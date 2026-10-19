@@ -52,3 +52,10 @@ jobs:
           path: |
             app/build/reports/
             app/build/test-results/
+
+  deploy-staging:
+    name: Trigger Staging CD
+    needs: [test-and-lint]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/'))
+    uses: ./.github/workflows/cd.yml
+    secrets: inherit

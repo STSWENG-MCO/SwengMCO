@@ -3,8 +3,7 @@
 name: CD
 
 on:
-  push:
-    branches: [develop, 'release/**']
+  workflow_call:
   workflow_dispatch:
 
 concurrency:

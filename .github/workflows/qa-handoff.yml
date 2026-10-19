@@ -5,13 +5,13 @@ on:
     branches: [main, develop, 'release/**', master]
 
 jobs:
-  handoff:
+  handoff-feature:
     runs-on: ubuntu-latest
     if: contains(github.event.head_commit.message, '#qa')
     permissions:
       issues: write
     steps:
-      - name: Process QA Handoff
+      - name: Process Feature QA Handoff
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -129,3 +129,38 @@ jobs:
                 console.error(`Error processing #${issueNumber}: ${error.message}`)
               }
             }
+  
+  
+  handoff-release:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/heads/release/')
+    permissions:
+      issues: write
+    steps:
+      - name: Process Staging Candidate QA Handoff
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const branchName = context.ref.replace('refs/heads/', '')
+            const commitHash = context.sha.substring(0, 7)
+            const commitUrl = `${context.payload.repository.html_url}/commit/${context.sha}`
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[Release QA] Testing Candidate Ready: ${branchName}`,
+              labels: ['QA Pending'],
+              body: `
+              ### [Release Candidate Testing] <@&1561637916432801832>
+              A new release branch **${branchName}** has been cut and staged for verification.
+              * **Branch:** \`${branchName}\`
+              * **Source Commit:** [${commitHash}](${commitUrl})
+              * **Status:** Staging APK built via \`cd.yml\`
+              #### QA Acceptance Checklist:
+              - [ ] Verify core acceptance criteria on **at least two physical devices** with different Android versions.
+              - [ ] Validate Room schema migrations and offline data preservation.
+              - [ ] Coordinate testing feedback across the 2-week testing window with User Testers.
+              - [ ] If all checks pass, mark as \`Done\` for Product Owner sign-off.
+              `.trim().replace(/^\s+/gm, '')
+            })
