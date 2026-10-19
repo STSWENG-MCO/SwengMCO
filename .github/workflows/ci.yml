@@ -1,15 +1,13 @@
-# Unit tests and release lint on every push and pull request (Play-readiness audit, 2026-09-25:
-# the project had strong unit coverage but nothing ran it automatically). Release lint matters
-# because the build now fails on any NewApi error, the class of bug that crashed Android 8-13.
-#
-# No signing secrets are needed: lint and tests never package a release, and the release-only
-# contact-email guard is hooked on packaging tasks.
+# unit tests, release lint, debug build, and Room schema validation
+# runs on pushes and pull requests to main, develop, and release branches
 name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop, 'release/**']
   pull_request:
+    branches: [main, develop, 'release/**']
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -17,20 +15,35 @@ concurrency:
 
 jobs:
   test-and-lint:
+    name: Test, Lint, & Compile
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+
       # JDK 21: Robolectric cannot read class files from JDK 25+ (see gradle.properties).
+      - name: Set up JDK 21
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "21"
+
+      
+      - name: Set up Gradle
       - uses: gradle/actions/setup-gradle@v4
+
       - name: Unit tests
         run: ./gradlew :app:testDebugUnitTest --console=plain
+
       - name: Release lint
         run: ./gradlew :app:lintRelease --console=plain
+
+      - name: Debug build (assembleDebug)
+        run: ./gradlew :app:assembleDebug --console=plain
+
+      - name: Database schema verification
+        run: git diff --exit-code app/schemas
+
       - name: Upload reports on failure
         if: failure()
         uses: actions/upload-artifact@v4

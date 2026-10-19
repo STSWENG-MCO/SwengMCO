@@ -1,0 +1,131 @@
+name: QA Handoff
+
+on:
+  push:
+    branches: [main, develop, 'release/**', master]
+
+jobs:
+  handoff:
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.message, '#qa')
+    permissions:
+      issues: write
+    steps:
+      - name: Process QA Handoff
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const commitMsg = context.payload.head_commit.message
+            const firstLine = commitMsg.split('\n')[0]
+
+            if (!firstLine.includes('#qa')) {
+              console.log('Trigger flag #qa not found in the first line. Skipping.')
+              return
+            }
+
+            const commitHash = context.payload.head_commit.id.substring(0, 7)
+            const commitUrl = `${context.payload.repository.html_url}/commit/${context.payload.head_commit.id}`
+            const actor = context.actor
+
+            const issueMatch = firstLine.match(/(?<!\w)#(\d+)\b/g) || []
+            const analystIssueNumbers = issueMatch.map(m => m.replace('#', ''))
+
+            const lifecycle = [
+              'To do',
+              'In progress',
+              'QA Pending',
+              'QA Failed',
+              'Done'
+            ]
+
+            const commentTemplate = (hash, url, user) => `
+            ### [QA Request] Triggered <@&1561637916432801832>
+
+            The implementation is ready for verification.
+
+            * **Source Commit:** [${hash}](${url})
+            * **Triggered By:** @${user}
+
+            ---
+
+            #### Issue Lifecycle
+            > \`To do\` ➔ \`In progress\` ➔ \`QA Pending\` ➔ \`QA Failed\` ➔ \`Done\`
+
+            ---
+
+            #### Instructions for QA
+            1. **Access** the development environment.
+            2. **Ensure** the relevant feature flag is enabled in environment variables.
+            3. **Verify** the implementation against the requirements.
+            4. If verification **passes**, change the label to \`Done\`.
+            5. If verification **fails**, change the label to \`QA Failed\` and tag @${user}.
+            `.trim().replace(/^\s+/gm, '')
+
+            const createOrphanIssue = async (summary, reasonNotes = '') => {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `[QA Request] ${summary}`,
+                assignees: [actor],
+                labels: ['QA Pending'],
+                body: `${reasonNotes}\n\n${commentTemplate(commitHash, commitUrl, actor)}`
+              })
+            }
+
+            const commitSummary = firstLine.replace('#qa', '').replace(/\s+/g, ' ').trim()
+
+            if (analystIssueNumbers.length === 0) {
+              const reason = `Created because #qa was used without an issue reference.`
+              await createOrphanIssue(commitSummary, reason)
+              return
+            }
+
+            for (const issueNumber of analystIssueNumbers) {
+              const issueId = parseInt(issueNumber)
+              try {
+                await github.rest.issues.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueId
+                })
+
+                await github.rest.issues.addAssignees({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueId,
+                  assignees: [actor]
+                })
+
+                const { data: currentLabels } = await github.rest.issues.listLabelsOnIssue({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueId
+                })
+
+                const filteredLabels = currentLabels
+                  .map(l => l.name)
+                  .filter(name => !lifecycle.includes(name))
+
+                await github.rest.issues.setLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueId,
+                  labels: [...filteredLabels, 'QA Pending']
+                })
+
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueId,
+                  body: commentTemplate(commitHash, commitUrl, actor)
+                })
+              } catch (error) {
+                if (error.status === 404) {
+                  const reason = `Referenced issue **#${issueNumber}** does not exist.`
+                  await createOrphanIssue(`[Invalid #${issueNumber}] ${commitSummary}`, reason)
+                  continue
+                }
+                console.error(`Error processing #${issueNumber}: ${error.message}`)
+              }
+            }
