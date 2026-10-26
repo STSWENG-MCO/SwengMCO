@@ -37,19 +37,22 @@ jobs:
         run: ./gradlew :app:spotlessCheck --console=plain
       
       - name: Static code analysis (Detekt)
+        if: success() || failure()
         run: ./gradlew :app:detekt --console=plain
+
+      - name: Release lint
+        if: success() || failure()
+        run: ./gradlew :app:lintRelease --console=plain
+      
+      - name: Database schema verification
+        if: success() || failure()
+        run: git diff --exit-code app/schemas
 
       - name: Unit tests
         run: ./gradlew :app:testDebugUnitTest --console=plain
-
-      - name: Release lint
-        run: ./gradlew :app:lintRelease --console=plain
-
+      
       - name: Debug build (assembleDebug)
         run: ./gradlew :app:assembleDebug --console=plain
-
-      - name: Database schema verification
-        run: git diff --exit-code app/schemas
 
       - name: Upload reports on failure
         if: failure()
