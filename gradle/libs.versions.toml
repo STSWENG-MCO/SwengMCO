@@ -38,6 +38,9 @@ espressoCore = "3.5.1"
 robolectric = "4.13"
 androidxTestCore = "1.6.1"
 
+spotless = "7.0.2"
+detekt = "1.28.8"
+
 exifinterface = "1.4.2" # 2026-09-25 (Play-readiness audit, lint ExifInterface warning): the framework android.media.ExifInterface has known bugs on older Android releases; this is the AndroidX replacement. Exactly the version camera-core 1.6.2 already pulls in at runtime scope (checked in its POM), so declaring it adds nothing to the APK -- it only makes the API visible at compile time.
 
 [libraries]
@@ -121,3 +124,5 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }

@@ -6,6 +6,8 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt.android)
+    alias(libs.plugins.spotless)
+    alias(libs.plugins.detekt)
 }
 
 // Release signing credentials live in the gitignored /keystore.properties (repo root), never in
