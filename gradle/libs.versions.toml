@@ -39,7 +39,7 @@ robolectric = "4.13"
 androidxTestCore = "1.6.1"
 
 spotless = "7.0.2"
-detekt = "1.28.8"
+detekt = "1.23.8"
 
 exifinterface = "1.4.2" # 2026-09-25 (Play-readiness audit, lint ExifInterface warning): the framework android.media.ExifInterface has known bugs on older Android releases; this is the AndroidX replacement. Exactly the version camera-core 1.6.2 already pulls in at runtime scope (checked in its POM), so declaring it adds nothing to the APK -- it only makes the API visible at compile time.
 
