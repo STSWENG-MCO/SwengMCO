@@ -34,10 +34,10 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
       
       - name: Formatting check (Spotless & ktlint)
-        uses: ./gradlew :app:spotlessCheck --console=plain
+        run: ./gradlew :app:spotlessCheck --console=plain
       
       - name: Static code analysis (Detekt)
-        uses: ./gradlew :app:detekt --console=plain
+        run: ./gradlew :app:detekt --console=plain
 
       - name: Unit tests
         run: ./gradlew :app:testDebugUnitTest --console=plain
