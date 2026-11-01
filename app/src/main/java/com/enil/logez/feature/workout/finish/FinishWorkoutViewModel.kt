@@ -7,6 +7,7 @@ import com.enil.logez.core.common.AppLogger
 import com.enil.logez.core.data.entity.WorkoutEntity
 import com.enil.logez.core.domain.calc.ExerciseShape
 import com.enil.logez.core.domain.calc.RoutineStructureDiffer
+import com.enil.logez.core.domain.model.WorkoutStatus
 import com.enil.logez.core.domain.repository.RoutineRepository
 import com.enil.logez.core.domain.repository.WorkoutRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -48,6 +49,13 @@ class FinishWorkoutViewModel @Inject constructor(
                 // Surfacing this as an error beats leaving isLoading true forever, which rendered
                 // an empty screen with no spinner, no message and no way forward but Back.
                 _uiState.update { it.copy(isLoading = false, isMissing = true) }
+                return@launch
+            }
+            if (w.status == WorkoutStatus.COMPLETED) {
+                // W1-01: this workout was already saved. Re-entering the finish flow for it (a
+                // stale back-stack entry, a deep link) must not offer to save it a second time,
+                // which would re-run the save transaction and re-count its records.
+                _uiState.update { it.copy(isLoading = false, isAlreadySaved = true) }
                 return@launch
             }
             workout = w
@@ -109,6 +117,8 @@ class FinishWorkoutViewModel @Inject constructor(
      * still running instead of an enabled Save button inviting a second run.
      */
     fun save(structureChoice: RoutineStructureChoice?) {
+        // W1-01: already saved — a second save is a no-op, not a failure to report.
+        if (_uiState.value.isAlreadySaved) return
         val w = workout
         if (w == null) {
             _saveState.value = SaveState.Failed
@@ -202,4 +212,6 @@ data class FinishWorkoutUiState(
     val completedSetCount: Int = 0,
     /** The workout row could not be loaded — nothing to save; the screen shows an error, not a blank. */
     val isMissing: Boolean = false,
+    /** W1-01: the workout is already COMPLETED, so there is nothing left to save. */
+    val isAlreadySaved: Boolean = false,
 )
