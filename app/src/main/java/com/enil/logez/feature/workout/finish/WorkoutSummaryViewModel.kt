@@ -14,6 +14,7 @@ import com.enil.logez.core.domain.calc.WorkoutMuscleTargetCalculator
 import com.enil.logez.core.domain.calc.MuscleStatsCalculator
 import com.enil.logez.core.domain.calc.RegionShare
 import com.enil.logez.core.domain.calc.balanceAxes
+import com.enil.logez.core.domain.calc.WorkoutTotalsCalculator
 import com.enil.logez.core.domain.calc.isIncluded
 import com.enil.logez.core.domain.model.GpsActivity
 import com.enil.logez.core.domain.model.MuscleDiagramVariant
@@ -183,7 +184,10 @@ class WorkoutSummaryViewModel @Inject constructor(
             // routePoints/DailyWellnessTotalEntity elsewhere in this milestone.
             val heartRateSamples = heartRateSampleRepository.getForWorkout(workoutId).map { it.recordedAt to it.bpm }
 
-            val totalDistanceMeters = included.sumOf { it.set.distanceMeters ?: 0.0 }
+            // W1-02: sets/reps/distance and the hide-if-not-logged flags come from one domain
+            // calculator, over the same isIncluded() rule every other stat uses.
+            val totals = WorkoutTotalsCalculator.totals(sets.map { it.set }, settings.includeWarmupsInStats)
+            val totalDistanceMeters = totals.totalDistanceMeters
             val windowEnd = workout.endedAt ?: (workout.startedAt + workout.durationSeconds * 1000L)
             val heartRateSummary = if (isGpsTracked) {
                 HeartRateSummaryCalculator.summarize(heartRateSamples, workout.startedAt, windowEnd, settings.maxHeartRateBpm)
@@ -212,10 +216,10 @@ class WorkoutSummaryViewModel @Inject constructor(
                 title = workout.title,
                 startedAtMillis = workout.startedAt,
                 durationSeconds = workout.durationSeconds,
-                completedSetCount = included.size,
-                // Same `included` list as the Sets stat, so warm-up filtering can't drift between
+                completedSetCount = totals.setCount,
+                // Same counted sets as the Sets stat, so warm-up filtering can't drift between
                 // the two numbers. Rep-less sets (cardio/time) honestly contribute 0.
-                totalReps = included.sumOf { it.set.reps ?: 0 },
+                totalReps = totals.totalReps,
                 totalVolumeKg = volumeKg,
                 // A GPS-tracked walk/run has no weight/reps concept at all -- showing "0kg"/"0 Reps"
                 // next to a real distance/duration reads as noise, not data. Gate each cell on
@@ -223,9 +227,9 @@ class WorkoutSummaryViewModel @Inject constructor(
                 // (a bodyweight exercise can legitimately total 0kg volume while still being
                 // weight-tracked in spirit -- checking the raw field's presence, not the computed
                 // total, is what distinguishes "not tracked" from "tracked as zero").
-                hasVolume = included.any { it.set.weightKg != null },
-                hasReps = included.any { it.set.reps != null },
-                hasDistance = included.any { it.set.distanceMeters != null },
+                hasVolume = totals.hasWeight,
+                hasReps = totals.hasReps,
+                hasDistance = totals.hasDistance,
                 totalDistanceMeters = totalDistanceMeters,
                 routePoints = routePoints,
                 isGpsTracked = isGpsTracked,

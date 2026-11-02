@@ -436,6 +436,74 @@ class WorkoutSummaryViewModelTest {
         assertEquals(150L, vm.uiState.value.heartRateSummary!!.maxBpm)
     }
 
+    // --- W1-02: core workout stats ---
+
+    @Test
+    fun `drop sets and failure sets count toward sets and reps like normal sets`() = runTest {
+        val vm = viewModel(
+            FakeWorkoutRepository(
+                workouts = listOf(workout("w1")),
+                exercises = listOf(workoutExercise("we1", "w1")),
+                sets = listOf(
+                    aSet("s1", "we1", 0, reps = 8),
+                    aSet("s2", "we1", 1, reps = 6, setType = SetType.DROPSET),
+                    aSet("s3", "we1", 2, reps = 4, setType = SetType.FAILURE),
+                ),
+            ),
+        )
+
+        assertEquals(3, vm.uiState.value.completedSetCount)
+        assertEquals(18, vm.uiState.value.totalReps) // 8 + 6 + 4
+    }
+
+    @Test
+    fun `warm-ups count toward sets and reps when includeWarmupsInStats is on`() = runTest {
+        val vm = viewModel(
+            FakeWorkoutRepository(
+                workouts = listOf(workout("w1")),
+                exercises = listOf(workoutExercise("we1", "w1")),
+                sets = listOf(
+                    aSet("s1", "we1", 0, reps = 8),
+                    aSet("s2", "we1", 1, reps = 15, setType = SetType.WARMUP),
+                ),
+            ),
+            settingsRepo = FakeSettingsRepository(UserSettings(includeWarmupsInStats = true)),
+        )
+
+        assertEquals(2, vm.uiState.value.completedSetCount)
+        assertEquals(23, vm.uiState.value.totalReps) // 8 + 15
+    }
+
+    @Test
+    fun `sets that were never completed count toward neither sets nor reps`() = runTest {
+        val vm = viewModel(
+            FakeWorkoutRepository(
+                workouts = listOf(workout("w1")),
+                exercises = listOf(workoutExercise("we1", "w1")),
+                sets = listOf(
+                    aSet("s1", "we1", 0, reps = 8),
+                    aSet("s2", "we1", 1, reps = 10, isCompleted = false),
+                ),
+            ),
+        )
+
+        assertEquals(1, vm.uiState.value.completedSetCount)
+        assertEquals(8, vm.uiState.value.totalReps)
+    }
+
+    @Test
+    fun `duration on the summary is the workout's saved duration, unchanged`() = runTest {
+        val vm = viewModel(
+            FakeWorkoutRepository(
+                workouts = listOf(workout("w1", durationSeconds = 3_120)), // 52 min
+                exercises = listOf(workoutExercise("we1", "w1")),
+                sets = listOf(aSet("s1", "we1", 0, reps = 8)),
+            ),
+        )
+
+        assertEquals(3_120, vm.uiState.value.durationSeconds)
+    }
+
     // --- fixture ---
 
     /** A backfill that never finds anything new: Health Connect unavailable. */
@@ -517,10 +585,11 @@ class WorkoutSummaryViewModelTest {
         setType: SetType = SetType.NORMAL,
         weightKg: Double? = 50.0,
         distanceMeters: Double? = null,
+        isCompleted: Boolean = true,
     ) = WorkoutSetEntity(
         id = id, workoutExerciseId = workoutExerciseId, orderIndex = orderIndex, setType = setType,
         weightKg = weightKg, reps = reps, durationSeconds = null, distanceMeters = distanceMeters, rpe = null,
-        customMetric = null, isCompleted = true, completedAt = 1L,
+        customMetric = null, isCompleted = isCompleted, completedAt = if (isCompleted) 1L else null,
     )
 
     private fun exercise(
