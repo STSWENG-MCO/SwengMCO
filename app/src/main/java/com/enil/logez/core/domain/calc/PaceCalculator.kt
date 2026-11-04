@@ -13,7 +13,11 @@ object PaceCalculator {
     private const val MIN_METERS_FOR_PACE = 50.0
 
     /** Seconds-per-unit-distance, or null before [MIN_METERS_FOR_PACE] has accumulated. */
-    fun paceSecondsPerUnit(distanceMeters: Double, elapsedSeconds: Int, unit: DistanceUnit): Double? {
+    fun paceSecondsPerUnit(
+        distanceMeters: Double,
+        elapsedSeconds: Int,
+        unit: DistanceUnit,
+    ): Double? {
         if (distanceMeters < MIN_METERS_FOR_PACE) return null
         return elapsedSeconds / (distanceMeters / DistanceDisplay.unitMeters(unit))
     }
@@ -34,7 +38,11 @@ object PaceCalculator {
      * samples on a pace-history chart) rather than the session's cumulative total -- see
      * [MIN_METERS_FOR_WINDOWED_PACE]'s own doc comment for why the two need different minimums.
      */
-    fun windowedPaceSecondsPerUnit(deltaMeters: Double, deltaSeconds: Int, unit: DistanceUnit): Double? {
+    fun windowedPaceSecondsPerUnit(
+        deltaMeters: Double,
+        deltaSeconds: Int,
+        unit: DistanceUnit,
+    ): Double? {
         if (deltaMeters < MIN_METERS_FOR_WINDOWED_PACE || deltaSeconds <= 0) return null
         return deltaSeconds / (deltaMeters / DistanceDisplay.unitMeters(unit))
     }

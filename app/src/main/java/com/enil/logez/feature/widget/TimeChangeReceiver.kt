@@ -15,7 +15,10 @@ import kotlinx.coroutines.launch
  * Both actions are on the implicit-broadcast allowlist, so a manifest receiver genuinely works.
  */
 class TimeChangeReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
+    override fun onReceive(
+        context: Context,
+        intent: Intent,
+    ) {
         // Act only on the two system broadcasts the manifest registers for (lint
         // UnsafeProtectedBroadcastReceiver, 2026-09-25 audit): anything else reaching this
         // receiver is not a clock change and must not trigger a refresh or reschedule.

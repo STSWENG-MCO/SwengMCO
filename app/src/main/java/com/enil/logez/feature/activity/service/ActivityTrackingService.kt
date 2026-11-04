@@ -20,20 +20,20 @@ import com.enil.logez.feature.activity.ActivityTrackingController
 import com.enil.logez.feature.activity.ActivityTrackingState
 import com.enil.logez.feature.workout.service.WorkoutNotificationChannels
 import dagger.hilt.android.AndroidEntryPoint
-import java.util.Locale
-import javax.inject.Inject
-import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.Locale
+import javax.inject.Inject
+import kotlin.math.roundToInt
 
 /**
  * M21a. Thin shell mirroring [com.enil.logez.feature.workout.service.WorkoutSessionService]'s
@@ -49,7 +49,9 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class ActivityTrackingService : Service() {
     @Inject lateinit var controller: ActivityTrackingController
+
     @Inject lateinit var settingsRepository: SettingsRepository
+
     @Inject lateinit var logger: AppLogger
 
     // The unit the notification's distance renders in. KM until the settings collector's first
@@ -79,7 +81,11 @@ class ActivityTrackingService : Service() {
         WorkoutNotificationChannels.ensureCreated(this)
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int,
+    ): Int {
         // Anything but ACTION_START stops without a foreground promotion. ACTION_STOP arrives
         // through a plain startService(), so there is no startForegroundService() contract to
         // honour. Any other intent can only be a system redelivery, and GPS has no rehydration
@@ -184,29 +190,35 @@ class ActivityTrackingService : Service() {
         // controller, while the only two explicit stop calls live on one screen the user may no
         // longer be able to reach. Cancel any watcher armed for a now-superseded session first.
         stopWatcherJob?.cancel()
-        stopWatcherJob = serviceScope.launch {
-            controller.state.map { it.isTracking }.distinctUntilChanged().filter { !it }.first()
-            withContext(Dispatchers.Main.immediate) { stopSelfCleanly() }
-        }
+        stopWatcherJob =
+            serviceScope.launch {
+                controller.state
+                    .map { it.isTracking }
+                    .distinctUntilChanged()
+                    .filter { !it }
+                    .first()
+                withContext(Dispatchers.Main.immediate) { stopSelfCleanly() }
+            }
     }
 
     /** Returns false instead of throwing when Android refuses the promotion; see the caller. */
-    private fun startForegroundSafely(notification: Notification): Boolean = try {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
-        } else {
-            startForeground(NOTIFICATION_ID, notification)
+    private fun startForegroundSafely(notification: Notification): Boolean =
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
+            } else {
+                startForeground(NOTIFICATION_ID, notification)
+            }
+            true
+        } catch (e: IllegalStateException) {
+            // ForegroundServiceStartNotAllowedException (API 31+) is an IllegalStateException.
+            logger.e(TAG, "Foreground promotion refused; stopping the activity tracking service", e)
+            false
+        } catch (e: SecurityException) {
+            // API 34+: location access is no longer granted, so the location type is not allowed.
+            logger.e(TAG, "Location foreground service not allowed; stopping the activity tracking service", e)
+            false
         }
-        true
-    } catch (e: IllegalStateException) {
-        // ForegroundServiceStartNotAllowedException (API 31+) is an IllegalStateException.
-        logger.e(TAG, "Foreground promotion refused; stopping the activity tracking service", e)
-        false
-    } catch (e: SecurityException) {
-        // API 34+: location access is no longer granted, so the location type is not allowed.
-        logger.e(TAG, "Location foreground service not allowed; stopping the activity tracking service", e)
-        false
-    }
 
     @SuppressLint("MissingPermission") // notify() safely no-ops if POST_NOTIFICATIONS was denied — the FGS itself keeps running either way
     private fun postNotification(notification: Notification) {
@@ -215,17 +227,30 @@ class ActivityTrackingService : Service() {
 
     private fun buildNotification(state: ActivityTrackingState): Notification {
         val unit = distanceUnit
-        val text = getString(
-            if (unit == DistanceUnit.MILES) R.string.activity_tracking_notification_text_mi else R.string.activity_tracking_notification_text,
-            formatDistanceNumber(DistanceDisplay.toDisplay(state.distanceMeters, unit)),
-        )
-        val openAppIntent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-        }
-        val contentIntent = PendingIntent.getActivity(
-            this, REQUEST_OPEN_APP, openAppIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
-        return NotificationCompat.Builder(this, WorkoutNotificationChannels.WORKOUT_ONGOING)
+        val text =
+            getString(
+                if (unit ==
+                    DistanceUnit.MILES
+                ) {
+                    R.string.activity_tracking_notification_text_mi
+                } else {
+                    R.string.activity_tracking_notification_text
+                },
+                formatDistanceNumber(DistanceDisplay.toDisplay(state.distanceMeters, unit)),
+            )
+        val openAppIntent =
+            Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+        val contentIntent =
+            PendingIntent.getActivity(
+                this,
+                REQUEST_OPEN_APP,
+                openAppIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+        return NotificationCompat
+            .Builder(this, WorkoutNotificationChannels.WORKOUT_ONGOING)
             .setSmallIcon(R.drawable.ic_stat_logez)
             .setContentTitle(getString(R.string.activity_tracking_notification_title))
             .setContentText(text)

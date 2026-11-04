@@ -1,9 +1,9 @@
 package com.enil.logez.core.domain.calc
 
-import java.time.DayOfWeek
-import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.time.DayOfWeek
+import java.time.LocalDate
 
 /** §10.6's M4c row: "StreakCalculatorTest (the summary's streak line)" — §8.7 weekly streak semantics. */
 class StreakCalculatorTest {

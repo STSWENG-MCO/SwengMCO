@@ -16,17 +16,34 @@ object MuscleStatsCalculator {
         val isCompleted: Boolean,
     )
 
-    data class GroupShare(val group: MuscleGroup, val setCount: Int, val sharePercent: Int)
-    data class DistributionResult(val current: List<GroupShare>, val previous: List<GroupShare>?)
-    data class MuscleBucketCount(val bucketStart: LocalDate, val group: MuscleGroup, val setCount: Int)
+    data class GroupShare(
+        val group: MuscleGroup,
+        val setCount: Int,
+        val sharePercent: Int,
+    )
 
-    private fun included(s: MuscleSetInput, includeWarmups: Boolean) =
-        s.isCompleted && (s.setType != SetType.WARMUP || includeWarmups)
+    data class DistributionResult(
+        val current: List<GroupShare>,
+        val previous: List<GroupShare>?,
+    )
+
+    data class MuscleBucketCount(
+        val bucketStart: LocalDate,
+        val group: MuscleGroup,
+        val setCount: Int,
+    )
+
+    private fun included(
+        s: MuscleSetInput,
+        includeWarmups: Boolean,
+    ) = s.isCompleted && (s.setType != SetType.WARMUP || includeWarmups)
 
     private fun shares(sets: List<MuscleSetInput>): List<GroupShare> {
         val total = sets.size
         if (total == 0) return emptyList()
-        return sets.groupingBy { it.primaryMuscleGroup }.eachCount()
+        return sets
+            .groupingBy { it.primaryMuscleGroup }
+            .eachCount()
             .map { (g, count) -> GroupShare(g, count, Math.round(count * 100.0 / total).toInt()) }
     }
 
@@ -37,11 +54,14 @@ object MuscleStatsCalculator {
         includeWarmups: Boolean,
     ): DistributionResult {
         val window = ChartAggregator.window(range, today)
-        val previousWindow = window?.let {
-            val lengthDays = java.time.temporal.ChronoUnit.DAYS.between(it.start, it.endInclusive) + 1
-            val prevEnd = it.start.minusDays(1)
-            prevEnd.minusDays(lengthDays - 1)..prevEnd
-        }
+        val previousWindow =
+            window?.let {
+                val lengthDays =
+                    java.time.temporal.ChronoUnit.DAYS
+                        .between(it.start, it.endInclusive) + 1
+                val prevEnd = it.start.minusDays(1)
+                prevEnd.minusDays(lengthDays - 1)..prevEnd
+            }
         return distributionInWindows(sets, window, previousWindow, includeWarmups)
     }
 
@@ -74,18 +94,19 @@ object MuscleStatsCalculator {
         includeWarmups: Boolean,
     ): List<MuscleBucketCount> {
         val window = ChartAggregator.window(range, today)
-        val included = sets
-            .filter { included(it, includeWarmups) }
-            .filter { window == null || it.workoutDate in window }
+        val included =
+            sets
+                .filter { included(it, includeWarmups) }
+                .filter { window == null || it.workoutDate in window }
         return included
             .map { s ->
-                val bucketStart = when (bucket) {
-                    StatBucket.WEEK -> StreakCalculator.weekStart(s.workoutDate, firstDayOfWeek)
-                    StatBucket.MONTH -> s.workoutDate.withDayOfMonth(1)
-                }
+                val bucketStart =
+                    when (bucket) {
+                        StatBucket.WEEK -> StreakCalculator.weekStart(s.workoutDate, firstDayOfWeek)
+                        StatBucket.MONTH -> s.workoutDate.withDayOfMonth(1)
+                    }
                 bucketStart to s.primaryMuscleGroup
-            }
-            .groupingBy { it }
+            }.groupingBy { it }
             .eachCount()
             .map { (key, count) -> MuscleBucketCount(key.first, key.second, count) }
             // §8.8's vector orders CHEST before LATS within a bucket — name order, not the

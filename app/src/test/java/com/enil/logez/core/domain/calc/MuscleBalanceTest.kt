@@ -5,7 +5,10 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class MuscleBalanceTest {
-    private fun share(group: MuscleGroup, count: Int) = MuscleStatsCalculator.GroupShare(group, count, 0) // sharePercent unused by balanceAxes
+    private fun share(
+        group: MuscleGroup,
+        count: Int,
+    ) = MuscleStatsCalculator.GroupShare(group, count, 0) // sharePercent unused by balanceAxes
 
     @Test
     fun `four non-region groups map to no BodyRegion`() {
@@ -40,14 +43,20 @@ class MuscleBalanceTest {
         val result = balanceAxes(listOf(share(MuscleGroup.CARDIO, 5)))
 
         assertEquals(8, result.size)
-        result.forEach { assertEquals(0, it.setCount); assertEquals(0, it.sharePercent) }
+        result.forEach {
+            assertEquals(0, it.setCount)
+            assertEquals(0, it.sharePercent)
+        }
     }
 
     @Test
     fun `an empty distribution list is also all zeros`() {
         val result = balanceAxes(emptyList())
         assertEquals(8, result.size)
-        result.forEach { assertEquals(0, it.setCount); assertEquals(0, it.sharePercent) }
+        result.forEach {
+            assertEquals(0, it.setCount)
+            assertEquals(0, it.sharePercent)
+        }
     }
 
     @Test

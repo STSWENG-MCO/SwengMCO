@@ -27,8 +27,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -40,12 +42,10 @@ import com.enil.logez.R
 import com.enil.logez.core.designsystem.ScreenTitle
 import com.enil.logez.core.designsystem.Spacing
 import com.enil.logez.core.designsystem.logEzTopAppBarColors
+import com.enil.logez.core.wellness.openHealthConnectSettings
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.runtime.saveable.rememberSaveable
-import com.enil.logez.core.wellness.openHealthConnectSettings
 
 /**
  * Settings → Data. The app's privacy policy has pointed users here since it was written; this is
@@ -70,21 +70,26 @@ fun DataScreen(
     var confirmHealthDisconnect by rememberSaveable { mutableStateOf(false) }
     var confirmDeleteAll by rememberSaveable { mutableStateOf(false) }
 
-    val createDocument = rememberLauncherForActivityResult(
-        ActivityResultContracts.CreateDocument("application/octet-stream"),
-    ) { uri ->
-        val kind = pendingKind
-        pendingKind = null
-        if (uri != null && kind != null) viewModel.export(kind, uri) else viewModel.pickerCancelled()
-    }
+    val createDocument =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.CreateDocument("application/octet-stream"),
+        ) { uri ->
+            val kind = pendingKind
+            pendingKind = null
+            if (uri != null && kind != null) viewModel.export(kind, uri) else viewModel.pickerCancelled()
+        }
 
-    val openDocument = rememberLauncherForActivityResult(
-        ActivityResultContracts.OpenDocument(),
-    ) { uri ->
-        if (uri != null) viewModel.prepareRestore(uri) else viewModel.pickerCancelled()
-    }
+    val openDocument =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.OpenDocument(),
+        ) { uri ->
+            if (uri != null) viewModel.prepareRestore(uri) else viewModel.pickerCancelled()
+        }
 
-    fun startExport(kind: ExportKind, fileName: String) {
+    fun startExport(
+        kind: ExportKind,
+        fileName: String,
+    ) {
         pendingKind = kind
         createDocument.launch(fileName)
     }
@@ -94,15 +99,17 @@ fun DataScreen(
     BackHandler(enabled = uiState.job is DataJob.Working) { }
 
     val busy = uiState.job is DataJob.Working
+
     fun ifIdle(action: () -> Unit): () -> Unit = { if (!busy) action() }
 
     LaunchedEffect(uiState.job) {
         val job = uiState.job
-        val messageRes = when (job) {
-            is DataJob.Done -> job.messageRes
-            is DataJob.Failed -> job.messageRes
-            else -> null
-        }
+        val messageRes =
+            when (job) {
+                is DataJob.Done -> job.messageRes
+                is DataJob.Failed -> job.messageRes
+                else -> null
+            }
         if (messageRes != null) {
             snackbarHostState.showSnackbar(resources.getString(messageRes))
             viewModel.dismissJob()
@@ -228,9 +235,11 @@ fun DataScreen(
                 SettingsValueRow(
                     title = stringResource(R.string.data_export_workouts),
                     subtitle = stringResource(R.string.data_export_workouts_subtitle),
-                    value = uiState.workoutSetCount?.let {
-                        pluralStringResource(R.plurals.data_set_count, it, it)
-                    }.orEmpty(),
+                    value =
+                        uiState.workoutSetCount
+                            ?.let {
+                                pluralStringResource(R.plurals.data_set_count, it, it)
+                            }.orEmpty(),
                     onClick = ifIdle { startExport(ExportKind.WORKOUTS_CSV, fileName("logez_workouts", "csv")) },
                 )
             }
@@ -239,9 +248,11 @@ fun DataScreen(
                 SettingsValueRow(
                     title = stringResource(R.string.data_export_measurements),
                     subtitle = stringResource(R.string.data_export_measurements_subtitle),
-                    value = uiState.measurementCount?.let {
-                        pluralStringResource(R.plurals.data_entry_count, it, it)
-                    }.orEmpty(),
+                    value =
+                        uiState.measurementCount
+                            ?.let {
+                                pluralStringResource(R.plurals.data_entry_count, it, it)
+                            }.orEmpty(),
                     onClick = ifIdle { startExport(ExportKind.MEASUREMENTS_CSV, fileName("logez_measurements", "csv")) },
                 )
             }
@@ -272,11 +283,12 @@ fun DataScreen(
                 item(key = "health_manage") {
                     SettingsValueRow(
                         title = stringResource(R.string.data_health_manage),
-                        subtitle = when {
-                            uiState.healthDisconnectedThisSession -> stringResource(R.string.data_health_access_disconnected)
-                            uiState.grantedHealthTypes != null -> healthAccessSummary(uiState.grantedHealthTypes!!)
-                            else -> stringResource(R.string.data_health_manage_subtitle)
-                        },
+                        subtitle =
+                            when {
+                                uiState.healthDisconnectedThisSession -> stringResource(R.string.data_health_access_disconnected)
+                                uiState.grantedHealthTypes != null -> healthAccessSummary(uiState.grantedHealthTypes!!)
+                                else -> stringResource(R.string.data_health_manage_subtitle)
+                            },
                         value = "",
                         onClick = ifIdle { openHealthConnectSettings(context) },
                     )
@@ -315,7 +327,10 @@ fun DataScreen(
     }
 }
 
-private fun fileName(prefix: String, extension: String): String {
+private fun fileName(
+    prefix: String,
+    extension: String,
+): String {
     val stamp = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd", Locale.ROOT))
     return "${prefix}_$stamp.$extension"
 }
@@ -323,15 +338,16 @@ private fun fileName(prefix: String, extension: String): String {
 /** "LogEZ can read: Steps, Heart rate. Not allowed: Calories burned." in the app's type order. */
 @Composable
 private fun healthAccessSummary(granted: Set<com.enil.logez.core.wellness.HealthDataType>): String {
-    val names = com.enil.logez.core.wellness.HealthDataType.entries.associateWith { type ->
-        stringResource(
-            when (type) {
-                com.enil.logez.core.wellness.HealthDataType.STEPS -> R.string.data_health_type_steps
-                com.enil.logez.core.wellness.HealthDataType.CALORIES -> R.string.data_health_type_calories
-                com.enil.logez.core.wellness.HealthDataType.HEART_RATE -> R.string.data_health_type_heart_rate
-            },
-        )
-    }
+    val names =
+        com.enil.logez.core.wellness.HealthDataType.entries.associateWith { type ->
+            stringResource(
+                when (type) {
+                    com.enil.logez.core.wellness.HealthDataType.STEPS -> R.string.data_health_type_steps
+                    com.enil.logez.core.wellness.HealthDataType.CALORIES -> R.string.data_health_type_calories
+                    com.enil.logez.core.wellness.HealthDataType.HEART_RATE -> R.string.data_health_type_heart_rate
+                },
+            )
+        }
     if (granted.isEmpty()) return stringResource(R.string.data_health_access_none)
     val reading = names.filterKeys { it in granted }.values.joinToString(", ")
     val missing = names.filterKeys { it !in granted }.values.joinToString(", ")

@@ -2,9 +2,9 @@ package com.enil.logez.core.designsystem
 
 import com.enil.logez.core.domain.model.DistanceUnit
 import com.enil.logez.core.domain.model.WeightUnit
-import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.util.Locale
 
 /**
  * [Formatting.weightKg] and [Formatting.mmSs] formatted with the default locale until 2026-09-22,
@@ -13,10 +13,17 @@ import org.junit.Test
  * restore it afterwards, so a regression fails here and not on a German phone.
  */
 class FormattingTest {
-    private fun <T> withDefaultLocale(locale: Locale, block: () -> T): T {
+    private fun <T> withDefaultLocale(
+        locale: Locale,
+        block: () -> T,
+    ): T {
         val previous = Locale.getDefault()
         Locale.setDefault(locale)
-        return try { block() } finally { Locale.setDefault(previous) }
+        return try {
+            block()
+        } finally {
+            Locale.setDefault(previous)
+        }
     }
 
     @Test
@@ -42,6 +49,7 @@ class FormattingTest {
         assertEquals("0lb", Formatting.weight(0.0, WeightUnit.LB))
         assertEquals(Formatting.weight(60.0, WeightUnit.LB), formatWeight(60.0, WeightUnit.LB))
     }
+
     @Test
     fun `a whole number of kilometers has no decimal point`() {
         assertEquals("2km", Formatting.distanceKm(2000.0))

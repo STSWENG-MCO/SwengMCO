@@ -24,57 +24,66 @@ import com.enil.logez.R
  * axis labels, set-row weights, timers) is deliberately a separate, later pass, not bundled into
  * this foundational token change.
  */
-private val chakraPetch = FontFamily(
-    Font(R.font.chakra_petch_semibold, FontWeight.SemiBold),
-    Font(R.font.chakra_petch_bold, FontWeight.Bold),
-)
+private val chakraPetch =
+    FontFamily(
+        Font(R.font.chakra_petch_semibold, FontWeight.SemiBold),
+        Font(R.font.chakra_petch_bold, FontWeight.Bold),
+    )
 
 /** IBM Plex Sans ships as a single variable font (no more static per-weight files) -- one resource, three named instances via [FontVariation]. */
 @OptIn(ExperimentalTextApi::class)
-private val plexSans = FontFamily(
-    Font(R.font.ibm_plex_sans_variable, FontWeight.Normal, variationSettings = FontVariation.Settings(FontVariation.weight(400))),
-    Font(R.font.ibm_plex_sans_variable, FontWeight.Medium, variationSettings = FontVariation.Settings(FontVariation.weight(500))),
-    Font(R.font.ibm_plex_sans_variable, FontWeight.SemiBold, variationSettings = FontVariation.Settings(FontVariation.weight(600))),
-)
+private val plexSans =
+    FontFamily(
+        Font(R.font.ibm_plex_sans_variable, FontWeight.Normal, variationSettings = FontVariation.Settings(FontVariation.weight(400))),
+        Font(R.font.ibm_plex_sans_variable, FontWeight.Medium, variationSettings = FontVariation.Settings(FontVariation.weight(500))),
+        Font(R.font.ibm_plex_sans_variable, FontWeight.SemiBold, variationSettings = FontVariation.Settings(FontVariation.weight(600))),
+    )
 
-private val plexMono = FontFamily(
-    Font(R.font.ibm_plex_mono_regular, FontWeight.Normal),
-    Font(R.font.ibm_plex_mono_medium, FontWeight.Medium),
-    Font(R.font.ibm_plex_mono_semibold, FontWeight.SemiBold),
-)
+private val plexMono =
+    FontFamily(
+        Font(R.font.ibm_plex_mono_regular, FontWeight.Normal),
+        Font(R.font.ibm_plex_mono_medium, FontWeight.Medium),
+        Font(R.font.ibm_plex_mono_semibold, FontWeight.SemiBold),
+    )
 
-val LogEzTypography = Typography(
-    titleLarge = TextStyle(
-        fontFamily = chakraPetch,
-        fontWeight = FontWeight.Bold,
-        fontSize = 22.sp,
-        lineHeight = 28.sp,
-    ),
-    titleMedium = TextStyle(
-        fontFamily = chakraPetch,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 18.sp,
-        lineHeight = 24.sp,
-    ),
-    bodyLarge = TextStyle(
-        fontFamily = plexSans,
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-    ),
-    bodyMedium = TextStyle(
-        fontFamily = plexSans,
-        fontWeight = FontWeight.Normal,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-    ),
-    labelLarge = TextStyle(
-        fontFamily = plexSans,
-        fontWeight = FontWeight.Medium,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-    ),
-)
+val LogEzTypography =
+    Typography(
+        titleLarge =
+            TextStyle(
+                fontFamily = chakraPetch,
+                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp,
+                lineHeight = 28.sp,
+            ),
+        titleMedium =
+            TextStyle(
+                fontFamily = chakraPetch,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 18.sp,
+                lineHeight = 24.sp,
+            ),
+        bodyLarge =
+            TextStyle(
+                fontFamily = plexSans,
+                fontWeight = FontWeight.Normal,
+                fontSize = 16.sp,
+                lineHeight = 24.sp,
+            ),
+        bodyMedium =
+            TextStyle(
+                fontFamily = plexSans,
+                fontWeight = FontWeight.Normal,
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
+            ),
+        labelLarge =
+            TextStyle(
+                fontFamily = plexSans,
+                fontWeight = FontWeight.Medium,
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
+            ),
+    )
 
 /** Numeric-data treatment (weights, reps, timers, chart axis/value labels) -- not yet adopted at call sites; see this file's KDoc. */
 object LogEzMono {

@@ -21,7 +21,10 @@ interface RecordsDao {
     suspend fun insertAll(records: List<PersonalRecordEntity>)
 
     @Transaction
-    suspend fun rebuildFor(exerciseId: String, records: List<PersonalRecordEntity>) {
+    suspend fun rebuildFor(
+        exerciseId: String,
+        records: List<PersonalRecordEntity>,
+    ) {
         deleteForExercise(exerciseId)
         insertAll(records)
     }
@@ -44,7 +47,10 @@ interface RecordsDao {
 
     /** Records achieved inside a half-open window — the Monthly Report's PR list (§5.2 card 6). */
     @Query("SELECT * FROM personal_records WHERE achieved_at >= :fromMillis AND achieved_at < :untilMillis")
-    suspend fun getAchievedBetween(fromMillis: Long, untilMillis: Long): List<PersonalRecordEntity>
+    suspend fun getAchievedBetween(
+        fromMillis: Long,
+        untilMillis: Long,
+    ): List<PersonalRecordEntity>
 
     @Query("SELECT * FROM personal_records WHERE workout_id = :workoutId")
     fun observeForWorkout(workoutId: String): Flow<List<PersonalRecordEntity>>

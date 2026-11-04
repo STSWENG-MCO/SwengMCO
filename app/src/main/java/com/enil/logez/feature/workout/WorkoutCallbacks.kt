@@ -23,7 +23,6 @@ data class WorkoutCallbacks(
     val onAddSet: (exerciseId: String) -> Unit,
     /** M18 §5.1.6: inserts the Warmup Method ladder above set 1 (regular workouts only). */
     val onAddWarmupSets: (exerciseId: String) -> Unit,
-
     // --- Per-set operations (used by SetTable / CircuitEntry → SetRow) ---
     val onUpdateSetType: (exerciseId: String, setId: String, type: SetType) -> Unit,
     val onRemoveSet: (exerciseId: String, setId: String) -> Unit,

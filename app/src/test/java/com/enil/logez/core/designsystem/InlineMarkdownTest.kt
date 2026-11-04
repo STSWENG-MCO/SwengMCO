@@ -11,8 +11,17 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class InlineMarkdownTest {
-    private fun AnnotatedString.boldRanges() = spanStyles.filter { it.item.fontWeight == FontWeight.Bold }.map { text.substring(it.start, it.end) }
-    private fun AnnotatedString.italicRanges() = spanStyles.filter { it.item.fontStyle == FontStyle.Italic }.map { text.substring(it.start, it.end) }
+    private fun AnnotatedString.boldRanges() =
+        spanStyles
+            .filter {
+                it.item.fontWeight == FontWeight.Bold
+            }.map { text.substring(it.start, it.end) }
+
+    private fun AnnotatedString.italicRanges() =
+        spanStyles
+            .filter {
+                it.item.fontStyle == FontStyle.Italic
+            }.map { text.substring(it.start, it.end) }
 
     @Test
     fun `bold and italic markers render as styles and disappear from the text`() {
@@ -83,8 +92,10 @@ class InlineMarkdownTest {
     @Test
     fun `the editor transformation keeps the raw text so the cursor maps one to one`() {
         val raw = "a **b** c"
-        val transformed = InlineMarkdown.editorTransformation(androidx.compose.ui.graphics.Color.Gray)
-            .filter(AnnotatedString(raw))
+        val transformed =
+            InlineMarkdown
+                .editorTransformation(androidx.compose.ui.graphics.Color.Gray)
+                .filter(AnnotatedString(raw))
         assertEquals(raw, transformed.text.text)
         assertEquals(4, transformed.offsetMapping.originalToTransformed(4))
     }

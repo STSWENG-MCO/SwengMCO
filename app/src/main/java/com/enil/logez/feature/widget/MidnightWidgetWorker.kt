@@ -29,12 +29,12 @@ class MidnightWidgetWorker(
     appContext: Context,
     params: WorkerParameters,
 ) : CoroutineWorker(appContext, params) {
-
     override suspend fun doWork(): Result {
-        val entryPoint = EntryPointAccessors.fromApplication(
-            applicationContext,
-            MidnightWorkerEntryPoint::class.java,
-        )
+        val entryPoint =
+            EntryPointAccessors.fromApplication(
+                applicationContext,
+                MidnightWorkerEntryPoint::class.java,
+            )
         entryPoint.widgetRefresher().refresh()
         schedule(applicationContext) // re-arm for the next midnight
         return Result.success()
@@ -77,7 +77,12 @@ class MidnightWidgetWorker(
 internal fun nextMidnightDelayMillis(now: ZonedDateTime): Long {
     // atStartOfDay(zone), not LocalDate.atTime(0, 0): some zones skip 00:00 entirely on a DST
     // transition, and only the zoned overload resolves that to the day's first valid instant.
-    val nextMidnight = now.toLocalDate().plusDays(1).atStartOfDay(now.zone).plusMinutes(1)
+    val nextMidnight =
+        now
+            .toLocalDate()
+            .plusDays(1)
+            .atStartOfDay(now.zone)
+            .plusMinutes(1)
     return Duration.between(now, nextMidnight).toMillis().coerceAtLeast(0)
 }
 

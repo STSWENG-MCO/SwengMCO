@@ -2,10 +2,10 @@ package com.enil.logez.core.domain.calc
 
 import com.enil.logez.core.domain.model.ExerciseType
 import com.enil.logez.core.domain.model.SetType
-import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import java.time.LocalDate
 
 /** PHASE2_PLAN.md §8.9 literal test vectors, landing with the engine's consuming milestone (M6a) per §10.6. */
 class ChartAggregatorTest {
@@ -22,9 +22,17 @@ class ChartAggregatorTest {
         startedAt: Long = 1_000L,
         isCompleted: Boolean = true,
     ) = StatSet(
-        setId = id, workoutId = workoutId, workoutStartedAt = startedAt, orderIndex = 0,
-        setType = setType, weightKg = weightKg, reps = reps, durationSeconds = durationSeconds,
-        distanceMeters = distanceMeters, customMetric = null, isCompleted = isCompleted,
+        setId = id,
+        workoutId = workoutId,
+        workoutStartedAt = startedAt,
+        orderIndex = 0,
+        setType = setType,
+        weightKg = weightKg,
+        reps = reps,
+        durationSeconds = durationSeconds,
+        distanceMeters = distanceMeters,
+        customMetric = null,
+        isCompleted = isCompleted,
     )
 
     // --- window vectors (§8.9, today = 2026-08-22) ---
@@ -60,11 +68,20 @@ class ChartAggregatorTest {
     @Test
     fun `metric sets follow the per-ExerciseType table exactly`() {
         assertEquals(
-            listOf(ChartMetric.HEAVIEST_WEIGHT, ChartMetric.ONE_REP_MAX, ChartMetric.BEST_SET_VOLUME, ChartMetric.SESSION_VOLUME, ChartMetric.TOTAL_REPS),
+            listOf(
+                ChartMetric.HEAVIEST_WEIGHT,
+                ChartMetric.ONE_REP_MAX,
+                ChartMetric.BEST_SET_VOLUME,
+                ChartMetric.SESSION_VOLUME,
+                ChartMetric.TOTAL_REPS,
+            ),
             ChartAggregator.metricsFor(ExerciseType.WEIGHT_REPS),
         )
         assertEquals(listOf(ChartMetric.MOST_REPS_SET, ChartMetric.SESSION_REPS), ChartAggregator.metricsFor(ExerciseType.REPS_ONLY))
-        assertEquals(listOf(ChartMetric.MOST_REPS_SET, ChartMetric.SESSION_REPS), ChartAggregator.metricsFor(ExerciseType.BODYWEIGHT_ASSISTED))
+        assertEquals(
+            listOf(ChartMetric.MOST_REPS_SET, ChartMetric.SESSION_REPS),
+            ChartAggregator.metricsFor(ExerciseType.BODYWEIGHT_ASSISTED),
+        )
         assertEquals(
             listOf(ChartMetric.HEAVIEST_WEIGHT, ChartMetric.BEST_SET_VOLUME, ChartMetric.TOTAL_REPS),
             ChartAggregator.metricsFor(ExerciseType.BODYWEIGHT_WEIGHTED),
@@ -75,21 +92,37 @@ class ChartAggregatorTest {
             listOf(ChartMetric.BEST_PACE, ChartMetric.LONGEST_DISTANCE, ChartMetric.LONGEST_TIME),
             ChartAggregator.metricsFor(ExerciseType.DISTANCE_DURATION),
         )
-        assertEquals(listOf(ChartMetric.HEAVIEST_WEIGHT, ChartMetric.LONGEST_DISTANCE), ChartAggregator.metricsFor(ExerciseType.WEIGHT_DISTANCE))
+        assertEquals(
+            listOf(ChartMetric.HEAVIEST_WEIGHT, ChartMetric.LONGEST_DISTANCE),
+            ChartAggregator.metricsFor(ExerciseType.WEIGHT_DISTANCE),
+        )
         assertEquals(listOf(ChartMetric.BEST_TIME), ChartAggregator.metricsFor(ExerciseType.FLOORS_DURATION))
         assertEquals(listOf(ChartMetric.BEST_TIME), ChartAggregator.metricsFor(ExerciseType.STEPS_DURATION))
     }
 
     // --- point-value vectors (§8.9: WEIGHT_REPS workout with sets 100.0x1, 90.0x5, 80.0x10) ---
 
-    private val weightRepsSets = listOf(
-        set("s1", weightKg = 100.0, reps = 1),
-        set("s2", weightKg = 90.0, reps = 5),
-        set("s3", weightKg = 80.0, reps = 10),
-    )
+    private val weightRepsSets =
+        listOf(
+            set("s1", weightKg = 100.0, reps = 1),
+            set("s2", weightKg = 90.0, reps = 5),
+            set("s3", weightKg = 80.0, reps = 10),
+        )
 
-    private fun singleValue(metric: ChartMetric, sets: List<StatSet>, type: ExerciseType = ExerciseType.WEIGHT_REPS): Double {
-        val points = ChartAggregator.points(metric, type, isBodyweightVolumeEligible = false, sets = sets, bodyweightByWorkout = emptyMap(), includeWarmupsInStats = false)
+    private fun singleValue(
+        metric: ChartMetric,
+        sets: List<StatSet>,
+        type: ExerciseType = ExerciseType.WEIGHT_REPS,
+    ): Double {
+        val points =
+            ChartAggregator.points(
+                metric,
+                type,
+                isBodyweightVolumeEligible = false,
+                sets = sets,
+                bodyweightByWorkout = emptyMap(),
+                includeWarmupsInStats = false,
+            )
         assertEquals(1, points.size)
         return points.single().value
     }
@@ -116,10 +149,11 @@ class ChartAggregatorTest {
 
     @Test
     fun `BEST_PACE picks the fastest set in seconds per km`() {
-        val sets = listOf(
-            set("p1", distanceMeters = 5000.0, durationSeconds = 1440),
-            set("p2", distanceMeters = 3000.0, durationSeconds = 900),
-        )
+        val sets =
+            listOf(
+                set("p1", distanceMeters = 5000.0, durationSeconds = 1440),
+                set("p2", distanceMeters = 3000.0, durationSeconds = 900),
+            )
         assertEquals(288.0, singleValue(ChartMetric.BEST_PACE, sets, ExerciseType.DISTANCE_DURATION), 1e-9)
     }
 
@@ -127,28 +161,51 @@ class ChartAggregatorTest {
 
     @Test
     fun `one point per workout, sorted by startedAt, excluded sets contribute nothing`() {
-        val sets = listOf(
-            set("a1", weightKg = 100.0, reps = 5, workoutId = "w2", startedAt = 2_000L),
-            set("a2", weightKg = 90.0, reps = 5, workoutId = "w1", startedAt = 1_000L),
-            set("a3", weightKg = 200.0, reps = 5, workoutId = "w1", startedAt = 1_000L, isCompleted = false),
-            set("a4", weightKg = 300.0, reps = 5, workoutId = "w3", startedAt = 3_000L, setType = SetType.WARMUP),
-        )
-        val points = ChartAggregator.points(
-            ChartMetric.HEAVIEST_WEIGHT, ExerciseType.WEIGHT_REPS, isBodyweightVolumeEligible = false,
-            sets = sets, bodyweightByWorkout = emptyMap(), includeWarmupsInStats = false,
-        )
+        val sets =
+            listOf(
+                set("a1", weightKg = 100.0, reps = 5, workoutId = "w2", startedAt = 2_000L),
+                set("a2", weightKg = 90.0, reps = 5, workoutId = "w1", startedAt = 1_000L),
+                set("a3", weightKg = 200.0, reps = 5, workoutId = "w1", startedAt = 1_000L, isCompleted = false),
+                set("a4", weightKg = 300.0, reps = 5, workoutId = "w3", startedAt = 3_000L, setType = SetType.WARMUP),
+            )
+        val points =
+            ChartAggregator.points(
+                ChartMetric.HEAVIEST_WEIGHT,
+                ExerciseType.WEIGHT_REPS,
+                isBodyweightVolumeEligible = false,
+                sets = sets,
+                bodyweightByWorkout = emptyMap(),
+                includeWarmupsInStats = false,
+            )
         assertEquals(listOf("w1", "w2"), points.map { it.workoutId })
         assertEquals(listOf(90.0, 100.0), points.map { it.value })
     }
 
     @Test
     fun `warm-up sets count once the stats setting includes them`() {
-        val sets = listOf(
-            set("a1", weightKg = 100.0, reps = 5),
-            set("a2", weightKg = 120.0, reps = 3, setType = SetType.WARMUP),
-        )
-        val excluded = ChartAggregator.points(ChartMetric.HEAVIEST_WEIGHT, ExerciseType.WEIGHT_REPS, false, sets, emptyMap(), includeWarmupsInStats = false)
-        val included = ChartAggregator.points(ChartMetric.HEAVIEST_WEIGHT, ExerciseType.WEIGHT_REPS, false, sets, emptyMap(), includeWarmupsInStats = true)
+        val sets =
+            listOf(
+                set("a1", weightKg = 100.0, reps = 5),
+                set("a2", weightKg = 120.0, reps = 3, setType = SetType.WARMUP),
+            )
+        val excluded =
+            ChartAggregator.points(
+                ChartMetric.HEAVIEST_WEIGHT,
+                ExerciseType.WEIGHT_REPS,
+                false,
+                sets,
+                emptyMap(),
+                includeWarmupsInStats = false,
+            )
+        val included =
+            ChartAggregator.points(
+                ChartMetric.HEAVIEST_WEIGHT,
+                ExerciseType.WEIGHT_REPS,
+                false,
+                sets,
+                emptyMap(),
+                includeWarmupsInStats = true,
+            )
         assertEquals(100.0, excluded.single().value, 1e-9)
         assertEquals(120.0, included.single().value, 1e-9)
     }

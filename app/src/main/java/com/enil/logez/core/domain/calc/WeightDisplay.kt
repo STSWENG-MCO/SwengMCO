@@ -17,15 +17,18 @@ import java.util.Locale
  * when the stored kg changes underneath them, so conversion never fights active typing.
  */
 object WeightDisplay {
-
     /** Exact by definition (international avoirdupois pound). */
     const val KG_PER_LB = 0.45359237
 
-    fun toDisplay(kg: Double, unit: WeightUnit): Double =
-        if (unit == WeightUnit.LB) kg / KG_PER_LB else kg
+    fun toDisplay(
+        kg: Double,
+        unit: WeightUnit,
+    ): Double = if (unit == WeightUnit.LB) kg / KG_PER_LB else kg
 
-    fun toKg(display: Double, unit: WeightUnit): Double =
-        if (unit == WeightUnit.LB) display * KG_PER_LB else display
+    fun toKg(
+        display: Double,
+        unit: WeightUnit,
+    ): Double = if (unit == WeightUnit.LB) display * KG_PER_LB else display
 
     /** Whole numbers bare, else up to two decimals with trailing zeros trimmed, dot separator always. */
     fun format(value: Double): String {

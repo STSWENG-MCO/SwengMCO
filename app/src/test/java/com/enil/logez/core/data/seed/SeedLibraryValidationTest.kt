@@ -3,11 +3,11 @@ package com.enil.logez.core.data.seed
 import com.enil.logez.core.domain.model.Equipment
 import com.enil.logez.core.domain.model.ExerciseType
 import com.enil.logez.core.domain.model.MuscleGroup
-import java.io.File
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
 
 /**
  * PHASE2_PLAN.md §10.5 — runs against the raw seed asset, a plain JVM test with no Room/Android
@@ -27,12 +27,20 @@ class SeedLibraryValidationTest {
      * docs/SEED_SKELETON_400_REVIEW.md's 🔵 markers define (Handstand Push Up has no
      * weighted/assisted variant in the 400, so it contributes only its own row).
      */
-    private val expectedEligibleNames = setOf(
-        "Pull Up", "Pull Up (Weighted)", "Pull Up (Assisted)", "Pull Up (Band)",
-        "Chin Up", "Chin Up (Weighted)", "Chin Up (Assisted)",
-        "Dips", "Dips (Weighted)", "Dips (Assisted)",
-        "Handstand Push Up",
-    )
+    private val expectedEligibleNames =
+        setOf(
+            "Pull Up",
+            "Pull Up (Weighted)",
+            "Pull Up (Assisted)",
+            "Pull Up (Band)",
+            "Chin Up",
+            "Chin Up (Weighted)",
+            "Chin Up (Assisted)",
+            "Dips",
+            "Dips (Weighted)",
+            "Dips (Assisted)",
+            "Handstand Push Up",
+        )
 
     private fun loadSeedFile(): ExerciseSeedFile {
         val file = File("src/main/assets/seed/exercises_seed.json")
@@ -76,7 +84,12 @@ class SeedLibraryValidationTest {
 
     @Test
     fun `isBodyweightVolumeEligible is set on exactly the intended rows`() {
-        val actual = loadSeedFile().exercises.filter { it.isBodyweightVolumeEligible }.map { it.name }.toSet()
+        val actual =
+            loadSeedFile()
+                .exercises
+                .filter { it.isBodyweightVolumeEligible }
+                .map { it.name }
+                .toSet()
         assertEquals(expectedEligibleNames, actual)
     }
 

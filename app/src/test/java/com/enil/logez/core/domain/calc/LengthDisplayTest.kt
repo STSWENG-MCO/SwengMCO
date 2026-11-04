@@ -6,7 +6,6 @@ import org.junit.Test
 
 /** The single cm ↔ display-unit boundary for body-measurement input cells. */
 class LengthDisplayTest {
-
     // --- Conversions ---
 
     @Test

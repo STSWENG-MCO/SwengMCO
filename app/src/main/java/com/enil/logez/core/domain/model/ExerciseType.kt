@@ -29,29 +29,31 @@ enum class ExerciseType {
 
 /** The 8 types selectable when creating a custom exercise (excludes the 2 seed-only types). */
 val ExerciseType.Companion.userSelectable: List<ExerciseType>
-    get() = listOf(
-        ExerciseType.WEIGHT_REPS,
-        ExerciseType.REPS_ONLY,
-        ExerciseType.BODYWEIGHT_WEIGHTED,
-        ExerciseType.BODYWEIGHT_ASSISTED,
-        ExerciseType.DURATION,
-        ExerciseType.WEIGHT_DURATION,
-        ExerciseType.DISTANCE_DURATION,
-        ExerciseType.WEIGHT_DISTANCE,
-    )
+    get() =
+        listOf(
+            ExerciseType.WEIGHT_REPS,
+            ExerciseType.REPS_ONLY,
+            ExerciseType.BODYWEIGHT_WEIGHTED,
+            ExerciseType.BODYWEIGHT_ASSISTED,
+            ExerciseType.DURATION,
+            ExerciseType.WEIGHT_DURATION,
+            ExerciseType.DISTANCE_DURATION,
+            ExerciseType.WEIGHT_DISTANCE,
+        )
 
 /** One target-column kind from the set-table matrix (§5.1.2). */
 enum class TargetField { WEIGHT, REPS, DURATION, DISTANCE }
 
 /** Which target columns a given [ExerciseType] shows (§5.1.2's per-type column table). */
-fun ExerciseType.targetFields(): Set<TargetField> = when (this) {
-    ExerciseType.WEIGHT_REPS -> setOf(TargetField.WEIGHT, TargetField.REPS)
-    ExerciseType.REPS_ONLY -> setOf(TargetField.REPS)
-    ExerciseType.BODYWEIGHT_WEIGHTED -> setOf(TargetField.WEIGHT, TargetField.REPS)
-    ExerciseType.BODYWEIGHT_ASSISTED -> setOf(TargetField.WEIGHT, TargetField.REPS)
-    ExerciseType.DURATION -> setOf(TargetField.DURATION)
-    ExerciseType.WEIGHT_DURATION -> setOf(TargetField.WEIGHT, TargetField.DURATION)
-    ExerciseType.DISTANCE_DURATION -> setOf(TargetField.DISTANCE, TargetField.DURATION)
-    ExerciseType.WEIGHT_DISTANCE -> setOf(TargetField.WEIGHT, TargetField.DISTANCE)
-    ExerciseType.FLOORS_DURATION, ExerciseType.STEPS_DURATION -> setOf(TargetField.DURATION)
-}
+fun ExerciseType.targetFields(): Set<TargetField> =
+    when (this) {
+        ExerciseType.WEIGHT_REPS -> setOf(TargetField.WEIGHT, TargetField.REPS)
+        ExerciseType.REPS_ONLY -> setOf(TargetField.REPS)
+        ExerciseType.BODYWEIGHT_WEIGHTED -> setOf(TargetField.WEIGHT, TargetField.REPS)
+        ExerciseType.BODYWEIGHT_ASSISTED -> setOf(TargetField.WEIGHT, TargetField.REPS)
+        ExerciseType.DURATION -> setOf(TargetField.DURATION)
+        ExerciseType.WEIGHT_DURATION -> setOf(TargetField.WEIGHT, TargetField.DURATION)
+        ExerciseType.DISTANCE_DURATION -> setOf(TargetField.DISTANCE, TargetField.DURATION)
+        ExerciseType.WEIGHT_DISTANCE -> setOf(TargetField.WEIGHT, TargetField.DISTANCE)
+        ExerciseType.FLOORS_DURATION, ExerciseType.STEPS_DURATION -> setOf(TargetField.DURATION)
+    }

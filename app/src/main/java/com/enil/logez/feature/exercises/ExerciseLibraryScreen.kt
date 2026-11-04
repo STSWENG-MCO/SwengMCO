@@ -14,8 +14,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.DropdownMenu
@@ -122,11 +122,12 @@ fun ExerciseLibraryScreen(
                     icon = Icons.Outlined.Search,
                     title = stringResource(R.string.exercise_library_no_results_title),
                     subtitle = stringResource(R.string.exercise_library_no_results_subtitle),
-                    ctaLabel = if (uiState.searchQuery.isNotBlank()) {
-                        stringResource(R.string.exercise_library_create_from_query, uiState.searchQuery)
-                    } else {
-                        null
-                    },
+                    ctaLabel =
+                        if (uiState.searchQuery.isNotBlank()) {
+                            stringResource(R.string.exercise_library_create_from_query, uiState.searchQuery)
+                        } else {
+                            null
+                        },
                     onCtaClick = { onCreateExercise(uiState.searchQuery) },
                 )
             } else {
@@ -188,9 +189,11 @@ private fun ExerciseRow(
         supportingContent = {
             Text(
                 muscleGroupLabel(exercise.primaryMuscleGroup) +
-                    exercise.muscleHeads.takeIf { it.isNotEmpty() }?.let { heads ->
-                        " • " + heads.joinToString(", ") { muscleHeadLabel(it) }
-                    }.orEmpty() +
+                    exercise.muscleHeads
+                        .takeIf { it.isNotEmpty() }
+                        ?.let { heads ->
+                            " • " + heads.joinToString(", ") { muscleHeadLabel(it) }
+                        }.orEmpty() +
                     if (exercise.isCustom) stringResource(R.string.exercise_library_custom_badge) else "",
             )
         },
@@ -200,9 +203,18 @@ private fun ExerciseRow(
                     Icon(Icons.Outlined.MoreVert, contentDescription = stringResource(R.string.more_options))
                 }
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                    DropdownMenuItem(text = { Text(stringResource(R.string.action_edit)) }, onClick = { menuExpanded = false; onEdit() })
-                    DropdownMenuItem(text = { Text(stringResource(R.string.action_duplicate)) }, onClick = { menuExpanded = false; onDuplicate() })
-                    DropdownMenuItem(text = { Text(stringResource(R.string.action_delete)) }, onClick = { menuExpanded = false; showDeleteConfirm = true })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.action_edit)) }, onClick = {
+                        menuExpanded = false
+                        onEdit()
+                    })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.action_duplicate)) }, onClick = {
+                        menuExpanded = false
+                        onDuplicate()
+                    })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.action_delete)) }, onClick = {
+                        menuExpanded = false
+                        showDeleteConfirm = true
+                    })
                 }
             }
         },
@@ -221,44 +233,64 @@ private fun ExerciseRow(
 }
 
 @Composable
-private fun EquipmentFilterChip(selected: Equipment?, onSelect: (Equipment?) -> Unit) {
+private fun EquipmentFilterChip(
+    selected: Equipment?,
+    onSelect: (Equipment?) -> Unit,
+) {
     var expanded by remember { mutableStateOf(false) }
     Box {
         FilterChip(
             selected = selected != null,
             onClick = { expanded = true },
             label = { Text(selected?.let { equipmentLabel(it) } ?: stringResource(R.string.exercise_library_filter_equipment)) },
-            colors = FilterChipDefaults.filterChipColors(
-                selectedContainerColor = MaterialTheme.colorScheme.primary,
-                selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-            ),
+            colors =
+                FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.primary,
+                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                ),
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(text = { Text(stringResource(R.string.exercise_library_filter_all)) }, onClick = { expanded = false; onSelect(null) })
+            DropdownMenuItem(text = { Text(stringResource(R.string.exercise_library_filter_all)) }, onClick = {
+                expanded = false
+                onSelect(null)
+            })
             Equipment.entries.forEach { eq ->
-                DropdownMenuItem(text = { Text(equipmentLabel(eq)) }, onClick = { expanded = false; onSelect(eq) })
+                DropdownMenuItem(text = { Text(equipmentLabel(eq)) }, onClick = {
+                    expanded = false
+                    onSelect(eq)
+                })
             }
         }
     }
 }
 
 @Composable
-private fun MuscleFilterChip(selected: MuscleGroup?, onSelect: (MuscleGroup?) -> Unit) {
+private fun MuscleFilterChip(
+    selected: MuscleGroup?,
+    onSelect: (MuscleGroup?) -> Unit,
+) {
     var expanded by remember { mutableStateOf(false) }
     Box {
         FilterChip(
             selected = selected != null,
             onClick = { expanded = true },
             label = { Text(selected?.let { muscleGroupLabel(it) } ?: stringResource(R.string.exercise_library_filter_muscle)) },
-            colors = FilterChipDefaults.filterChipColors(
-                selectedContainerColor = MaterialTheme.colorScheme.primary,
-                selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-            ),
+            colors =
+                FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = MaterialTheme.colorScheme.primary,
+                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                ),
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(text = { Text(stringResource(R.string.exercise_library_filter_all)) }, onClick = { expanded = false; onSelect(null) })
+            DropdownMenuItem(text = { Text(stringResource(R.string.exercise_library_filter_all)) }, onClick = {
+                expanded = false
+                onSelect(null)
+            })
             MuscleGroup.entries.forEach { m ->
-                DropdownMenuItem(text = { Text(muscleGroupLabel(m)) }, onClick = { expanded = false; onSelect(m) })
+                DropdownMenuItem(text = { Text(muscleGroupLabel(m)) }, onClick = {
+                    expanded = false
+                    onSelect(m)
+                })
             }
         }
     }

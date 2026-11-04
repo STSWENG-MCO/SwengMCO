@@ -14,7 +14,14 @@ class FakeGoalRepository(
     private val state = MutableStateFlow(initial.associateBy { it.id })
 
     override fun observeAll(): Flow<List<GoalDefinitionEntity>> = state.map { it.values.sortedBy { g -> g.createdAt } }
+
     override suspend fun getById(id: String): GoalDefinitionEntity? = state.value[id]
-    override suspend fun upsert(goal: GoalDefinitionEntity) { state.update { it + (goal.id to goal) } }
-    override suspend fun deleteById(id: String) { state.update { it - id } }
+
+    override suspend fun upsert(goal: GoalDefinitionEntity) {
+        state.update { it + (goal.id to goal) }
+    }
+
+    override suspend fun deleteById(id: String) {
+        state.update { it - id }
+    }
 }

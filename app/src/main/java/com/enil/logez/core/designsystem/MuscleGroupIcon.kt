@@ -16,13 +16,14 @@ import com.enil.logez.core.domain.model.MuscleGroup
  * (already a dependency) so the resolver mechanism, not the art, ships with M2. Swapping in the
  * real illustrations later touches zero data, exactly as §7.5 intends.
  */
-fun muscleGroupIcon(group: MuscleGroup): ImageVector = when (group) {
-    MuscleGroup.CARDIO -> Icons.AutoMirrored.Outlined.DirectionsRun
-    MuscleGroup.FULL_BODY -> Icons.AutoMirrored.Outlined.DirectionsWalk
-    MuscleGroup.OTHER -> Icons.Outlined.QuestionMark
-    MuscleGroup.ABDOMINALS -> Icons.Outlined.SelfImprovement
-    else -> LogEzIcons.Workout
-}
+fun muscleGroupIcon(group: MuscleGroup): ImageVector =
+    when (group) {
+        MuscleGroup.CARDIO -> Icons.AutoMirrored.Outlined.DirectionsRun
+        MuscleGroup.FULL_BODY -> Icons.AutoMirrored.Outlined.DirectionsWalk
+        MuscleGroup.OTHER -> Icons.Outlined.QuestionMark
+        MuscleGroup.ABDOMINALS -> Icons.Outlined.SelfImprovement
+        else -> LogEzIcons.Workout
+    }
 
 /** A generic fallback used only where no muscle group is known yet (should not normally occur). */
 val genericExerciseIcon: ImageVector = Icons.Outlined.Accessibility

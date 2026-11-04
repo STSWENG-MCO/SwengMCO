@@ -27,13 +27,22 @@ enum class HealthDataType { STEPS, CALORIES, HEART_RATE }
  * and [caloriesBurned] null for a type the user has not granted, so callers gate on
  * [HealthMetricsSource.grantedTypes] before showing either.
  */
-data class DailyTotals(val steps: Long, val caloriesBurned: Double?)
+data class DailyTotals(
+    val steps: Long,
+    val caloriesBurned: Double?,
+)
 
 /** One Health-Connect-sourced heart-rate reading, plain-typed (no `Energy`-style unit wrapper -- `bpm` is already a beats-per-minute count). */
-data class HeartRateSample(val time: Instant, val bpm: Long)
+data class HeartRateSample(
+    val time: Instant,
+    val bpm: Long,
+)
 
 /** One calendar day's step total, as Health Connect's own per-day aggregate reports it. */
-data class DailyStepCount(val date: LocalDate, val steps: Long)
+data class DailyStepCount(
+    val date: LocalDate,
+    val steps: Long,
+)
 
 /**
  * M21e/M21f. `HealthConnectMetricsSource` is the production binding (talks to the real Health
@@ -82,7 +91,10 @@ interface HealthMetricsSource {
      * are selected by their timestamps, not by which record holds them: a record that began
      * before [start] still contributes its later samples (2026-09-26, see HeartRateReadWindow).
      */
-    suspend fun readHeartRateSamples(start: Instant, end: Instant): List<HeartRateSample>
+    suspend fun readHeartRateSamples(
+        start: Instant,
+        end: Instant,
+    ): List<HeartRateSample>
 
     /**
      * One entry per calendar day in [start]..[end] inclusive that Health Connect actually has data
@@ -90,7 +102,10 @@ interface HealthMetricsSource {
      * read grant can see (its own permission screen says "the app can read new data and data from
      * the past 30 days"), so callers should not ask for a wider range expecting more to come back.
      */
-    suspend fun readStepsHistory(start: LocalDate, end: LocalDate): List<DailyStepCount>
+    suspend fun readStepsHistory(
+        start: LocalDate,
+        end: LocalDate,
+    ): List<DailyStepCount>
 
     /**
      * Withdraws every Health Connect permission LogEZ holds, the "Disconnect" half of Settings >
@@ -112,5 +127,4 @@ interface HealthMetricsSource {
 }
 
 /** True when Health Connect is usable and the user has granted [type]. */
-suspend fun HealthMetricsSource.canRead(type: HealthDataType): Boolean =
-    availability() == HealthConnectAvailability.Available && type in grantedTypes()
+suspend fun HealthMetricsSource.canRead(type: HealthDataType): Boolean = availability() == HealthConnectAvailability.Available && type in grantedTypes()

@@ -13,14 +13,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.enil.logez.R
-import com.enil.logez.core.domain.model.WorkoutKind
 import com.enil.logez.core.designsystem.LogEzMono
 import com.enil.logez.core.designsystem.Spacing
+import com.enil.logez.core.domain.model.WorkoutKind
 import kotlinx.coroutines.flow.Flow
 
 /** PHASE2_PLAN.md §5.1.3 — the collapsed live-workout surface shown on every tab root while a workout is IN_PROGRESS. */
@@ -39,11 +39,12 @@ fun WorkoutMiniBar(
     // Only the strength branch may go through rememberStartWorkoutSession: it starts
     // WorkoutSessionService, which for a GPS run means a second foreground service next to the
     // location one, and the wrong screen.
-    val tap: () -> Unit = when {
-        uiState.kind == WorkoutKind.STRENGTH -> ({ expandStrength(workoutId) })
-        uiState.gpsSessionAlive -> onExpandLiveTracking
-        else -> ({ onInterruptedRun(workoutId, uiState.startedAt) })
-    }
+    val tap: () -> Unit =
+        when {
+            uiState.kind == WorkoutKind.STRENGTH -> ({ expandStrength(workoutId) })
+            uiState.gpsSessionAlive -> onExpandLiveTracking
+            else -> ({ onInterruptedRun(workoutId, uiState.startedAt) })
+        }
 
     Surface(
         color = MaterialTheme.colorScheme.primaryContainer,
@@ -61,12 +62,16 @@ fun WorkoutMiniBar(
 
 /** Leaf composable (spine rule) — only these digits recompose every second, not the whole bar/Scaffold. */
 @Composable
-private fun MiniBarStatsText(elapsedSecondsFlow: Flow<Long>, restRemainingMillisFlow: Flow<Long?>) {
+private fun MiniBarStatsText(
+    elapsedSecondsFlow: Flow<Long>,
+    restRemainingMillisFlow: Flow<Long?>,
+) {
     val elapsedSeconds by elapsedSecondsFlow.collectAsStateWithLifecycle(0L)
     val restRemainingMillis by restRemainingMillisFlow.collectAsStateWithLifecycle(null)
-    val stats = restRemainingMillis?.let { millis ->
-        "${formatMiniBarTime(elapsedSeconds)} · ${stringResource(R.string.workout_rest_timer_label)} ${formatMiniBarTime((millis + 999) / 1000)}"
-    } ?: formatMiniBarTime(elapsedSeconds)
+    val stats =
+        restRemainingMillis?.let { millis ->
+            "${formatMiniBarTime(elapsedSeconds)} · ${stringResource(R.string.workout_rest_timer_label)} ${formatMiniBarTime((millis + 999) / 1000)}"
+        } ?: formatMiniBarTime(elapsedSeconds)
     Text(stats, style = LogEzMono.dataSmall, maxLines = 1)
 }
 
