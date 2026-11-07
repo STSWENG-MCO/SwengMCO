@@ -38,28 +38,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.enil.logez.R
 import com.enil.logez.core.designsystem.Danger500
 import com.enil.logez.core.designsystem.Elevation
 import com.enil.logez.core.designsystem.LogEzCard
-import com.enil.logez.core.designsystem.Spacing
-import com.enil.logez.core.designsystem.boxedFieldColors
-import com.enil.logez.core.designsystem.SetTable
 import com.enil.logez.core.designsystem.Radius
+import com.enil.logez.core.designsystem.SetTable
+import com.enil.logez.core.designsystem.Spacing
 import com.enil.logez.core.designsystem.SupersetPalette
+import com.enil.logez.core.designsystem.Warning300
 import com.enil.logez.core.designsystem.Warning500
+import com.enil.logez.core.designsystem.boxedFieldColors
+import com.enil.logez.core.designsystem.parseDecimalInput
 import com.enil.logez.core.domain.calc.WeightDisplay
 import com.enil.logez.core.domain.model.ExerciseType
 import com.enil.logez.core.domain.model.SetType
 import com.enil.logez.core.domain.model.TargetField
 import com.enil.logez.core.domain.model.WeightUnit
 import com.enil.logez.core.domain.model.targetFields
-import com.enil.logez.core.designsystem.parseDecimalInput
-import com.enil.logez.core.designsystem.Warning300
 
 /**
  * One `routine_exercises` card (PHASE2_PLAN.md §5.1.2): header, notes, rest timer, set table.
@@ -89,10 +89,11 @@ internal fun RoutineExerciseCard(
     val supersetColor = exercise.supersetGroup?.let { SupersetPalette[it % SupersetPalette.size] }
 
     LogEzCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(bottom = Spacing.sm)
-            .let { m -> if (supersetSelectionActive && !isSupersetSource) m.clickable { viewModel.confirmSupersetTarget(exercise.id) } else m },
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(bottom = Spacing.sm)
+                .let { m -> if (supersetSelectionActive && !isSupersetSource) m.clickable { viewModel.confirmSupersetTarget(exercise.id) } else m },
         elevation = if (isDragging) Elevation.dragging else Elevation.card,
     ) {
         Column(modifier = Modifier.padding(Spacing.md)) {
@@ -118,25 +119,38 @@ internal fun RoutineExerciseCard(
                     overflow = TextOverflow.Ellipsis,
                     // No separate click target during superset selection — a tap anywhere on the
                     // card (including the name) must confirm the pairing, not navigate away.
-                    modifier = Modifier.weight(1f).let { m ->
-                        if (supersetSelectionActive) m else m.clickable(onClick = onExerciseClick)
-                    },
+                    modifier =
+                        Modifier.weight(1f).let { m ->
+                            if (supersetSelectionActive) m else m.clickable(onClick = onExerciseClick)
+                        },
                 )
                 Box {
                     IconButton(onClick = { menuExpanded = true }) {
                         Icon(Icons.Outlined.MoreVert, contentDescription = stringResource(R.string.more_options))
                     }
                     DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                        DropdownMenuItem(text = { Text(stringResource(R.string.routine_builder_menu_replace)) }, onClick = { menuExpanded = false; onOpenReplacePicker() })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.routine_builder_menu_replace)) }, onClick = {
+                            menuExpanded = false
+                            onOpenReplacePicker()
+                        })
                         // M11: no superset controls inside a circuit — the circuit IS the sequence.
                         if (!isCircuit) {
                             if (exercise.supersetGroup == null) {
-                                DropdownMenuItem(text = { Text(stringResource(R.string.routine_builder_menu_add_to_superset)) }, onClick = { menuExpanded = false; viewModel.startSupersetSelection(exercise.id) })
+                                DropdownMenuItem(text = { Text(stringResource(R.string.routine_builder_menu_add_to_superset)) }, onClick = {
+                                    menuExpanded = false
+                                    viewModel.startSupersetSelection(exercise.id)
+                                })
                             } else {
-                                DropdownMenuItem(text = { Text(stringResource(R.string.routine_builder_menu_remove_from_superset)) }, onClick = { menuExpanded = false; viewModel.removeFromSuperset(exercise.id) })
+                                DropdownMenuItem(text = { Text(stringResource(R.string.routine_builder_menu_remove_from_superset)) }, onClick = {
+                                    menuExpanded = false
+                                    viewModel.removeFromSuperset(exercise.id)
+                                })
                             }
                         }
-                        DropdownMenuItem(text = { Text(stringResource(R.string.routine_builder_menu_remove_exercise)) }, onClick = { menuExpanded = false; viewModel.removeExercise(exercise.id) })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.routine_builder_menu_remove_exercise)) }, onClick = {
+                            menuExpanded = false
+                            viewModel.removeExercise(exercise.id)
+                        })
                     }
                 }
             }
@@ -144,17 +158,21 @@ internal fun RoutineExerciseCard(
             var notesText by remember(exercise.id) { mutableStateOf(exercise.notes.orEmpty()) }
             OutlinedTextField(
                 value = notesText,
-                onValueChange = { notesText = it; viewModel.updateExerciseNotes(exercise.id, it) },
+                onValueChange = {
+                    notesText = it
+                    viewModel.updateExerciseNotes(exercise.id, it)
+                },
                 placeholder = { Text(stringResource(R.string.routine_builder_notes_hint)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth().padding(top = Spacing.xs),
             )
 
-            val restLabel = when (val seconds = exercise.restTimerSeconds) {
-                null -> stringResource(R.string.rest_timer_default_option, formatMmSs(defaultRestTimerSeconds))
-                0 -> stringResource(R.string.rest_timer_off_option)
-                else -> formatMmSs(seconds)
-            }
+            val restLabel =
+                when (val seconds = exercise.restTimerSeconds) {
+                    null -> stringResource(R.string.rest_timer_default_option, formatMmSs(defaultRestTimerSeconds))
+                    0 -> stringResource(R.string.rest_timer_off_option)
+                    else -> formatMmSs(seconds)
+                }
             Row(
                 modifier = Modifier.fillMaxWidth().clickable(onClick = onRestTimerClick).padding(vertical = Spacing.xs),
                 verticalAlignment = Alignment.CenterVertically,
@@ -176,7 +194,12 @@ internal fun RoutineExerciseCard(
 }
 
 @Composable
-private fun SetTable(exercise: RoutineExerciseDraft, isCircuit: Boolean, weightUnit: WeightUnit, viewModel: RoutineBuilderViewModel) {
+private fun SetTable(
+    exercise: RoutineExerciseDraft,
+    isCircuit: Boolean,
+    weightUnit: WeightUnit,
+    viewModel: RoutineBuilderViewModel,
+) {
     val fields = exercise.exerciseType.targetFields()
     Column(modifier = Modifier.padding(top = Spacing.sm)) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -215,7 +238,12 @@ private fun SetTable(exercise: RoutineExerciseDraft, isCircuit: Boolean, weightU
 }
 
 @Composable
-private fun HeaderCell(label: String, modifier: Modifier = Modifier, width: androidx.compose.ui.unit.Dp? = null, textAlign: TextAlign? = null) {
+private fun HeaderCell(
+    label: String,
+    modifier: Modifier = Modifier,
+    width: androidx.compose.ui.unit.Dp? = null,
+    textAlign: TextAlign? = null,
+) {
     Text(
         label,
         style = MaterialTheme.typography.labelSmall,
@@ -254,16 +282,31 @@ private fun SetRow(
         Box(modifier = Modifier.width(SetTable.setCell).padding(horizontal = Spacing.xxs), contentAlignment = Alignment.Center) {
             SetBadge(setType = set.setType, position = index + 1, onClick = { typeMenuExpanded = true }, modifier = Modifier.fillMaxWidth())
             DropdownMenu(expanded = typeMenuExpanded, onDismissRequest = { typeMenuExpanded = false }) {
-                DropdownMenuItem(text = { Text(stringResource(R.string.set_type_normal)) }, onClick = { typeMenuExpanded = false; onSetTypeChange(SetType.NORMAL) })
+                DropdownMenuItem(text = { Text(stringResource(R.string.set_type_normal)) }, onClick = {
+                    typeMenuExpanded = false
+                    onSetTypeChange(SetType.NORMAL)
+                })
                 // M11: no WARMUP row inside a circuit (breaks row-index == round), and no per-row
                 // delete — rounds are removed for every exercise at once via the stepper.
                 if (!isCircuit) {
-                    DropdownMenuItem(text = { Text(stringResource(R.string.set_type_warmup)) }, onClick = { typeMenuExpanded = false; onSetTypeChange(SetType.WARMUP) })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.set_type_warmup)) }, onClick = {
+                        typeMenuExpanded = false
+                        onSetTypeChange(SetType.WARMUP)
+                    })
                 }
-                DropdownMenuItem(text = { Text(stringResource(R.string.set_type_failure)) }, onClick = { typeMenuExpanded = false; onSetTypeChange(SetType.FAILURE) })
-                DropdownMenuItem(text = { Text(stringResource(R.string.set_type_dropset)) }, onClick = { typeMenuExpanded = false; onSetTypeChange(SetType.DROPSET) })
+                DropdownMenuItem(text = { Text(stringResource(R.string.set_type_failure)) }, onClick = {
+                    typeMenuExpanded = false
+                    onSetTypeChange(SetType.FAILURE)
+                })
+                DropdownMenuItem(text = { Text(stringResource(R.string.set_type_dropset)) }, onClick = {
+                    typeMenuExpanded = false
+                    onSetTypeChange(SetType.DROPSET)
+                })
                 if (!isCircuit) {
-                    DropdownMenuItem(text = { Text(stringResource(R.string.action_delete)) }, onClick = { typeMenuExpanded = false; onRemove() })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.action_delete)) }, onClick = {
+                        typeMenuExpanded = false
+                        onRemove()
+                    })
                 }
             }
         }
@@ -310,13 +353,19 @@ private fun SetRow(
 /** M18 uniform boxed cells (Owner): same field-height hairline box as the logger's badge — the
  * three set tables must match. Type tint and whole-cell tap target unchanged. */
 @Composable
-private fun SetBadge(setType: SetType, position: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val (label, color) = when (setType) {
-        SetType.NORMAL -> position.toString() to MaterialTheme.colorScheme.onSurface
-        SetType.WARMUP -> "W" to Warning500
-        SetType.FAILURE -> "F" to Danger500
-        SetType.DROPSET -> "D" to SupersetPalette[4]
-    }
+private fun SetBadge(
+    setType: SetType,
+    position: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val (label, color) =
+        when (setType) {
+            SetType.NORMAL -> position.toString() to MaterialTheme.colorScheme.onSurface
+            SetType.WARMUP -> "W" to Warning500
+            SetType.FAILURE -> "F" to Danger500
+            SetType.DROPSET -> "D" to SupersetPalette[4]
+        }
     Surface(
         shape = RoundedCornerShape(Radius.sm),
         color = if (setType == SetType.NORMAL) Color.Transparent else color.copy(alpha = 0.15f),
@@ -330,7 +379,12 @@ private fun SetBadge(setType: SetType, position: Int, onClick: () -> Unit, modif
 }
 
 @Composable
-private fun NumberCell(value: Double?, onValueChange: (Double?) -> Unit, modifier: Modifier = Modifier, suffix: String? = null) {
+private fun NumberCell(
+    value: Double?,
+    onValueChange: (Double?) -> Unit,
+    modifier: Modifier = Modifier,
+    suffix: String? = null,
+) {
     var text by remember(value) { mutableStateOf(value?.let { formatTargetNumber(it) }.orEmpty()) }
     OutlinedTextField(
         value = text,
@@ -353,12 +407,20 @@ private fun NumberCell(value: Double?, onValueChange: (Double?) -> Unit, modifie
  * parsed here is unit-aware, exactly mirroring the logger's WeightCell.
  */
 @Composable
-private fun WeightCell(valueKg: Double?, unit: WeightUnit, onValueChange: (Double?) -> Unit, modifier: Modifier = Modifier) {
+private fun WeightCell(
+    valueKg: Double?,
+    unit: WeightUnit,
+    onValueChange: (Double?) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val displayText = valueKg?.let { WeightDisplay.format(WeightDisplay.toDisplay(it, unit)) }.orEmpty()
     var text by remember(displayText) { mutableStateOf(displayText) }
     OutlinedTextField(
         value = text,
-        onValueChange = { new -> text = new; onValueChange(parseDecimalInput(new)?.let { WeightDisplay.toKg(it, unit) }) },
+        onValueChange = { new ->
+            text = new
+            onValueChange(parseDecimalInput(new)?.let { WeightDisplay.toKg(it, unit) })
+        },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         singleLine = true,
         shape = RoundedCornerShape(Radius.sm),
@@ -368,7 +430,12 @@ private fun WeightCell(valueKg: Double?, unit: WeightUnit, onValueChange: (Doubl
 }
 
 @Composable
-private fun IntCell(value: Int?, onValueChange: (Int?) -> Unit, modifier: Modifier = Modifier, suffix: String? = null) {
+private fun IntCell(
+    value: Int?,
+    onValueChange: (Int?) -> Unit,
+    modifier: Modifier = Modifier,
+    suffix: String? = null,
+) {
     var text by remember(value) { mutableStateOf(value?.toString().orEmpty()) }
     OutlinedTextField(
         value = text,
@@ -385,11 +452,16 @@ private fun IntCell(value: Int?, onValueChange: (Int?) -> Unit, modifier: Modifi
     )
 }
 
-private fun formatTargetNumber(value: Double): String = com.enil.logez.core.designsystem.formatTargetNumber(value)
+private fun formatTargetNumber(value: Double): String =
+    com.enil.logez.core.designsystem
+        .formatTargetNumber(value)
 
 /** M18: KG/+KG/−KG flip to LBS/+LBS/−LBS when the display unit is pounds. */
 @Composable
-private fun weightHeaderLabel(exerciseType: ExerciseType, unit: WeightUnit): String {
+private fun weightHeaderLabel(
+    exerciseType: ExerciseType,
+    unit: WeightUnit,
+): String {
     val lb = unit == WeightUnit.LB
     return when (exerciseType) {
         ExerciseType.BODYWEIGHT_WEIGHTED ->

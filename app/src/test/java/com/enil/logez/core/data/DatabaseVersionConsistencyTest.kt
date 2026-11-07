@@ -1,10 +1,10 @@
 package com.enil.logez.core.data
 
 import com.enil.logez.core.data.backup.BackupWriter
-import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
 
 /**
  * The backup manifest's schema version is how an older app knows to refuse a newer backup. It was
@@ -21,7 +21,12 @@ class DatabaseVersionConsistencyTest {
     fun `the newest exported schema file is the current database version`() {
         val dir = File("schemas/com.enil.logez.core.data.LogEzDatabase")
         assertTrue("schema folder not found at ${dir.absolutePath}", dir.isDirectory)
-        val newest = dir.listFiles().orEmpty().mapNotNull { it.nameWithoutExtension.toIntOrNull() }.max()
+        val newest =
+            dir
+                .listFiles()
+                .orEmpty()
+                .mapNotNull { it.nameWithoutExtension.toIntOrNull() }
+                .max()
         assertEquals(LogEzDatabase.VERSION, newest)
     }
 }

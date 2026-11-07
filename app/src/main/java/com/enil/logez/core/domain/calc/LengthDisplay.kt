@@ -10,15 +10,18 @@ import java.util.Locale
  * [WeightDisplay]'s own kg-boundary shape.
  */
 object LengthDisplay {
-
     /** Exact by definition (international inch). */
     const val CM_PER_IN = 2.54
 
-    fun toDisplay(cm: Double, unit: LengthUnit): Double =
-        if (unit == LengthUnit.IN) cm / CM_PER_IN else cm
+    fun toDisplay(
+        cm: Double,
+        unit: LengthUnit,
+    ): Double = if (unit == LengthUnit.IN) cm / CM_PER_IN else cm
 
-    fun toCm(display: Double, unit: LengthUnit): Double =
-        if (unit == LengthUnit.IN) display * CM_PER_IN else display
+    fun toCm(
+        display: Double,
+        unit: LengthUnit,
+    ): Double = if (unit == LengthUnit.IN) display * CM_PER_IN else display
 
     /** Whole numbers bare, else up to two decimals with trailing zeros trimmed, dot separator always. */
     fun format(value: Double): String {

@@ -37,6 +37,7 @@ object Radius {
 /** M9b (Neon Lab) — real elevation for [LogEzCard], replacing the fully-flat pre-rebrand cards. */
 object Elevation {
     val card: Dp = 4.dp
+
     /** M20a: the lift a card gets while it is being dragged to reorder — the only other level. */
     val dragging: Dp = 8.dp
 }

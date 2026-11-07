@@ -13,6 +13,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -22,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -29,26 +31,24 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.enil.logez.BuildConfig
 import com.enil.logez.R
 import com.enil.logez.core.designsystem.ScreenTitle
-import com.enil.logez.core.designsystem.logEzTopAppBarColors
+import com.enil.logez.core.designsystem.Spacing
 import com.enil.logez.core.designsystem.currentLocale
+import com.enil.logez.core.designsystem.logEzTopAppBarColors
 import com.enil.logez.core.domain.model.DistanceUnit
 import com.enil.logez.core.domain.model.LengthUnit
 import com.enil.logez.core.domain.model.MuscleDiagramVariant
 import com.enil.logez.core.domain.model.PreviousValuesMode
 import com.enil.logez.core.domain.model.WeightUnit
 import com.enil.logez.feature.privacy.PrivacyPolicyActivity
-import java.time.DayOfWeek
-import java.time.format.TextStyle
-import com.enil.logez.BuildConfig
-import androidx.compose.runtime.saveable.rememberSaveable
-import com.enil.logez.core.designsystem.Spacing
-import androidx.compose.material3.MaterialTheme
 import com.enil.logez.feature.workout.hasNotificationPermission
 import com.enil.logez.feature.workout.openAppNotificationSettings
-import androidx.lifecycle.compose.LifecycleResumeEffect
+import java.time.DayOfWeek
+import java.time.format.TextStyle
 
 /** Which selection dialog is open, if any. One at a time — each row opens its own. */
 private enum class SettingsDialog { WEIGHT_UNIT, DISTANCE_UNIT, LENGTH_UNIT, BODY_DIAGRAM_VARIANT, WEEKLY_ACTIVE_DAY_TARGET, FIRST_DAY, REST_TIMER, PREVIOUS_VALUES, MAX_HEART_RATE }
@@ -205,8 +205,9 @@ fun SettingsScreen(
                 SettingsValueRow(
                     title = stringResource(R.string.settings_max_heart_rate),
                     subtitle = stringResource(R.string.settings_max_heart_rate_subtitle),
-                    value = settings.maxHeartRateBpm?.let { stringResource(R.string.settings_max_heart_rate_value, it) }
-                        ?: stringResource(R.string.settings_max_heart_rate_not_set),
+                    value =
+                        settings.maxHeartRateBpm?.let { stringResource(R.string.settings_max_heart_rate_value, it) }
+                            ?: stringResource(R.string.settings_max_heart_rate_not_set),
                     onClick = { openDialog = SettingsDialog.MAX_HEART_RATE },
                 )
             }
@@ -257,11 +258,12 @@ fun SettingsScreen(
                 SettingsValueRow(
                     title = stringResource(R.string.settings_plate_equipment_row),
                     subtitle = stringResource(R.string.settings_plate_equipment_subtitle),
-                    value = stringResource(
-                        R.string.settings_plate_equipment_value,
-                        pluralStringResource(R.plurals.settings_plate_bar_count, settings.plateEquipment.barsKg.size, settings.plateEquipment.barsKg.size),
-                        pluralStringResource(R.plurals.settings_plate_plate_count, settings.plateEquipment.platesKg.size, settings.plateEquipment.platesKg.size),
-                    ),
+                    value =
+                        stringResource(
+                            R.string.settings_plate_equipment_value,
+                            pluralStringResource(R.plurals.settings_plate_bar_count, settings.plateEquipment.barsKg.size, settings.plateEquipment.barsKg.size),
+                            pluralStringResource(R.plurals.settings_plate_plate_count, settings.plateEquipment.platesKg.size, settings.plateEquipment.platesKg.size),
+                        ),
                     onClick = onPlateEquipmentClick,
                 )
             }
@@ -279,9 +281,10 @@ fun SettingsScreen(
                 SettingsValueRow(
                     title = stringResource(R.string.settings_warmup_method_row),
                     subtitle = stringResource(R.string.settings_warmup_method_subtitle),
-                    value = settings.warmupMethod
-                        .map { stringResource(R.string.settings_warmup_step_value, it.displayPercent(), it.reps) }
-                        .joinToString(" · "),
+                    value =
+                        settings.warmupMethod
+                            .map { stringResource(R.string.settings_warmup_step_value, it.displayPercent(), it.reps) }
+                            .joinToString(" · "),
                     onClick = onWarmupSetsClick,
                 )
             }
@@ -353,81 +356,90 @@ fun SettingsScreen(
     }
 
     when (openDialog) {
-        SettingsDialog.WEIGHT_UNIT -> SettingsRadioDialog(
-            title = stringResource(R.string.settings_weight_unit),
-            options = WeightUnit.entries,
-            selected = settings.weightUnit,
-            optionLabel = { weightUnitLabel(it) },
-            onSelect = viewModel::setWeightUnit,
-            onDismiss = { openDialog = null },
-        )
-        SettingsDialog.DISTANCE_UNIT -> SettingsRadioDialog(
-            title = stringResource(R.string.settings_distance_unit),
-            options = DistanceUnit.entries,
-            selected = settings.distanceUnit,
-            optionLabel = { distanceUnitLabel(it) },
-            onSelect = viewModel::setDistanceUnit,
-            onDismiss = { openDialog = null },
-        )
-        SettingsDialog.LENGTH_UNIT -> SettingsRadioDialog(
-            title = stringResource(R.string.settings_length_unit),
-            options = LengthUnit.entries,
-            selected = settings.lengthUnit,
-            optionLabel = { lengthUnitLabel(it) },
-            onSelect = viewModel::setLengthUnit,
-            onDismiss = { openDialog = null },
-        )
-        SettingsDialog.BODY_DIAGRAM_VARIANT -> SettingsRadioDialog(
-            title = stringResource(R.string.settings_body_diagram_variant),
-            options = MuscleDiagramVariant.entries,
-            selected = settings.muscleDiagramVariant,
-            optionLabel = { bodyDiagramVariantLabel(it) },
-            onSelect = viewModel::setMuscleDiagramVariant,
-            onDismiss = { openDialog = null },
-        )
-        SettingsDialog.WEEKLY_ACTIVE_DAY_TARGET -> SettingsRadioDialog(
-            title = stringResource(R.string.settings_weekly_active_day_target),
-            // 1-7: a seven-day target is reachable but not the point -- rest days are training,
-            // which is the whole reason the widget counts days per week rather than a daily streak.
-            options = (1..7).toList(),
-            selected = settings.weeklyActiveDayTarget,
-            optionLabel = { pluralStringResource(R.plurals.settings_weekly_active_day_target_value, it, it) },
-            onSelect = viewModel::setWeeklyActiveDayTarget,
-            onDismiss = { openDialog = null },
-        )
-        SettingsDialog.FIRST_DAY -> SettingsRadioDialog(
-            title = stringResource(R.string.calendar_first_day_of_week),
-            // §5.2 lists exactly these three — the conventional week starts (same trio as the
-            // Calendar screen's picker), not all seven days.
-            options = listOf(DayOfWeek.MONDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY),
-            selected = settings.firstDayOfWeek,
-            optionLabel = { it.getDisplayName(TextStyle.FULL, currentLocale()) },
-            onSelect = viewModel::setFirstDayOfWeek,
-            onDismiss = { openDialog = null },
-        )
-        SettingsDialog.REST_TIMER -> SettingsRadioDialog(
-            title = stringResource(R.string.settings_rest_timer),
-            // 0 = off (spine convention shared with RestTimerPickerSheet), then the common gym
-            // rest lengths — not the routine picker's full 5s-step list, which would be 61 rows.
-            options = listOf(0, 30, 45, 60, 90, 120, 150, 180, 240, 300),
-            selected = settings.defaultRestTimerSeconds,
-            optionLabel = { restTimerLabel(it) },
-            onSelect = viewModel::setDefaultRestTimerSeconds,
-            onDismiss = { openDialog = null },
-        )
-        SettingsDialog.PREVIOUS_VALUES -> SettingsRadioDialog(
-            title = stringResource(R.string.settings_previous_values),
-            options = PreviousValuesMode.entries,
-            selected = settings.previousValuesMode,
-            optionLabel = { previousValuesLabel(it) },
-            onSelect = viewModel::setPreviousValuesMode,
-            onDismiss = { openDialog = null },
-        )
-        SettingsDialog.MAX_HEART_RATE -> MaxHeartRateDialog(
-            initial = settings.maxHeartRateBpm,
-            onSave = viewModel::setMaxHeartRateBpm,
-            onDismiss = { openDialog = null },
-        )
+        SettingsDialog.WEIGHT_UNIT ->
+            SettingsRadioDialog(
+                title = stringResource(R.string.settings_weight_unit),
+                options = WeightUnit.entries,
+                selected = settings.weightUnit,
+                optionLabel = { weightUnitLabel(it) },
+                onSelect = viewModel::setWeightUnit,
+                onDismiss = { openDialog = null },
+            )
+        SettingsDialog.DISTANCE_UNIT ->
+            SettingsRadioDialog(
+                title = stringResource(R.string.settings_distance_unit),
+                options = DistanceUnit.entries,
+                selected = settings.distanceUnit,
+                optionLabel = { distanceUnitLabel(it) },
+                onSelect = viewModel::setDistanceUnit,
+                onDismiss = { openDialog = null },
+            )
+        SettingsDialog.LENGTH_UNIT ->
+            SettingsRadioDialog(
+                title = stringResource(R.string.settings_length_unit),
+                options = LengthUnit.entries,
+                selected = settings.lengthUnit,
+                optionLabel = { lengthUnitLabel(it) },
+                onSelect = viewModel::setLengthUnit,
+                onDismiss = { openDialog = null },
+            )
+        SettingsDialog.BODY_DIAGRAM_VARIANT ->
+            SettingsRadioDialog(
+                title = stringResource(R.string.settings_body_diagram_variant),
+                options = MuscleDiagramVariant.entries,
+                selected = settings.muscleDiagramVariant,
+                optionLabel = { bodyDiagramVariantLabel(it) },
+                onSelect = viewModel::setMuscleDiagramVariant,
+                onDismiss = { openDialog = null },
+            )
+        SettingsDialog.WEEKLY_ACTIVE_DAY_TARGET ->
+            SettingsRadioDialog(
+                title = stringResource(R.string.settings_weekly_active_day_target),
+                // 1-7: a seven-day target is reachable but not the point -- rest days are training,
+                // which is the whole reason the widget counts days per week rather than a daily streak.
+                options = (1..7).toList(),
+                selected = settings.weeklyActiveDayTarget,
+                optionLabel = { pluralStringResource(R.plurals.settings_weekly_active_day_target_value, it, it) },
+                onSelect = viewModel::setWeeklyActiveDayTarget,
+                onDismiss = { openDialog = null },
+            )
+        SettingsDialog.FIRST_DAY ->
+            SettingsRadioDialog(
+                title = stringResource(R.string.calendar_first_day_of_week),
+                // §5.2 lists exactly these three — the conventional week starts (same trio as the
+                // Calendar screen's picker), not all seven days.
+                options = listOf(DayOfWeek.MONDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY),
+                selected = settings.firstDayOfWeek,
+                optionLabel = { it.getDisplayName(TextStyle.FULL, currentLocale()) },
+                onSelect = viewModel::setFirstDayOfWeek,
+                onDismiss = { openDialog = null },
+            )
+        SettingsDialog.REST_TIMER ->
+            SettingsRadioDialog(
+                title = stringResource(R.string.settings_rest_timer),
+                // 0 = off (spine convention shared with RestTimerPickerSheet), then the common gym
+                // rest lengths — not the routine picker's full 5s-step list, which would be 61 rows.
+                options = listOf(0, 30, 45, 60, 90, 120, 150, 180, 240, 300),
+                selected = settings.defaultRestTimerSeconds,
+                optionLabel = { restTimerLabel(it) },
+                onSelect = viewModel::setDefaultRestTimerSeconds,
+                onDismiss = { openDialog = null },
+            )
+        SettingsDialog.PREVIOUS_VALUES ->
+            SettingsRadioDialog(
+                title = stringResource(R.string.settings_previous_values),
+                options = PreviousValuesMode.entries,
+                selected = settings.previousValuesMode,
+                optionLabel = { previousValuesLabel(it) },
+                onSelect = viewModel::setPreviousValuesMode,
+                onDismiss = { openDialog = null },
+            )
+        SettingsDialog.MAX_HEART_RATE ->
+            MaxHeartRateDialog(
+                initial = settings.maxHeartRateBpm,
+                onSave = viewModel::setMaxHeartRateBpm,
+                onDismiss = { openDialog = null },
+            )
         null -> Unit
     }
 }
@@ -442,7 +454,11 @@ fun SettingsScreen(
  * disables Save rather than persisting nonsense.
  */
 @Composable
-private fun MaxHeartRateDialog(initial: Int?, onSave: (Int?) -> Unit, onDismiss: () -> Unit) {
+private fun MaxHeartRateDialog(
+    initial: Int?,
+    onSave: (Int?) -> Unit,
+    onDismiss: () -> Unit,
+) {
     var text by remember { mutableStateOf(initial?.toString().orEmpty()) }
     val parsed = text.toIntOrNull()
     val isError = text.isNotEmpty() && (parsed == null || parsed !in 1..300)
@@ -458,16 +474,20 @@ private fun MaxHeartRateDialog(initial: Int?, onSave: (Int?) -> Unit, onDismiss:
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true,
                 isError = isError,
-                supportingText = if (isError) {
-                    { Text(stringResource(R.string.settings_max_heart_rate_invalid)) }
-                } else {
-                    null
-                },
+                supportingText =
+                    if (isError) {
+                        { Text(stringResource(R.string.settings_max_heart_rate_invalid)) }
+                    } else {
+                        null
+                    },
                 modifier = Modifier.fillMaxWidth(),
             )
         },
         confirmButton = {
-            TextButton(onClick = { onSave(text.ifEmpty { null }?.toIntOrNull()); onDismiss() }, enabled = !isError) {
+            TextButton(onClick = {
+                onSave(text.ifEmpty { null }?.toIntOrNull())
+                onDismiss()
+            }, enabled = !isError) {
                 Text(stringResource(R.string.action_save))
             }
         },
@@ -478,45 +498,50 @@ private fun MaxHeartRateDialog(initial: Int?, onSave: (Int?) -> Unit, onDismiss:
 }
 
 @Composable
-private fun weightUnitLabel(unit: WeightUnit): String = when (unit) {
-    WeightUnit.KG -> stringResource(R.string.settings_weight_unit_kg)
-    WeightUnit.LB -> stringResource(R.string.settings_weight_unit_lb)
-}
+private fun weightUnitLabel(unit: WeightUnit): String =
+    when (unit) {
+        WeightUnit.KG -> stringResource(R.string.settings_weight_unit_kg)
+        WeightUnit.LB -> stringResource(R.string.settings_weight_unit_lb)
+    }
 
 /** Matches the lowercase "kg"/"lb" used everywhere values render (PreviousValueFormatter etc.). */
 private fun weightUnitShortLabel(unit: WeightUnit): String = if (unit == WeightUnit.KG) "kg" else "lb"
 
 @Composable
-private fun distanceUnitLabel(unit: DistanceUnit): String = when (unit) {
-    DistanceUnit.KM -> stringResource(R.string.settings_distance_unit_km)
-    DistanceUnit.MILES -> stringResource(R.string.settings_distance_unit_miles)
-}
+private fun distanceUnitLabel(unit: DistanceUnit): String =
+    when (unit) {
+        DistanceUnit.KM -> stringResource(R.string.settings_distance_unit_km)
+        DistanceUnit.MILES -> stringResource(R.string.settings_distance_unit_miles)
+    }
 
 private fun distanceUnitShortLabel(unit: DistanceUnit): String = if (unit == DistanceUnit.KM) "km" else "mi"
 
 @Composable
-private fun lengthUnitLabel(unit: LengthUnit): String = when (unit) {
-    LengthUnit.CM -> stringResource(R.string.settings_length_unit_cm)
-    LengthUnit.IN -> stringResource(R.string.settings_length_unit_in)
-}
+private fun lengthUnitLabel(unit: LengthUnit): String =
+    when (unit) {
+        LengthUnit.CM -> stringResource(R.string.settings_length_unit_cm)
+        LengthUnit.IN -> stringResource(R.string.settings_length_unit_in)
+    }
 
 /** Matches the lowercase "cm"/"in" used everywhere values render. */
 private fun lengthUnitShortLabel(unit: LengthUnit): String = if (unit == LengthUnit.CM) "cm" else "in"
 
 @Composable
-private fun bodyDiagramVariantLabel(variant: MuscleDiagramVariant): String = when (variant) {
-    MuscleDiagramVariant.MALE -> stringResource(R.string.settings_body_diagram_variant_male)
-    MuscleDiagramVariant.FEMALE -> stringResource(R.string.settings_body_diagram_variant_female)
-}
+private fun bodyDiagramVariantLabel(variant: MuscleDiagramVariant): String =
+    when (variant) {
+        MuscleDiagramVariant.MALE -> stringResource(R.string.settings_body_diagram_variant_male)
+        MuscleDiagramVariant.FEMALE -> stringResource(R.string.settings_body_diagram_variant_female)
+    }
 
 @Composable
 private fun bodyDiagramVariantShortLabel(variant: MuscleDiagramVariant): String = bodyDiagramVariantLabel(variant)
 
 @Composable
-private fun previousValuesLabel(mode: PreviousValuesMode): String = when (mode) {
-    PreviousValuesMode.ANY_WORKOUT -> stringResource(R.string.settings_previous_values_any)
-    PreviousValuesMode.SAME_ROUTINE -> stringResource(R.string.settings_previous_values_same_routine)
-}
+private fun previousValuesLabel(mode: PreviousValuesMode): String =
+    when (mode) {
+        PreviousValuesMode.ANY_WORKOUT -> stringResource(R.string.settings_previous_values_any)
+        PreviousValuesMode.SAME_ROUTINE -> stringResource(R.string.settings_previous_values_same_routine)
+    }
 
 /** "Off" for 0, otherwise m:ss — the same rendering the routine rest-timer picker uses. */
 @Composable
@@ -534,9 +559,10 @@ internal fun restTimerLabel(totalSeconds: Int): String {
  */
 private fun sendFeedbackEmail(context: android.content.Context) {
     val subject = "LogEZ feedback (${BuildConfig.VERSION_NAME}, Android ${android.os.Build.VERSION.RELEASE})"
-    val intent = Intent(Intent.ACTION_SENDTO, android.net.Uri.parse("mailto:")).apply {
-        putExtra(Intent.EXTRA_EMAIL, arrayOf(BuildConfig.CONTACT_EMAIL))
-        putExtra(Intent.EXTRA_SUBJECT, subject)
-    }
+    val intent =
+        Intent(Intent.ACTION_SENDTO, android.net.Uri.parse("mailto:")).apply {
+            putExtra(Intent.EXTRA_EMAIL, arrayOf(BuildConfig.CONTACT_EMAIL))
+            putExtra(Intent.EXTRA_SUBJECT, subject)
+        }
     runCatching { context.startActivity(intent) }
 }

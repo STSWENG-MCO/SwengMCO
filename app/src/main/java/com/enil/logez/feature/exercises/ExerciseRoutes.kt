@@ -15,11 +15,15 @@ object ExerciseRoutes {
 
     fun detail(exerciseId: String) = "exercise_detail/$exerciseId"
 
-    fun editor(exerciseId: String? = null, prefillName: String? = null): String {
-        val params = buildList {
-            exerciseId?.let { add("exerciseId=${Uri.encode(it)}") }
-            prefillName?.let { add("prefillName=${Uri.encode(it)}") }
-        }
+    fun editor(
+        exerciseId: String? = null,
+        prefillName: String? = null,
+    ): String {
+        val params =
+            buildList {
+                exerciseId?.let { add("exerciseId=${Uri.encode(it)}") }
+                prefillName?.let { add("prefillName=${Uri.encode(it)}") }
+            }
         return "custom_exercise_editor" + if (params.isEmpty()) "" else "?" + params.joinToString("&")
     }
 }

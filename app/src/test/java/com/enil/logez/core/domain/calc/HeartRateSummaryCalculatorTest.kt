@@ -16,10 +16,13 @@ class HeartRateSummaryCalculatorTest {
 
     @Test
     fun `samples outside the window are dropped before anything is computed`() {
-        val summary = HeartRateSummaryCalculator.summarize(
-            listOf((start - 30_000) to 180L, start to 120L, (start + 60_000) to 130L, (end + 30_000) to 190L),
-            start, end, 190,
-        )!!
+        val summary =
+            HeartRateSummaryCalculator.summarize(
+                listOf((start - 30_000) to 180L, start to 120L, (start + 60_000) to 130L, (end + 30_000) to 190L),
+                start,
+                end,
+                190,
+            )!!
         assertEquals(130L, summary.maxBpm) // the 180 and 190 fell outside
         assertEquals(listOf(start to 120L, (start + 60_000) to 130L), summary.samples)
     }

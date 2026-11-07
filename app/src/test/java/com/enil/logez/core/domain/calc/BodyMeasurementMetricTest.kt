@@ -9,30 +9,30 @@ import org.junit.Test
  * [valueFor]'s 17-branch `when` swaps two metrics' values, which only a per-field distinct-value
  * fixture like this one can actually catch (equal placeholder values would hide the bug). */
 class BodyMeasurementMetricTest {
-
     // Every field gets its own value, one per index, so a copy-paste swap between any two
     // branches produces a wrong number rather than accidentally matching.
-    private val entry = BodyMeasurement(
-        date = "2026-09-20",
-        weightKg = 1.0,
-        leanMassKg = 2.0,
-        fatPercent = 3.0,
-        neckCm = 4.0,
-        shoulderCm = 5.0,
-        chestCm = 6.0,
-        leftBicepCm = 7.0,
-        rightBicepCm = 8.0,
-        leftForearmCm = 9.0,
-        rightForearmCm = 10.0,
-        abdomenCm = 11.0,
-        waistCm = 12.0,
-        hipsCm = 13.0,
-        leftThighCm = 14.0,
-        rightThighCm = 15.0,
-        leftCalfCm = 16.0,
-        rightCalfCm = 17.0,
-        updatedAt = 0L,
-    )
+    private val entry =
+        BodyMeasurement(
+            date = "2026-09-20",
+            weightKg = 1.0,
+            leanMassKg = 2.0,
+            fatPercent = 3.0,
+            neckCm = 4.0,
+            shoulderCm = 5.0,
+            chestCm = 6.0,
+            leftBicepCm = 7.0,
+            rightBicepCm = 8.0,
+            leftForearmCm = 9.0,
+            rightForearmCm = 10.0,
+            abdomenCm = 11.0,
+            waistCm = 12.0,
+            hipsCm = 13.0,
+            leftThighCm = 14.0,
+            rightThighCm = 15.0,
+            leftCalfCm = 16.0,
+            rightCalfCm = 17.0,
+            updatedAt = 0L,
+        )
 
     @Test
     fun `each metric reads its own field`() {

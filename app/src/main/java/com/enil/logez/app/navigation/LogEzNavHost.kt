@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -33,8 +34,8 @@ import com.enil.logez.feature.routines.RoutineBuilderScreen
 import com.enil.logez.feature.routines.RoutineDetailScreen
 import com.enil.logez.feature.routines.RoutineRoutes
 import com.enil.logez.feature.routines.WorkoutTabScreen
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.enil.logez.feature.settings.DataScreen
+import com.enil.logez.feature.settings.LicensesScreen
 import com.enil.logez.feature.settings.PlateEquipmentScreen
 import com.enil.logez.feature.settings.SettingsRoutes
 import com.enil.logez.feature.settings.SettingsScreen
@@ -45,7 +46,6 @@ import com.enil.logez.feature.workout.WorkoutLoggerViewModel
 import com.enil.logez.feature.workout.WorkoutRoutes
 import com.enil.logez.feature.workout.finish.FinishWorkoutScreen
 import com.enil.logez.feature.workout.finish.WorkoutSummaryScreen
-import com.enil.logez.feature.settings.LicensesScreen
 
 @Composable
 fun LogEzNavHost(
@@ -185,7 +185,14 @@ fun LogEzNavHost(
         }
         composable(
             route = AnalyticsRoutes.DASHBOARD,
-            arguments = listOf(navArgument(AnalyticsViewModel.FOCUS_ARG) { type = NavType.StringType; nullable = true; defaultValue = null }),
+            arguments =
+                listOf(
+                    navArgument(AnalyticsViewModel.FOCUS_ARG) {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                ),
         ) {
             AnalyticsScreen(
                 onBack = { navController.popBackStack() },
@@ -200,7 +207,14 @@ fun LogEzNavHost(
 
         composable(
             route = ExerciseRoutes.LIBRARY,
-            arguments = listOf(navArgument("muscle") { type = NavType.StringType; nullable = true; defaultValue = null }),
+            arguments =
+                listOf(
+                    navArgument("muscle") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                ),
         ) {
             ExerciseLibraryScreen(
                 onBack = { navController.popBackStack() },
@@ -225,10 +239,19 @@ fun LogEzNavHost(
         }
         composable(
             route = ExerciseRoutes.EDITOR,
-            arguments = listOf(
-                navArgument("exerciseId") { type = NavType.StringType; nullable = true; defaultValue = null },
-                navArgument("prefillName") { type = NavType.StringType; nullable = true; defaultValue = null },
-            ),
+            arguments =
+                listOf(
+                    navArgument("exerciseId") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    navArgument("prefillName") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                ),
         ) {
             CustomExerciseEditorScreen(
                 onBack = { navController.popBackStack() },
@@ -250,10 +273,19 @@ fun LogEzNavHost(
         }
         composable(
             route = RoutineRoutes.BUILDER,
-            arguments = listOf(
-                navArgument("routineId") { type = NavType.StringType; nullable = true; defaultValue = null },
-                navArgument("folderId") { type = NavType.StringType; nullable = true; defaultValue = null },
-            ),
+            arguments =
+                listOf(
+                    navArgument("routineId") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    navArgument("folderId") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                ),
         ) {
             RoutineBuilderScreen(
                 onBack = { navController.popBackStack() },
@@ -292,14 +324,18 @@ fun LogEzNavHost(
 
         composable(
             route = WorkoutRoutes.EDIT,
-            arguments = listOf(
-                navArgument("workoutId") { type = NavType.StringType },
-                // The one thing that distinguishes this destination from LOGGER. Declared as a
-                // defaulted nav argument rather than a route segment so the flag reaches
-                // SavedStateHandle without putting "true" in the URL; LOGGER omits it entirely and
-                // the ViewModel reads absent-as-false.
-                navArgument(WorkoutLoggerViewModel.EDIT_MODE_ARG) { type = NavType.BoolType; defaultValue = true },
-            ),
+            arguments =
+                listOf(
+                    navArgument("workoutId") { type = NavType.StringType },
+                    // The one thing that distinguishes this destination from LOGGER. Declared as a
+                    // defaulted nav argument rather than a route segment so the flag reaches
+                    // SavedStateHandle without putting "true" in the URL; LOGGER omits it entirely and
+                    // the ViewModel reads absent-as-false.
+                    navArgument(WorkoutLoggerViewModel.EDIT_MODE_ARG) {
+                        type = NavType.BoolType
+                        defaultValue = true
+                    },
+                ),
         ) {
             WorkoutLoggerScreen(
                 // §5.1.10: Save and Cancel both return to Workout Detail, which re-reads on resume.
@@ -340,8 +376,9 @@ fun LogEzNavHost(
                     // whenever the Logger was reached from the mini-bar or a cold start, which
                     // left the user sitting on the Save screen with nothing having happened.
                     val poppedLogger = navController.popBackStack(WorkoutRoutes.LOGGER, inclusive = true)
-                    val poppedLiveTracking = !poppedLogger &&
-                        navController.popBackStack(ActivityTrackingRoutes.LIVE_TRACKING, inclusive = true)
+                    val poppedLiveTracking =
+                        !poppedLogger &&
+                            navController.popBackStack(ActivityTrackingRoutes.LIVE_TRACKING, inclusive = true)
                     if (!poppedLogger && !poppedLiveTracking) {
                         navController.popBackStack()
                     }

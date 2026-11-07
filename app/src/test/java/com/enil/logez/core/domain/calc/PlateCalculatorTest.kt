@@ -12,7 +12,6 @@ import org.junit.Test
  * written out literally so a model-default change breaks this suite loudly instead of silently.
  */
 class PlateCalculatorTest {
-
     private val defaultPlates = listOf(1.25, 2.5, 5.0, 10.0, 15.0, 20.0, 25.0)
 
     // --- Exact solves ---

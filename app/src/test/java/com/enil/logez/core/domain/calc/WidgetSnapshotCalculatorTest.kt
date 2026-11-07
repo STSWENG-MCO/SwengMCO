@@ -1,11 +1,11 @@
 package com.enil.logez.core.domain.calc
 
-import java.time.DayOfWeek
-import java.time.LocalDate
-import java.time.LocalDateTime
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.LocalDateTime
 
 /** M23b: what the home-screen widget renders. */
 class WidgetSnapshotCalculatorTest {
@@ -55,10 +55,11 @@ class WidgetSnapshotCalculatorTest {
 
     @Test
     fun `week day states re-order when the week starts on Sunday`() {
-        val states = snapshot(
-            listOf(LocalDate.of(2026, 8, 24), LocalDate.of(2026, 8, 26)),
-            firstDayOfWeek = DayOfWeek.SUNDAY,
-        ).weekDayStates
+        val states =
+            snapshot(
+                listOf(LocalDate.of(2026, 8, 24), LocalDate.of(2026, 8, 26)),
+                firstDayOfWeek = DayOfWeek.SUNDAY,
+            ).weekDayStates
         // Sunday, Monday, Tuesday, Wednesday, ...
         assertEquals(listOf(false, true, false, true, false, false, false), states)
     }
@@ -71,11 +72,12 @@ class WidgetSnapshotCalculatorTest {
 
     @Test
     fun `week streak delegates to StreakCalculator`() {
-        val dates = listOf(
-            LocalDate.of(2026, 8, 25),
-            LocalDate.of(2026, 8, 18),
-            LocalDate.of(2026, 8, 11),
-        )
+        val dates =
+            listOf(
+                LocalDate.of(2026, 8, 25),
+                LocalDate.of(2026, 8, 18),
+                LocalDate.of(2026, 8, 11),
+            )
         assertEquals(3, snapshot(dates).weekStreakWeeks)
     }
 

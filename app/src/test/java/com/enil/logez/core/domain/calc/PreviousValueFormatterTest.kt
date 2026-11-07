@@ -4,14 +4,13 @@ import com.enil.logez.core.domain.model.DistanceUnit
 import com.enil.logez.core.domain.model.ExerciseType
 import com.enil.logez.core.domain.model.SetType
 import com.enil.logez.core.domain.model.WeightUnit
-import java.util.Locale
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import java.util.Locale
 
 class PreviousValueFormatterTest {
-
     private val defaultLocale: Locale = Locale.getDefault()
 
     @After
@@ -26,33 +25,56 @@ class PreviousValueFormatterTest {
         distanceMeters: Double? = null,
         rpe: Double? = null,
     ) = StatSet(
-        setId = "s1", workoutId = "w1", workoutStartedAt = 0L, orderIndex = 0, setType = SetType.NORMAL,
-        weightKg = weightKg, reps = reps, durationSeconds = durationSeconds, distanceMeters = distanceMeters,
-        customMetric = null, isCompleted = true, rpe = rpe,
+        setId = "s1",
+        workoutId = "w1",
+        workoutStartedAt = 0L,
+        orderIndex = 0,
+        setType = SetType.NORMAL,
+        weightKg = weightKg,
+        reps = reps,
+        durationSeconds = durationSeconds,
+        distanceMeters = distanceMeters,
+        customMetric = null,
+        isCompleted = true,
+        rpe = rpe,
     )
 
     // --- WEIGHT_REPS (and its bodyweight siblings, which share the same branch) ---
 
     @Test
     fun `WEIGHT_REPS formats as value unit x reps, in kg`() {
-        val result = PreviousValueFormatter.format(
-            set(weightKg = 100.0, reps = 8), ExerciseType.WEIGHT_REPS, WeightUnit.KG, DistanceUnit.KM,
-        )
+        val result =
+            PreviousValueFormatter.format(
+                set(weightKg = 100.0, reps = 8),
+                ExerciseType.WEIGHT_REPS,
+                WeightUnit.KG,
+                DistanceUnit.KM,
+            )
         assertEquals("100 kg x 8", result)
     }
 
     @Test
     fun `WEIGHT_REPS converts to lb and rounds to one decimal`() {
-        val result = PreviousValueFormatter.format(
-            set(weightKg = 80.0, reps = 8), ExerciseType.WEIGHT_REPS, WeightUnit.LB, DistanceUnit.KM,
-        )
+        val result =
+            PreviousValueFormatter.format(
+                set(weightKg = 80.0, reps = 8),
+                ExerciseType.WEIGHT_REPS,
+                WeightUnit.LB,
+                DistanceUnit.KM,
+            )
         assertEquals("176.4 lb x 8", result)
     }
 
     @Test
     fun `WEIGHT_REPS with a null weight or null reps renders the em dash placeholder`() {
-        assertEquals("—", PreviousValueFormatter.format(set(weightKg = null, reps = 8), ExerciseType.WEIGHT_REPS, WeightUnit.KG, DistanceUnit.KM))
-        assertEquals("—", PreviousValueFormatter.format(set(weightKg = 100.0, reps = null), ExerciseType.WEIGHT_REPS, WeightUnit.KG, DistanceUnit.KM))
+        assertEquals(
+            "—",
+            PreviousValueFormatter.format(set(weightKg = null, reps = 8), ExerciseType.WEIGHT_REPS, WeightUnit.KG, DistanceUnit.KM),
+        )
+        assertEquals(
+            "—",
+            PreviousValueFormatter.format(set(weightKg = 100.0, reps = null), ExerciseType.WEIGHT_REPS, WeightUnit.KG, DistanceUnit.KM),
+        )
     }
 
     @Test
@@ -107,8 +129,24 @@ class PreviousValueFormatterTest {
 
     @Test
     fun `WEIGHT_DURATION with a null weight or null duration renders the em dash placeholder`() {
-        assertEquals("—", PreviousValueFormatter.format(set(weightKg = null, durationSeconds = 45), ExerciseType.WEIGHT_DURATION, WeightUnit.KG, DistanceUnit.KM))
-        assertEquals("—", PreviousValueFormatter.format(set(weightKg = 20.0, durationSeconds = null), ExerciseType.WEIGHT_DURATION, WeightUnit.KG, DistanceUnit.KM))
+        assertEquals(
+            "—",
+            PreviousValueFormatter.format(
+                set(weightKg = null, durationSeconds = 45),
+                ExerciseType.WEIGHT_DURATION,
+                WeightUnit.KG,
+                DistanceUnit.KM,
+            ),
+        )
+        assertEquals(
+            "—",
+            PreviousValueFormatter.format(
+                set(weightKg = 20.0, durationSeconds = null),
+                ExerciseType.WEIGHT_DURATION,
+                WeightUnit.KG,
+                DistanceUnit.KM,
+            ),
+        )
     }
 
     // --- DISTANCE_DURATION (cardio: run/walk) ---
@@ -127,8 +165,24 @@ class PreviousValueFormatterTest {
 
     @Test
     fun `DISTANCE_DURATION with a null distance or null duration renders the em dash placeholder`() {
-        assertEquals("—", PreviousValueFormatter.format(set(distanceMeters = null, durationSeconds = 1500), ExerciseType.DISTANCE_DURATION, WeightUnit.KG, DistanceUnit.KM))
-        assertEquals("—", PreviousValueFormatter.format(set(distanceMeters = 5000.0, durationSeconds = null), ExerciseType.DISTANCE_DURATION, WeightUnit.KG, DistanceUnit.KM))
+        assertEquals(
+            "—",
+            PreviousValueFormatter.format(
+                set(distanceMeters = null, durationSeconds = 1500),
+                ExerciseType.DISTANCE_DURATION,
+                WeightUnit.KG,
+                DistanceUnit.KM,
+            ),
+        )
+        assertEquals(
+            "—",
+            PreviousValueFormatter.format(
+                set(distanceMeters = 5000.0, durationSeconds = null),
+                ExerciseType.DISTANCE_DURATION,
+                WeightUnit.KG,
+                DistanceUnit.KM,
+            ),
+        )
     }
 
     // --- WEIGHT_DISTANCE (e.g. a weighted carry) ---
@@ -141,8 +195,24 @@ class PreviousValueFormatterTest {
 
     @Test
     fun `WEIGHT_DISTANCE with a null weight or null distance renders the em dash placeholder`() {
-        assertEquals("—", PreviousValueFormatter.format(set(weightKg = null, distanceMeters = 20.0), ExerciseType.WEIGHT_DISTANCE, WeightUnit.KG, DistanceUnit.KM))
-        assertEquals("—", PreviousValueFormatter.format(set(weightKg = 40.0, distanceMeters = null), ExerciseType.WEIGHT_DISTANCE, WeightUnit.KG, DistanceUnit.KM))
+        assertEquals(
+            "—",
+            PreviousValueFormatter.format(
+                set(weightKg = null, distanceMeters = 20.0),
+                ExerciseType.WEIGHT_DISTANCE,
+                WeightUnit.KG,
+                DistanceUnit.KM,
+            ),
+        )
+        assertEquals(
+            "—",
+            PreviousValueFormatter.format(
+                set(weightKg = 40.0, distanceMeters = null),
+                ExerciseType.WEIGHT_DISTANCE,
+                WeightUnit.KG,
+                DistanceUnit.KM,
+            ),
+        )
     }
 
     // --- formatRpeLine ---
@@ -167,9 +237,13 @@ class PreviousValueFormatterTest {
     @Test
     fun `non-integer values use a dot decimal separator regardless of the device's default locale`() {
         Locale.setDefault(Locale.GERMANY) // comma-decimal locale
-        val result = PreviousValueFormatter.format(
-            set(weightKg = 80.0, reps = 8), ExerciseType.WEIGHT_REPS, WeightUnit.LB, DistanceUnit.KM,
-        )
+        val result =
+            PreviousValueFormatter.format(
+                set(weightKg = 80.0, reps = 8),
+                ExerciseType.WEIGHT_REPS,
+                WeightUnit.LB,
+                DistanceUnit.KM,
+            )
         assertEquals("176.4 lb x 8", result)
     }
 }

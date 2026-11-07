@@ -6,7 +6,10 @@ import java.time.LocalDate
 /** One dated value for a single [BodyMeasurementMetric] -- [date] is the ISO `yyyy-MM-dd` string
  * straight from [BodyMeasurement.date], left as a String so the UI layer decides how to render it
  * (this codebase's [com.enil.logez.core.designsystem.LineChart] wants epoch millis, not this). */
-data class BodyMeasurementPoint(val date: String, val value: Double)
+data class BodyMeasurementPoint(
+    val date: String,
+    val value: Double,
+)
 
 /** Range-filters and flattens [BodyMeasurement] entries down to one metric's plottable points. */
 object BodyMeasurementChart {

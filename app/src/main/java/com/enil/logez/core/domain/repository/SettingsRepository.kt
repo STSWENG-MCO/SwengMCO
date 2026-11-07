@@ -9,8 +9,8 @@ import com.enil.logez.core.domain.model.PreviousValuesMode
 import com.enil.logez.core.domain.model.UserSettings
 import com.enil.logez.core.domain.model.WarmupStep
 import com.enil.logez.core.domain.model.WeightUnit
-import java.time.DayOfWeek
 import kotlinx.coroutines.flow.Flow
+import java.time.DayOfWeek
 
 /**
  * DataStore-backed settings (PHASE2_PLAN.md §5.2 — the Settings *screen* lands in M7; this
@@ -21,32 +21,60 @@ interface SettingsRepository {
     val settings: Flow<UserSettings>
 
     suspend fun setWeightUnit(value: WeightUnit)
+
     suspend fun setDistanceUnit(value: DistanceUnit)
+
     suspend fun setLengthUnit(value: LengthUnit)
+
     suspend fun setMuscleDiagramVariant(value: MuscleDiagramVariant)
+
     suspend fun setFirstDayOfWeek(value: DayOfWeek)
-    suspend fun setPerExerciseUnitOverride(exerciseId: String, unit: WeightUnit?)
+
+    suspend fun setPerExerciseUnitOverride(
+        exerciseId: String,
+        unit: WeightUnit?,
+    )
 
     suspend fun setDefaultRestTimerSeconds(value: Int)
+
     suspend fun setTimerSound(value: Int)
+
     suspend fun setTimerVolume(value: Float)
+
     suspend fun setSetCompleteVolume(value: Float)
+
     suspend fun setPrVolume(value: Float)
+
     suspend fun setPreviousValuesMode(value: PreviousValuesMode)
+
     suspend fun setWarmupCalculatorEnabled(value: Boolean)
+
     suspend fun setWarmupMethod(value: List<WarmupStep>)
+
     suspend fun setIncludeWarmupsInStats(value: Boolean)
+
     suspend fun setKeepAwake(value: Boolean)
+
     suspend fun setPlateCalculatorEnabled(value: Boolean)
+
     suspend fun setPlateEquipment(value: PlateEquipment)
+
     suspend fun setRpeTrackingEnabled(value: Boolean)
+
     suspend fun setSmartSupersetScrolling(value: Boolean)
+
     suspend fun setInlineTimerEnabled(value: Boolean)
+
     suspend fun setLivePrNotificationEnabled(value: Boolean)
+
     suspend fun setMaxHeartRateBpm(value: Int?)
+
     suspend fun setShowHeatmap(value: Boolean)
+
     suspend fun setShowGoals(value: Boolean)
+
     suspend fun setMeasurementsTrackingMode(value: MeasurementsTrackingMode)
+
     suspend fun setWeeklyActiveDayTarget(value: Int)
 
     /**

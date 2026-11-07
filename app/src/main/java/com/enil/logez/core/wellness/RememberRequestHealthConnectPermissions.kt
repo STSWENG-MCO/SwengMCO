@@ -18,9 +18,10 @@ fun rememberRequestHealthConnectPermissions(
     source: HealthMetricsSource,
     onResult: (anyGranted: Boolean) -> Unit,
 ): () -> Unit {
-    val launcher = rememberLauncherForActivityResult(PermissionController.createRequestPermissionResultContract()) { granted ->
-        onResult(granted.any { it in source.requiredPermissions })
-    }
+    val launcher =
+        rememberLauncherForActivityResult(PermissionController.createRequestPermissionResultContract()) { granted ->
+            onResult(granted.any { it in source.requiredPermissions })
+        }
     return { launcher.launch(source.requiredPermissions) }
 }
 
@@ -35,8 +36,9 @@ fun rememberRequestHealthPermissions(
     permissions: Set<String>,
     onResult: (granted: Set<String>) -> Unit,
 ): () -> Unit {
-    val launcher = rememberLauncherForActivityResult(PermissionController.createRequestPermissionResultContract()) { granted ->
-        onResult(granted)
-    }
+    val launcher =
+        rememberLauncherForActivityResult(PermissionController.createRequestPermissionResultContract()) { granted ->
+            onResult(granted)
+        }
     return { launcher.launch(permissions) }
 }

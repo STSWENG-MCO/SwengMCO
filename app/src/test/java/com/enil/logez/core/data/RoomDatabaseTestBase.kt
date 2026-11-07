@@ -16,10 +16,12 @@ abstract class RoomDatabaseTestBase {
 
     @Before
     fun setUpDatabase() {
-        database = Room.inMemoryDatabaseBuilder(
-            ApplicationProvider.getApplicationContext(),
-            LogEzDatabase::class.java,
-        ).build()
+        database =
+            Room
+                .inMemoryDatabaseBuilder(
+                    ApplicationProvider.getApplicationContext(),
+                    LogEzDatabase::class.java,
+                ).build()
     }
 
     @After

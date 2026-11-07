@@ -7,7 +7,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 
 /** In-memory fake (PHASE2_PLAN.md §10.1 rule 2). */
-class FakeActivityTrackRepository(initial: List<ActivityTrackEntity> = emptyList()) : ActivityTrackRepository {
+class FakeActivityTrackRepository(
+    initial: List<ActivityTrackEntity> = emptyList(),
+) : ActivityTrackRepository {
     private val tracksState = MutableStateFlow(initial.associateBy { it.workoutSetId })
 
     override suspend fun upsert(track: ActivityTrackEntity) {
@@ -16,6 +18,5 @@ class FakeActivityTrackRepository(initial: List<ActivityTrackEntity> = emptyList
 
     override suspend fun getByWorkoutSetId(workoutSetId: String): ActivityTrackEntity? = tracksState.value[workoutSetId]
 
-    override fun observeByWorkoutSetId(workoutSetId: String): Flow<ActivityTrackEntity?> =
-        tracksState.map { it[workoutSetId] }
+    override fun observeByWorkoutSetId(workoutSetId: String): Flow<ActivityTrackEntity?> = tracksState.map { it[workoutSetId] }
 }

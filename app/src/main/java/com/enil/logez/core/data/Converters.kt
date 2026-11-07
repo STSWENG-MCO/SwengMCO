@@ -92,23 +92,27 @@ class Converters {
     fun toGoalPeriod(value: String): GoalPeriod = GoalPeriod.valueOf(value)
 
     @TypeConverter
-    fun fromMuscleGroupList(value: List<MuscleGroup>): String =
-        json.encodeToString(value.map { it.name })
+    fun fromMuscleGroupList(value: List<MuscleGroup>): String = json.encodeToString(value.map { it.name })
 
     @TypeConverter
     fun toMuscleGroupList(value: String): List<MuscleGroup> =
-        if (value.isBlank()) emptyList()
-        else json.decodeFromString<List<String>>(value).mapNotNull { name -> runCatching { MuscleGroup.valueOf(name) }.getOrNull() }
+        if (value.isBlank()) {
+            emptyList()
+        } else {
+            json.decodeFromString<List<String>>(value).mapNotNull { name -> runCatching { MuscleGroup.valueOf(name) }.getOrNull() }
+        }
 
     /** A checklist, not a single pick (M8e revision — Owner feedback) -- empty for every exercise that doesn't specify any. */
     @TypeConverter
-    fun fromMuscleHeadList(value: List<MuscleHead>): String =
-        json.encodeToString(value.map { it.name })
+    fun fromMuscleHeadList(value: List<MuscleHead>): String = json.encodeToString(value.map { it.name })
 
     @TypeConverter
     fun toMuscleHeadList(value: String): List<MuscleHead> =
-        if (value.isBlank()) emptyList()
-        else json.decodeFromString<List<String>>(value).mapNotNull { name -> runCatching { MuscleHead.valueOf(name) }.getOrNull() }
+        if (value.isBlank()) {
+            emptyList()
+        } else {
+            json.decodeFromString<List<String>>(value).mapNotNull { name -> runCatching { MuscleHead.valueOf(name) }.getOrNull() }
+        }
 
     /**
      * Superseded by [fromMuscleHeadList]/[toMuscleHeadList] (M8e revision), kept only because

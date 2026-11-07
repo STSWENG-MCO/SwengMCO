@@ -9,11 +9,15 @@ object RoutineRoutes {
 
     fun detail(routineId: String) = "routine_detail/$routineId"
 
-    fun builder(routineId: String? = null, folderId: String? = null): String {
-        val params = buildList {
-            routineId?.let { add("routineId=${Uri.encode(it)}") }
-            folderId?.let { add("folderId=${Uri.encode(it)}") }
-        }
+    fun builder(
+        routineId: String? = null,
+        folderId: String? = null,
+    ): String {
+        val params =
+            buildList {
+                routineId?.let { add("routineId=${Uri.encode(it)}") }
+                folderId?.let { add("folderId=${Uri.encode(it)}") }
+            }
         return "routine_builder" + if (params.isEmpty()) "" else "?" + params.joinToString("&")
     }
 }

@@ -1,13 +1,13 @@
 package com.enil.logez.core.data.export
 
 import com.enil.logez.core.domain.model.SetType
-import java.time.ZoneId
-import java.util.Locale
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.ZoneId
+import java.util.Locale
 
 /**
  * The whole class runs under a comma-decimal locale on purpose. A default-locale number format
@@ -98,10 +98,11 @@ class WorkoutCsvFormatterTest {
 
     @Test
     fun `absent values are empty cells, never zero`() {
-        val line = WorkoutCsvFormatter.row(
-            row(weightKg = null, reps = null, rpe = null, supersetGroup = null, exerciseNotes = null),
-            utc,
-        )
+        val line =
+            WorkoutCsvFormatter.row(
+                row(weightKg = null, reps = null, rpe = null, supersetGroup = null, exerciseNotes = null),
+                utc,
+            )
         // The five trailing metric columns are all absent here, and none may render as 0.
         // set_index legitimately IS 0, which is why this checks the cells rather than the line.
         assertTrue(

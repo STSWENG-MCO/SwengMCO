@@ -1,11 +1,11 @@
 package com.enil.logez.feature.workout.finish
 
+import org.junit.Assert.assertEquals
+import org.junit.Test
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
-import org.junit.Assert.assertEquals
-import org.junit.Test
 
 /**
  * Regression from the M4c review: backdating landed on the wrong local day for anyone not on UTC,
@@ -71,12 +71,22 @@ class FinishDatePickerConversionTest {
         assertEquals(localMillis("2026-10-10T10:00", losAngeles), result)
     }
 
-    private fun localMillis(isoLocal: String, zone: ZoneId): Long =
-        LocalDateTime.parse(isoLocal).atZone(zone).toInstant().toEpochMilli()
+    private fun localMillis(
+        isoLocal: String,
+        zone: ZoneId,
+    ): Long =
+        LocalDateTime
+            .parse(isoLocal)
+            .atZone(zone)
+            .toInstant()
+            .toEpochMilli()
 
     private fun utcMidnight(isoDate: String): Long =
-        LocalDate.parse(isoDate).atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli()
+        LocalDate
+            .parse(isoDate)
+            .atStartOfDay(ZoneId.of("UTC"))
+            .toInstant()
+            .toEpochMilli()
 
-    private fun utcDateOf(millis: Long): LocalDate =
-        Instant.ofEpochMilli(millis).atZone(ZoneId.of("UTC")).toLocalDate()
+    private fun utcDateOf(millis: Long): LocalDate = Instant.ofEpochMilli(millis).atZone(ZoneId.of("UTC")).toLocalDate()
 }

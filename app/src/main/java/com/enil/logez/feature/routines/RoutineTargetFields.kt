@@ -9,7 +9,10 @@ import com.enil.logez.core.domain.model.targetFields
  * the rest." Reps-range mode is cleared whenever the new type drops REPS, since a range with no
  * REPS column to display it in is meaningless.
  */
-internal fun RoutineSetDraft.carryOverTo(oldType: ExerciseType, newType: ExerciseType): RoutineSetDraft {
+internal fun RoutineSetDraft.carryOverTo(
+    oldType: ExerciseType,
+    newType: ExerciseType,
+): RoutineSetDraft {
     val kept = oldType.targetFields() intersect newType.targetFields()
     return copy(
         targetWeightKg = if (TargetField.WEIGHT in kept) targetWeightKg else null,

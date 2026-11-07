@@ -44,34 +44,38 @@ object HeartRateSummaryCalculator {
         windowEndMillis: Long,
         maxHeartRateBpm: Int?,
     ): HeartRateSummary? {
-        val inWindow = samples
-            .filter { (recordedAt, bpm) -> recordedAt in windowStartMillis..windowEndMillis && bpm > 0 }
-            .groupBy { it.first }
-            .map { (recordedAt, same) -> recordedAt to same.map { it.second }.average().roundToLong() }
-            .sortedBy { it.first }
+        val inWindow =
+            samples
+                .filter { (recordedAt, bpm) -> recordedAt in windowStartMillis..windowEndMillis && bpm > 0 }
+                .groupBy { it.first }
+                .map { (recordedAt, same) -> recordedAt to same.map { it.second }.average().roundToLong() }
+                .sortedBy { it.first }
         if (inWindow.isEmpty()) return null
 
-        val weights = inWindow.indices.map { i ->
-            val next = if (i < inWindow.lastIndex) inWindow[i + 1].first else windowEndMillis
-            (next - inWindow[i].first).coerceIn(0L, MAX_CREDITED_GAP_MILLIS)
-        }
-        val totalWeight = weights.sum()
-        val average = if (totalWeight > 0L) {
-            inWindow.indices.sumOf { inWindow[it].second.toDouble() * weights[it] } / totalWeight
-        } else {
-            inWindow.map { it.second }.average()
-        }
-
-        val zoneSeconds = if (maxHeartRateBpm != null && maxHeartRateBpm > 0) {
-            val millis = HeartRateZone.entries.associateWith { 0L }.toMutableMap()
-            inWindow.forEachIndexed { i, (_, bpm) ->
-                val zone = HeartRateZoneCalculator.zoneFor(bpm, maxHeartRateBpm) ?: return@forEachIndexed
-                millis[zone] = millis.getValue(zone) + weights[i]
+        val weights =
+            inWindow.indices.map { i ->
+                val next = if (i < inWindow.lastIndex) inWindow[i + 1].first else windowEndMillis
+                (next - inWindow[i].first).coerceIn(0L, MAX_CREDITED_GAP_MILLIS)
             }
-            millis.mapValues { (_, ms) -> (ms / 1000.0).roundToLong().toInt() }
-        } else {
-            null
-        }
+        val totalWeight = weights.sum()
+        val average =
+            if (totalWeight > 0L) {
+                inWindow.indices.sumOf { inWindow[it].second.toDouble() * weights[it] } / totalWeight
+            } else {
+                inWindow.map { it.second }.average()
+            }
+
+        val zoneSeconds =
+            if (maxHeartRateBpm != null && maxHeartRateBpm > 0) {
+                val millis = HeartRateZone.entries.associateWith { 0L }.toMutableMap()
+                inWindow.forEachIndexed { i, (_, bpm) ->
+                    val zone = HeartRateZoneCalculator.zoneFor(bpm, maxHeartRateBpm) ?: return@forEachIndexed
+                    millis[zone] = millis.getValue(zone) + weights[i]
+                }
+                millis.mapValues { (_, ms) -> (ms / 1000.0).roundToLong().toInt() }
+            } else {
+                null
+            }
 
         return HeartRateSummary(
             averageBpm = average.roundToLong(),

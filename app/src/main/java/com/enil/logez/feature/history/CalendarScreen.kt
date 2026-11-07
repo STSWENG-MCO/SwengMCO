@@ -2,7 +2,6 @@ package com.enil.logez.feature.history
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -42,8 +41,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -54,15 +53,14 @@ import com.enil.logez.R
 import com.enil.logez.core.designsystem.LogEzMono
 import com.enil.logez.core.designsystem.ScreenTitle
 import com.enil.logez.core.designsystem.Spacing
-import com.enil.logez.core.designsystem.logEzTopAppBarColors
 import com.enil.logez.core.designsystem.currentLocale
+import com.enil.logez.core.designsystem.logEzTopAppBarColors
 import com.kizitonwose.calendar.compose.HorizontalCalendar
 import com.kizitonwose.calendar.compose.rememberCalendarState
 import com.kizitonwose.calendar.core.DayPosition
 import com.kizitonwose.calendar.core.daysOfWeek
 import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 
@@ -105,12 +103,13 @@ fun CalendarScreen(
     // trigger (bounds or first-day-of-week) changes; ordinary month navigation flows through the
     // LaunchedEffects below instead.
     val initialVisibleMonth = remember(startMonth, endMonth, uiState.firstDayOfWeek) { uiState.displayedMonth }
-    val calendarState = rememberCalendarState(
-        startMonth = startMonth,
-        endMonth = endMonth,
-        firstVisibleMonth = initialVisibleMonth,
-        firstDayOfWeek = uiState.firstDayOfWeek,
-    )
+    val calendarState =
+        rememberCalendarState(
+            startMonth = startMonth,
+            endMonth = endMonth,
+            firstVisibleMonth = initialVisibleMonth,
+            firstDayOfWeek = uiState.firstDayOfWeek,
+        )
     val weekDayLabels = remember(uiState.firstDayOfWeek) { daysOfWeek(uiState.firstDayOfWeek) }
 
     // Chevron taps change displayedMonth in the VM; drive the calendar to match. Near-zero-motion
@@ -130,9 +129,10 @@ fun CalendarScreen(
     // A workout deleted or edited elsewhere changes which days are highlighted.
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) viewModel.refresh()
-        }
+        val observer =
+            LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME) viewModel.refresh()
+            }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
@@ -165,7 +165,10 @@ fun CalendarScreen(
                         listOf(DayOfWeek.MONDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY).forEach { day ->
                             DropdownMenuItem(
                                 text = { Text(day.getDisplayName(TextStyle.FULL, currentLocale())) },
-                                onClick = { firstDayMenuExpanded = false; viewModel.setFirstDayOfWeek(day) },
+                                onClick = {
+                                    firstDayMenuExpanded = false
+                                    viewModel.setFirstDayOfWeek(day)
+                                },
                             )
                         }
                     }
@@ -179,16 +182,18 @@ fun CalendarScreen(
             // Each half is independent and absent (not zeroed) when that streak isn't active -- a
             // broken day streak with an intact week streak is a real, common state, not a bug --
             // "No active streak" only replaces the whole banner when neither is active.
-            val dayText = if (uiState.dailyStreak > 0) {
-                pluralStringResource(R.plurals.calendar_day_streak_banner, uiState.dailyStreak, uiState.dailyStreak)
-            } else {
-                null
-            }
-            val weekText = if (uiState.weeklyStreak > 0) {
-                pluralStringResource(R.plurals.calendar_streak_banner, uiState.weeklyStreak, uiState.weeklyStreak)
-            } else {
-                null
-            }
+            val dayText =
+                if (uiState.dailyStreak > 0) {
+                    pluralStringResource(R.plurals.calendar_day_streak_banner, uiState.dailyStreak, uiState.dailyStreak)
+                } else {
+                    null
+                }
+            val weekText =
+                if (uiState.weeklyStreak > 0) {
+                    pluralStringResource(R.plurals.calendar_streak_banner, uiState.weeklyStreak, uiState.weeklyStreak)
+                } else {
+                    null
+                }
             Text(
                 when {
                     dayText != null && weekText != null -> "$dayText · $weekText"
@@ -263,10 +268,13 @@ fun CalendarScreen(
                 )
                 dayWorkouts.forEach { workout ->
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { selectedDay = null; onWorkoutClick(workout.workoutId) }
-                            .padding(vertical = Spacing.sm),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    selectedDay = null
+                                    onWorkoutClick(workout.workoutId)
+                                }.padding(vertical = Spacing.sm),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(workout.title, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
@@ -297,20 +305,22 @@ private fun DayCell(
         contentAlignment = Alignment.Center,
     ) {
         Box(
-            modifier = Modifier
-                .size(34.dp)
-                .then(if (hasWorkout) Modifier.background(MaterialTheme.colorScheme.primary, CircleShape) else Modifier),
+            modifier =
+                Modifier
+                    .size(34.dp)
+                    .then(if (hasWorkout) Modifier.background(MaterialTheme.colorScheme.primary, CircleShape) else Modifier),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 date.dayOfMonth.toString(),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
-                color = when {
-                    hasWorkout -> MaterialTheme.colorScheme.onPrimary
-                    isToday -> MaterialTheme.colorScheme.primary
-                    else -> MaterialTheme.colorScheme.onSurface
-                },
+                color =
+                    when {
+                        hasWorkout -> MaterialTheme.colorScheme.onPrimary
+                        isToday -> MaterialTheme.colorScheme.primary
+                        else -> MaterialTheme.colorScheme.onSurface
+                    },
             )
         }
     }

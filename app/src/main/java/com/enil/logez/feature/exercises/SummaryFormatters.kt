@@ -14,7 +14,12 @@ import com.enil.logez.core.domain.model.WeightUnit
  * Workout Detail and PREVIOUS-column surfaces already use.
  */
 object SummaryFormatters {
-    fun formatMetricValue(metric: ChartMetric, raw: Double, weightUnit: WeightUnit, distanceUnit: DistanceUnit): String =
+    fun formatMetricValue(
+        metric: ChartMetric,
+        raw: Double,
+        weightUnit: WeightUnit,
+        distanceUnit: DistanceUnit,
+    ): String =
         when (metric) {
             ChartMetric.HEAVIEST_WEIGHT, ChartMetric.ONE_REP_MAX,
             ChartMetric.BEST_SET_VOLUME, ChartMetric.SESSION_VOLUME,
@@ -25,7 +30,12 @@ object SummaryFormatters {
             ChartMetric.BEST_PACE -> pace(raw, distanceUnit)
         }
 
-    fun formatPrValue(prType: PrType, raw: Double, weightUnit: WeightUnit, distanceUnit: DistanceUnit): String =
+    fun formatPrValue(
+        prType: PrType,
+        raw: Double,
+        weightUnit: WeightUnit,
+        distanceUnit: DistanceUnit,
+    ): String =
         when (prType) {
             PrType.HEAVIEST_WEIGHT, PrType.BEST_1RM, PrType.BEST_SET_VOLUME, PrType.BEST_SESSION_VOLUME ->
                 weight(raw, weightUnit)
@@ -35,7 +45,12 @@ object SummaryFormatters {
         }
 
     /** Chart y-axis labels: the bare number, no unit suffix — the axis stays uncluttered. */
-    fun axisLabel(metric: ChartMetric, raw: Double, weightUnit: WeightUnit, distanceUnit: DistanceUnit): String =
+    fun axisLabel(
+        metric: ChartMetric,
+        raw: Double,
+        weightUnit: WeightUnit,
+        distanceUnit: DistanceUnit,
+    ): String =
         when (metric) {
             ChartMetric.HEAVIEST_WEIGHT, ChartMetric.ONE_REP_MAX,
             ChartMetric.BEST_SET_VOLUME, ChartMetric.SESSION_VOLUME,
@@ -46,14 +61,20 @@ object SummaryFormatters {
             ChartMetric.BEST_PACE -> mmss(convertPace(raw, distanceUnit).toInt())
         }
 
-    private fun weight(rawKg: Double, unit: WeightUnit): String =
-        "${oneDecimal(convertWeight(rawKg, unit))} ${if (unit == WeightUnit.KG) "kg" else "lb"}"
+    private fun weight(
+        rawKg: Double,
+        unit: WeightUnit,
+    ): String = "${oneDecimal(convertWeight(rawKg, unit))} ${if (unit == WeightUnit.KG) "kg" else "lb"}"
 
-    private fun distance(rawMeters: Double, unit: DistanceUnit): String =
-        "${oneDecimal(convertDistance(rawMeters, unit))} ${if (unit == DistanceUnit.KM) "km" else "mi"}"
+    private fun distance(
+        rawMeters: Double,
+        unit: DistanceUnit,
+    ): String = "${oneDecimal(convertDistance(rawMeters, unit))} ${if (unit == DistanceUnit.KM) "km" else "mi"}"
 
-    private fun pace(rawSecPerKm: Double, unit: DistanceUnit): String =
-        "${mmss(convertPace(rawSecPerKm, unit).toInt())} ${if (unit == DistanceUnit.KM) "/km" else "/mi"}"
+    private fun pace(
+        rawSecPerKm: Double,
+        unit: DistanceUnit,
+    ): String = "${mmss(convertPace(rawSecPerKm, unit).toInt())} ${if (unit == DistanceUnit.KM) "/km" else "/mi"}"
 
     private fun count(raw: Double): String = raw.toInt().toString()
 
@@ -67,12 +88,20 @@ object SummaryFormatters {
 
     private fun mmss(totalSeconds: Int): String = "%d:%02d".format(totalSeconds / 60, totalSeconds % 60)
 
-    private fun convertWeight(kg: Double, unit: WeightUnit): Double = WeightDisplay.toDisplay(kg, unit)
+    private fun convertWeight(
+        kg: Double,
+        unit: WeightUnit,
+    ): Double = WeightDisplay.toDisplay(kg, unit)
 
-    private fun convertDistance(meters: Double, unit: DistanceUnit): Double = DistanceDisplay.toDisplay(meters, unit)
+    private fun convertDistance(
+        meters: Double,
+        unit: DistanceUnit,
+    ): Double = DistanceDisplay.toDisplay(meters, unit)
 
-    private fun convertPace(secPerKm: Double, unit: DistanceUnit): Double =
-        if (unit == DistanceUnit.MILES) secPerKm * (DistanceDisplay.METERS_PER_MILE / DistanceDisplay.METERS_PER_KM) else secPerKm
+    private fun convertPace(
+        secPerKm: Double,
+        unit: DistanceUnit,
+    ): Double = if (unit == DistanceUnit.MILES) secPerKm * (DistanceDisplay.METERS_PER_MILE / DistanceDisplay.METERS_PER_KM) else secPerKm
 
     /**
      * Round to 1 decimal (§8.9); whole results render without a decimal via a locale-independent

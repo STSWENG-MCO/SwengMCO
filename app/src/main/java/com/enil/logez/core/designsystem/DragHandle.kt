@@ -40,14 +40,26 @@ fun DragHandle(
     val moveUpLabel = stringResource(R.string.workout_move_up)
     val moveDownLabel = stringResource(R.string.workout_move_down)
     Box(
-        modifier = modifier
-            .minimumInteractiveComponentSize()
-            .semantics {
-                customActions = listOfNotNull(
-                    onMoveUp?.let { CustomAccessibilityAction(moveUpLabel) { it(); true } },
-                    onMoveDown?.let { CustomAccessibilityAction(moveDownLabel) { it(); true } },
-                )
-            },
+        modifier =
+            modifier
+                .minimumInteractiveComponentSize()
+                .semantics {
+                    customActions =
+                        listOfNotNull(
+                            onMoveUp?.let {
+                                CustomAccessibilityAction(moveUpLabel) {
+                                    it()
+                                    true
+                                }
+                            },
+                            onMoveDown?.let {
+                                CustomAccessibilityAction(moveDownLabel) {
+                                    it()
+                                    true
+                                }
+                            },
+                        )
+                },
         contentAlignment = Alignment.Center,
     ) {
         Icon(
