@@ -46,6 +46,7 @@ jobs:
 
             * **Source Commit:** [${hash}](${url})
             * **Triggered By:** @${user}
+            * **Staging APK Build:** [Download Staging Artifacts (${hash})](${url}/checks)
 
             ---
 
@@ -55,11 +56,11 @@ jobs:
             ---
 
             #### Instructions for QA
-            1. **Access** the development environment.
-            2. **Ensure** the relevant feature flag is enabled in environment variables.
-            3. **Verify** the implementation against the requirements.
-            4. If verification **passes**, change the label to \`Done\`.
-            5. If verification **fails**, change the label to \`QA Failed\` and tag @${user}.
+            1. **Download & Install:** Get the Staging APK from [Build Artifacts](${url}/checks).
+            2. **Physical Device Testing:** Verify acceptance criteria and regression checklist on **at least two physical devices with different Android versions**.
+            3. **Regression Checklist:** Verify workout logging, history & statistics, GPS tracking & maps, Health Connect permissions, and version upgrade data preservation.
+            4. If verification **passes**, change the label to \`Done\` for release candidate sign-off.
+            5. If verification **fails**, change the label to \`QA Failed\` and tag @${user} for defect resolution via \`bugfix/*\`.
             `.trim().replace(/^\s+/gm, '')
 
             const createOrphanIssue = async (summary, reasonNotes = '') => {
