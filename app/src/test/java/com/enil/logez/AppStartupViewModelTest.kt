@@ -36,63 +36,84 @@ class AppStartupViewModelTest {
     @After
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun workout(id: String, kind: WorkoutKind, status: WorkoutStatus = WorkoutStatus.IN_PROGRESS) =
-        WorkoutEntity(
-            id = id, routineId = null, title = "Session", notes = null, status = status,
-            startedAt = 1_000L, endedAt = null, durationSeconds = 0, createdAt = 1_000L, updatedAt = 1_000L,
-            kind = kind,
-        )
-
-    private fun controller(workoutRepo: FakeWorkoutRepository) = ActivityTrackingController(
-        workoutRepo, FakeActivityTrackRepository(), FakeLocationSource(), FakeClock(),
-        CoroutineScope(UnconfinedTestDispatcher()),
+    private fun workout(
+        id: String,
+        kind: WorkoutKind,
+        status: WorkoutStatus = WorkoutStatus.IN_PROGRESS,
+    ) = WorkoutEntity(
+        id = id,
+        routineId = null,
+        title = "Session",
+        notes = null,
+        status = status,
+        startedAt = 1_000L,
+        endedAt = null,
+        durationSeconds = 0,
+        createdAt = 1_000L,
+        updatedAt = 1_000L,
+        kind = kind,
     )
 
-    @Test
-    fun `no in-progress workout recovers nothing`() = runTest {
-        val repo = FakeWorkoutRepository()
-        val vm = AppStartupViewModel(InProgressWorkoutResolver(repo, controller(repo)))
-        assertEquals(StartupRecovery.None, vm.recovery.value)
-    }
+    private fun controller(workoutRepo: FakeWorkoutRepository) =
+        ActivityTrackingController(
+            workoutRepo,
+            FakeActivityTrackRepository(),
+            FakeLocationSource(),
+            FakeClock(),
+            CoroutineScope(UnconfinedTestDispatcher()),
+        )
 
     @Test
-    fun `an in-progress strength workout resumes into the logger`() = runTest {
-        val repo = FakeWorkoutRepository(listOf(workout("w1", WorkoutKind.STRENGTH)))
-        val vm = AppStartupViewModel(InProgressWorkoutResolver(repo, controller(repo)))
-        assertEquals(StartupRecovery.ResumeStrength("w1"), vm.recovery.value)
-    }
+    fun `no in-progress workout recovers nothing`() =
+        runTest {
+            val repo = FakeWorkoutRepository()
+            val vm = AppStartupViewModel(InProgressWorkoutResolver(repo, controller(repo)))
+            assertEquals(StartupRecovery.None, vm.recovery.value)
+        }
 
     @Test
-    fun `a GPS run whose tracking session is still live re-enters the tracking screen`() = runTest {
-        val repo = FakeWorkoutRepository(listOf(workout("w1", WorkoutKind.GPS_TRACKED)))
-        val controller = controller(repo)
-        controller.startTracking("w1", "set1")
-        val vm = AppStartupViewModel(InProgressWorkoutResolver(repo, controller))
-        assertEquals(StartupRecovery.ResumeLiveTracking, vm.recovery.value)
-    }
+    fun `an in-progress strength workout resumes into the logger`() =
+        runTest {
+            val repo = FakeWorkoutRepository(listOf(workout("w1", WorkoutKind.STRENGTH)))
+            val vm = AppStartupViewModel(InProgressWorkoutResolver(repo, controller(repo)))
+            assertEquals(StartupRecovery.ResumeStrength("w1"), vm.recovery.value)
+        }
 
     @Test
-    fun `a GPS run whose process died is reported as interrupted, not resumed`() = runTest {
-        val repo = FakeWorkoutRepository(listOf(workout("w1", WorkoutKind.GPS_TRACKED)))
-        val vm = AppStartupViewModel(InProgressWorkoutResolver(repo, controller(repo)))
-        assertEquals(StartupRecovery.InterruptedRun("w1", 1_000L), vm.recovery.value)
-    }
+    fun `a GPS run whose tracking session is still live re-enters the tracking screen`() =
+        runTest {
+            val repo = FakeWorkoutRepository(listOf(workout("w1", WorkoutKind.GPS_TRACKED)))
+            val controller = controller(repo)
+            controller.startTracking("w1", "set1")
+            val vm = AppStartupViewModel(InProgressWorkoutResolver(repo, controller))
+            assertEquals(StartupRecovery.ResumeLiveTracking, vm.recovery.value)
+        }
 
     @Test
-    fun `a controller left pointing at a different workout does not count as this run's live session`() = runTest {
-        val repo = FakeWorkoutRepository(listOf(workout("w1", WorkoutKind.GPS_TRACKED)))
-        val controller = controller(repo)
-        // Tracking state from an earlier, already-finished run that was never cleared.
-        controller.startTracking("some-other-workout", "set9")
-        val vm = AppStartupViewModel(InProgressWorkoutResolver(repo, controller))
-        assertEquals(StartupRecovery.InterruptedRun("w1", 1_000L), vm.recovery.value)
-    }
+    fun `a GPS run whose process died is reported as interrupted, not resumed`() =
+        runTest {
+            val repo = FakeWorkoutRepository(listOf(workout("w1", WorkoutKind.GPS_TRACKED)))
+            val vm = AppStartupViewModel(InProgressWorkoutResolver(repo, controller(repo)))
+            assertEquals(StartupRecovery.InterruptedRun("w1", 1_000L), vm.recovery.value)
+        }
 
     @Test
-    fun `consumeRecovery clears the decision so it does not repeat on recomposition`() = runTest {
-        val repo = FakeWorkoutRepository(listOf(workout("w1", WorkoutKind.STRENGTH)))
-        val vm = AppStartupViewModel(InProgressWorkoutResolver(repo, controller(repo)))
-        vm.consumeRecovery()
-        assertEquals(StartupRecovery.None, vm.recovery.value)
-    }
+    fun `a controller left pointing at a different workout does not count as this run's live session`() =
+        runTest {
+            val repo = FakeWorkoutRepository(listOf(workout("w1", WorkoutKind.GPS_TRACKED)))
+            val controller = controller(repo)
+            // Tracking state from an earlier, already-finished run that was never cleared.
+            controller.startTracking("some-other-workout", "set9")
+            val vm = AppStartupViewModel(InProgressWorkoutResolver(repo, controller))
+            assertEquals(StartupRecovery.InterruptedRun("w1", 1_000L), vm.recovery.value)
+        }
+
+    @Test
+    fun `consumeRecovery clears the decision so it does not repeat on recomposition`() =
+        runTest {
+            val repo = FakeWorkoutRepository(listOf(workout("w1", WorkoutKind.STRENGTH)))
+            val vm = AppStartupViewModel(InProgressWorkoutResolver(repo, controller(repo)))
+            vm.consumeRecovery()
+            assertEquals(StartupRecovery.None, vm.recovery.value)
+        }
 }

@@ -17,10 +17,13 @@ object ZipEntryNames {
     const val MAX_ENTRIES = 50_000
     const val MAX_TOTAL_UNCOMPRESSED_BYTES = 2L * 1024 * 1024 * 1024 // 2 GB
 
-    class UnsafeEntryException(name: String) :
-        IllegalArgumentException("Backup contains an unsafe file path: $name")
+    class UnsafeEntryException(
+        name: String,
+    ) : IllegalArgumentException("Backup contains an unsafe file path: $name")
 
-    class ArchiveTooLargeException(message: String) : IllegalArgumentException(message)
+    class ArchiveTooLargeException(
+        message: String,
+    ) : IllegalArgumentException(message)
 
     /**
      * Resolves [entryName] inside [stagingDir], or throws if it would escape.
@@ -28,7 +31,10 @@ object ZipEntryNames {
      * Checked on the canonical paths rather than by looking for `..` in the string: a name can
      * escape through a symlink or an unusual encoding without containing the obvious marker.
      */
-    fun resolveSafely(stagingDir: File, entryName: String): File {
+    fun resolveSafely(
+        stagingDir: File,
+        entryName: String,
+    ): File {
         if (entryName.isBlank()) throw UnsafeEntryException(entryName)
         if (entryName.startsWith("/") || entryName.contains("\\")) throw UnsafeEntryException(entryName)
 

@@ -3,9 +3,9 @@ package com.enil.logez.feature.workout
 import com.enil.logez.core.domain.model.SetType
 import com.enil.logez.core.domain.repository.WorkoutRepository
 import com.enil.logez.feature.workout.session.WorkoutSessionController
-import java.util.UUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
+import java.util.UUID
 
 /**
  * Circuit-mode round operations (Add Round / Remove Round / the "has this round been logged into"
@@ -31,23 +31,26 @@ class CircuitRoundEditor(
     fun addRound() {
         val current = exercises.value
         if (current.isEmpty()) return
-        val newSetsByExercise = current.associate { ex ->
-            val last = ex.sets.lastOrNull()
-            ex.id to WorkoutSetUiModel(
-                id = UUID.randomUUID().toString(),
-                setType = SetType.NORMAL,
-                weightKg = last?.weightKg,
-                reps = last?.reps,
-                durationSeconds = last?.durationSeconds,
-                distanceMeters = last?.distanceMeters,
-                customMetric = last?.customMetric,
-            )
-        }
+        val newSetsByExercise =
+            current.associate { ex ->
+                val last = ex.sets.lastOrNull()
+                ex.id to
+                    WorkoutSetUiModel(
+                        id = UUID.randomUUID().toString(),
+                        setType = SetType.NORMAL,
+                        weightKg = last?.weightKg,
+                        reps = last?.reps,
+                        durationSeconds = last?.durationSeconds,
+                        distanceMeters = last?.distanceMeters,
+                        customMetric = last?.customMetric,
+                    )
+            }
         exercises.update { list -> list.map { ex -> newSetsByExercise[ex.id]?.let { ex.copy(sets = ex.sets + it) } ?: ex } }
         persist {
-            val entities = current.mapNotNull { ex ->
-                newSetsByExercise[ex.id]?.toEntity(ex.id)?.copy(orderIndex = ex.sets.size)
-            }
+            val entities =
+                current.mapNotNull { ex ->
+                    newSetsByExercise[ex.id]?.toEntity(ex.id)?.copy(orderIndex = ex.sets.size)
+                }
             workoutRepository.insertWorkoutSets(entities)
         }
     }
@@ -90,10 +93,15 @@ class CircuitRoundEditor(
     }
 
     /** How many rows a given round holds values in — the Remove Round confirm's "anything logged" check. */
-    fun roundHasLoggedValues(roundIndex: Int): Boolean = exercises.value.any { ex ->
-        ex.sets.getOrNull(roundIndex)?.let { s ->
-            s.isCompleted || s.weightKg != null || s.reps != null || s.durationSeconds != null ||
-                s.distanceMeters != null || s.customMetric != null
-        } == true
-    }
+    fun roundHasLoggedValues(roundIndex: Int): Boolean =
+        exercises.value.any { ex ->
+            ex.sets.getOrNull(roundIndex)?.let { s ->
+                s.isCompleted ||
+                    s.weightKg != null ||
+                    s.reps != null ||
+                    s.durationSeconds != null ||
+                    s.distanceMeters != null ||
+                    s.customMetric != null
+            } == true
+        }
 }

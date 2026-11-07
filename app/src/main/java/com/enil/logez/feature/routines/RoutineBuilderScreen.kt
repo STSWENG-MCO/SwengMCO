@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -65,16 +64,16 @@ import com.enil.logez.core.designsystem.LogEzMono
 import com.enil.logez.core.designsystem.Radius
 import com.enil.logez.core.designsystem.Spacing
 import com.enil.logez.core.designsystem.SyncOptimisticList
-import com.enil.logez.core.designsystem.logEzTopAppBarColors
 import com.enil.logez.core.designsystem.currentLocale
+import com.enil.logez.core.designsystem.logEzTopAppBarColors
 import com.enil.logez.core.domain.model.WorkoutStructure
 import com.enil.logez.feature.exercises.ExercisePickerMode
 import com.enil.logez.feature.exercises.ExercisePickerSheet
-import kotlin.math.cos
-import kotlin.math.sin
 import kotlinx.coroutines.launch
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
+import kotlin.math.cos
+import kotlin.math.sin
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -176,18 +175,23 @@ fun RoutineBuilderScreen(
                 // drop. One list instance for the screen's life (see SyncOptimisticList for why).
                 val lazyListState = rememberLazyListState()
                 val localExercises = remember { mutableStateListOf<RoutineExerciseDraft>().apply { addAll(uiState.exercises) } }
-                val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
-                    // Header items (structure row, rounds stepper) are unkeyed -> null -> ignored.
-                    val fromKey = from.key as? String ?: return@rememberReorderableLazyListState
-                    val toKey = to.key as? String ?: return@rememberReorderableLazyListState
-                    val fromIndex = localExercises.indexOfFirst { it.id == fromKey }
-                    val toIndex = localExercises.indexOfFirst { it.id == toKey }
-                    if (fromIndex >= 0 && toIndex >= 0) localExercises.add(toIndex, localExercises.removeAt(fromIndex))
-                }
+                val reorderState =
+                    rememberReorderableLazyListState(lazyListState) { from, to ->
+                        // Header items (structure row, rounds stepper) are unkeyed -> null -> ignored.
+                        val fromKey = from.key as? String ?: return@rememberReorderableLazyListState
+                        val toKey = to.key as? String ?: return@rememberReorderableLazyListState
+                        val fromIndex = localExercises.indexOfFirst { it.id == fromKey }
+                        val toIndex = localExercises.indexOfFirst { it.id == toKey }
+                        if (fromIndex >= 0 && toIndex >= 0) localExercises.add(toIndex, localExercises.removeAt(fromIndex))
+                    }
                 SyncOptimisticList(localExercises, uiState.exercises, reorderState.isAnyItemDragging)
                 val commitOrder = { viewModel.reorderExercises(localExercises.map { it.id }) }
+
                 // Accessibility "Move up/down" (DragHandle custom actions): one slot, then commit.
-                fun nudge(id: String, delta: Int) {
+                fun nudge(
+                    id: String,
+                    delta: Int,
+                ) {
                     val from = localExercises.indexOfFirst { it.id == id }
                     val to = from + delta
                     if (from < 0 || to !in localExercises.indices) return
@@ -241,7 +245,10 @@ fun RoutineBuilderScreen(
                                 isSupersetSource = exercise.id == uiState.supersetSourceExerciseId,
                                 viewModel = viewModel,
                                 onExerciseClick = { onExerciseClick(exercise.exerciseId) },
-                                onOpenReplacePicker = { replaceTargetId = exercise.id; pickerMode = ExercisePickerMode.REPLACE },
+                                onOpenReplacePicker = {
+                                    replaceTargetId = exercise.id
+                                    pickerMode = ExercisePickerMode.REPLACE
+                                },
                                 onRestTimerClick = { restTimerTargetId = exercise.id },
                             )
                         }
@@ -264,7 +271,10 @@ fun RoutineBuilderScreen(
     pickerMode?.let { mode ->
         ExercisePickerSheet(
             mode = mode,
-            onDismiss = { pickerMode = null; replaceTargetId = null },
+            onDismiss = {
+                pickerMode = null
+                replaceTargetId = null
+            },
             onAddCommitted = { exercises -> viewModel.addExercises(exercises) },
             onExercisePicked = { exercise -> replaceTargetId?.let { viewModel.replaceExercise(it, exercise) } },
             onCreateExercise = onCreateExercise,
@@ -315,7 +325,11 @@ fun RoutineBuilderScreen(
  * Circuit). Greyed with the immutable hint when editing, same as the chips before them.
  */
 @Composable
-private fun StructureRow(structure: WorkoutStructure, enabled: Boolean, onSelect: (WorkoutStructure) -> Unit) {
+private fun StructureRow(
+    structure: WorkoutStructure,
+    enabled: Boolean,
+    onSelect: (WorkoutStructure) -> Unit,
+) {
     Column(modifier = Modifier.fillMaxWidth().padding(bottom = Spacing.sm)) {
         Text(
             stringResource(R.string.routine_structure_label),
@@ -365,20 +379,22 @@ private fun StructureCard(
 ) {
     val shape = RoundedCornerShape(Radius.card)
     val primary = MaterialTheme.colorScheme.primary
-    val borderColor = when {
-        selected && enabled -> primary
-        selected -> primary.copy(alpha = 0.38f)
-        else -> MaterialTheme.colorScheme.outline
-    }
+    val borderColor =
+        when {
+            selected && enabled -> primary
+            selected -> primary.copy(alpha = 0.38f)
+            else -> MaterialTheme.colorScheme.outline
+        }
     val contentColor = if (selected) primary else MaterialTheme.colorScheme.onSurfaceVariant
     Column(
-        modifier = modifier
-            .aspectRatio(0.95f)
-            .clip(shape)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .border(if (selected) 2.dp else 1.dp, borderColor, shape)
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(Spacing.md),
+        modifier =
+            modifier
+                .aspectRatio(0.95f)
+                .clip(shape)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .border(if (selected) 2.dp else 1.dp, borderColor, shape)
+                .clickable(enabled = enabled, onClick = onClick)
+                .padding(Spacing.md),
     ) {
         Text(
             stringResource(labelRes).uppercase(currentLocale()),
@@ -395,7 +411,10 @@ private fun StructureCard(
 
 /** Standard: a straight stack of set rows with a single downward arrow — logged top to bottom, once. */
 @Composable
-private fun StandardFlowIcon(tint: Color, modifier: Modifier = Modifier) {
+private fun StandardFlowIcon(
+    tint: Color,
+    modifier: Modifier = Modifier,
+) {
     Canvas(modifier = modifier) {
         val w = size.width
         val h = size.height
@@ -420,19 +439,23 @@ private fun StandardFlowIcon(tint: Color, modifier: Modifier = Modifier) {
             cap = StrokeCap.Round,
         )
         val headHalf = w * 0.11f
-        val headPath = Path().apply {
-            moveTo(arrowX - headHalf, arrowBottom - w * 0.16f)
-            lineTo(arrowX + headHalf, arrowBottom - w * 0.16f)
-            lineTo(arrowX, arrowBottom)
-            close()
-        }
+        val headPath =
+            Path().apply {
+                moveTo(arrowX - headHalf, arrowBottom - w * 0.16f)
+                lineTo(arrowX + headHalf, arrowBottom - w * 0.16f)
+                lineTo(arrowX, arrowBottom)
+                close()
+            }
         drawPath(headPath, color = tint)
     }
 }
 
 /** Circuit: the same set rows, but the arrow loops back around — the same rows repeat for N rounds. */
 @Composable
-private fun CircuitLoopIcon(tint: Color, modifier: Modifier = Modifier) {
+private fun CircuitLoopIcon(
+    tint: Color,
+    modifier: Modifier = Modifier,
+) {
     Canvas(modifier = modifier) {
         val w = size.width
         val h = size.height
@@ -465,19 +488,24 @@ private fun CircuitLoopIcon(tint: Color, modifier: Modifier = Modifier) {
         val endX = loopCx + loopR * cos(endAngleRad).toFloat()
         val endY = loopCy + loopR * sin(endAngleRad).toFloat()
         val headSize = w * 0.10f
-        val headPath = Path().apply {
-            moveTo(endX - headSize, endY - headSize * 0.4f)
-            lineTo(endX + headSize * 0.3f, endY - headSize)
-            lineTo(endX + headSize * 0.5f, endY + headSize * 0.5f)
-            close()
-        }
+        val headPath =
+            Path().apply {
+                moveTo(endX - headSize, endY - headSize * 0.4f)
+                lineTo(endX + headSize * 0.3f, endY - headSize)
+                lineTo(endX + headSize * 0.5f, endY + headSize * 0.5f)
+                close()
+            }
         drawPath(headPath, color = tint)
     }
 }
 
 /** M11: routine-level round count for circuits — the one structural control a circuit template has. */
 @Composable
-private fun RoundsStepperCard(rounds: Int, onAddRound: () -> Unit, onRemoveRound: () -> Unit) {
+private fun RoundsStepperCard(
+    rounds: Int,
+    onAddRound: () -> Unit,
+    onRemoveRound: () -> Unit,
+) {
     LogEzCard(modifier = Modifier.fillMaxWidth().padding(bottom = Spacing.sm)) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.md, vertical = Spacing.xs),

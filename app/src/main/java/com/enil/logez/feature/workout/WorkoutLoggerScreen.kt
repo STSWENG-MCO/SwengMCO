@@ -7,32 +7,34 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -40,14 +42,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -73,16 +73,14 @@ import com.enil.logez.core.designsystem.Radius
 import com.enil.logez.core.designsystem.Spacing
 import com.enil.logez.core.designsystem.SyncOptimisticList
 import com.enil.logez.core.designsystem.logEzTopAppBarColors
+import com.enil.logez.core.designsystem.rememberClockTimeFormatter
 import com.enil.logez.core.domain.model.WorkoutStructure
+import com.enil.logez.core.wellness.HeartRateSample
 import com.enil.logez.feature.exercises.ExercisePickerMode
 import com.enil.logez.feature.exercises.ExercisePickerSheet
-import com.enil.logez.core.wellness.HeartRateSample
 import com.enil.logez.feature.workout.finish.fromDatePickerMillis
 import com.enil.logez.feature.workout.finish.labelRes
 import com.enil.logez.feature.workout.finish.toDatePickerMillis
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.currentCoroutineContext
@@ -91,10 +89,16 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
-import com.enil.logez.core.designsystem.rememberClockTimeFormatter
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 /** M20d: which set the screen-hoisted plate calculator sheet is open for. */
-private data class PlateTarget(val exerciseId: String, val setId: String, val initialWeightKg: Double?)
+private data class PlateTarget(
+    val exerciseId: String,
+    val setId: String,
+    val initialWeightKg: Double?,
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -146,31 +150,32 @@ fun WorkoutLoggerScreen(
     // Stable callback object for card composables — replaces direct viewModel references.
     // Each lambda captures only the ViewModel reference (stable across recompositions); the
     // exercise/set IDs are bound at the call site inside the lambda body.
-    val workoutCallbacks = remember {
-        WorkoutCallbacks(
-            onStartSupersetSelection = viewModel::startSupersetSelection,
-            onConfirmSupersetTarget = viewModel::confirmSupersetTarget,
-            onRemoveFromSuperset = viewModel::removeFromSuperset,
-            onRemoveExercise = viewModel::removeExercise,
-            onUpdateNotes = viewModel::updateExerciseNotes,
-            onAddSet = viewModel::addSet,
-            onAddWarmupSets = viewModel::addWarmupSets,
-            onUpdateSetType = viewModel::updateSetType,
-            onRemoveSet = viewModel::removeSet,
-            onUpdateWeight = viewModel::updateWeight,
-            onUpdateReps = viewModel::updateReps,
-            onUpdateDuration = viewModel::updateDuration,
-            onUpdateDistance = viewModel::updateDistance,
-            onUpdateCustomMetric = viewModel::updateCustomMetric,
-            onToggleCheck = viewModel::toggleCheck,
-            onUpdateRpe = viewModel::updateRpe,
-            onStartInlineTimer = viewModel::startInlineTimer,
-            onStopInlineTimer = viewModel::stopInlineTimer,
-            onOpenPlateCalculator = { exerciseId, setId, currentWeightKg ->
-                plateTarget = PlateTarget(exerciseId, setId, currentWeightKg)
-            },
-        )
-    }
+    val workoutCallbacks =
+        remember {
+            WorkoutCallbacks(
+                onStartSupersetSelection = viewModel::startSupersetSelection,
+                onConfirmSupersetTarget = viewModel::confirmSupersetTarget,
+                onRemoveFromSuperset = viewModel::removeFromSuperset,
+                onRemoveExercise = viewModel::removeExercise,
+                onUpdateNotes = viewModel::updateExerciseNotes,
+                onAddSet = viewModel::addSet,
+                onAddWarmupSets = viewModel::addWarmupSets,
+                onUpdateSetType = viewModel::updateSetType,
+                onRemoveSet = viewModel::removeSet,
+                onUpdateWeight = viewModel::updateWeight,
+                onUpdateReps = viewModel::updateReps,
+                onUpdateDuration = viewModel::updateDuration,
+                onUpdateDistance = viewModel::updateDistance,
+                onUpdateCustomMetric = viewModel::updateCustomMetric,
+                onToggleCheck = viewModel::toggleCheck,
+                onUpdateRpe = viewModel::updateRpe,
+                onStartInlineTimer = viewModel::startInlineTimer,
+                onStopInlineTimer = viewModel::stopInlineTimer,
+                onOpenPlateCalculator = { exerciseId, setId, currentWeightKg ->
+                    plateTarget = PlateTarget(exerciseId, setId, currentWeightKg)
+                },
+            )
+        }
 
     // §5.1.10: "Returns to Workout Detail." Driven off ViewModel state, not the tap, so a save
     // that outlives an Activity recreation still navigates when it lands.
@@ -266,16 +271,20 @@ fun WorkoutLoggerScreen(
                             // (not AssistChip's padding) both fix that.
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                                 Box(
-                                    modifier = Modifier
-                                        .weight(1f, fill = false)
-                                        .clickable(enabled = uiState.exercises.isNotEmpty()) { timerMenuExpanded = true },
+                                    modifier =
+                                        Modifier
+                                            .weight(1f, fill = false)
+                                            .clickable(enabled = uiState.exercises.isNotEmpty()) { timerMenuExpanded = true },
                                 ) {
                                     WorkoutStatsText(elapsedSecondsFlow = viewModel.elapsedSecondsFlow)
                                 }
                                 DropdownMenu(expanded = timerMenuExpanded, onDismissRequest = { timerMenuExpanded = false }) {
                                     DropdownMenuItem(
                                         text = { Text(stringResource(if (uiState.isPaused) R.string.workout_resume_timer else R.string.workout_pause_timer)) },
-                                        onClick = { timerMenuExpanded = false; viewModel.togglePause() },
+                                        onClick = {
+                                            timerMenuExpanded = false
+                                            viewModel.togglePause()
+                                        },
                                     )
                                 }
                                 // M21f: absent whenever Health Connect has nothing to show (not
@@ -331,8 +340,14 @@ fun WorkoutLoggerScreen(
                             // Plain navigation — the session is write-through and foregrounded by
                             // the service, and the ViewModel (kept alive beneath Settings) observes
                             // the settings Flow, so edits made there apply live on return.
-                            DropdownMenuItem(text = { Text(stringResource(R.string.settings_title)) }, onClick = { menuExpanded = false; onSettingsClick() })
-                            DropdownMenuItem(text = { Text(stringResource(R.string.workout_discard)) }, onClick = { menuExpanded = false; showDiscardConfirm = true })
+                            DropdownMenuItem(text = { Text(stringResource(R.string.settings_title)) }, onClick = {
+                                menuExpanded = false
+                                onSettingsClick()
+                            })
+                            DropdownMenuItem(text = { Text(stringResource(R.string.workout_discard)) }, onClick = {
+                                menuExpanded = false
+                                showDiscardConfirm = true
+                            })
                         }
                     }
                 },
@@ -396,7 +411,7 @@ fun WorkoutLoggerScreen(
         workoutCallbacks = workoutCallbacks,
         pickerModeState = pickerModeState,
         replaceTargetIdState = replaceTargetIdState,
-                        pendingReplaceTargetIdState = pendingReplaceTargetIdState,
+        pendingReplaceTargetIdState = pendingReplaceTargetIdState,
         onCreateExercise = onCreateExercise,
         plateTargetState = plateTargetState,
         showEditDatePickerState = showEditDatePickerState,
@@ -452,7 +467,10 @@ private fun WorkoutLoggerDialogs(
     pickerMode?.let { mode ->
         ExercisePickerSheet(
             mode = mode,
-            onDismiss = { pickerMode = null; replaceTargetId = null },
+            onDismiss = {
+                pickerMode = null
+                replaceTargetId = null
+            },
             onAddCommitted = { exercises -> viewModel.addExercises(exercises) },
             onExercisePicked = { exercise -> replaceTargetId?.let { viewModel.replaceExercise(it, exercise) } },
             onCreateExercise = onCreateExercise,
@@ -544,7 +562,10 @@ private fun WorkoutLoggerDialogs(
             title = stringResource(R.string.workout_replace_confirm_title),
             body = stringResource(R.string.workout_replace_confirm_body),
             confirmLabel = stringResource(R.string.workout_replace_confirm_action),
-            onConfirm = { replaceTargetId = targetId; pickerMode = ExercisePickerMode.REPLACE },
+            onConfirm = {
+                replaceTargetId = targetId
+                pickerMode = ExercisePickerMode.REPLACE
+            },
             dismissLabel = stringResource(R.string.action_cancel),
         )
     }
@@ -588,13 +609,14 @@ private fun ColumnScope.CircuitWorkoutBody(
     var replaceTargetId by replaceTargetIdState
     var pendingReplaceTargetId by pendingReplaceTargetIdState
     var pendingRemoveRoundIndex by pendingRemoveRoundIndexState
-    val displayConfig = WorkoutLoggerDisplayConfig(
-        rpeTrackingEnabled = uiState.rpeTrackingEnabled,
-        inlineTimerEnabled = uiState.inlineTimerEnabled,
-        isEditMode = uiState.isEditMode,
-        plateCalculator = uiState.plateCalculator,
-        weightUnit = uiState.weightUnit,
-    )
+    val displayConfig =
+        WorkoutLoggerDisplayConfig(
+            rpeTrackingEnabled = uiState.rpeTrackingEnabled,
+            inlineTimerEnabled = uiState.inlineTimerEnabled,
+            isEditMode = uiState.isEditMode,
+            plateCalculator = uiState.plateCalculator,
+            weightUnit = uiState.weightUnit,
+        )
 
     // M11: round-grouped rendering — one card per round, exercises in sequence
     // order inside it. Grouping is pure (buildCircuitRounds) and never repairs
@@ -612,7 +634,14 @@ private fun ColumnScope.CircuitWorkoutBody(
                 round = round,
                 callbacks = workoutCallbacks,
                 onExerciseClick = onExerciseClick,
-                onOpenReplacePicker = { weId -> if (uiState.exercises.hasCompletedSets(weId)) pendingReplaceTargetId = weId else { replaceTargetId = weId; pickerMode = ExercisePickerMode.REPLACE } },
+                onOpenReplacePicker = { weId ->
+                    if (uiState.exercises.hasCompletedSets(weId)) {
+                        pendingReplaceTargetId = weId
+                    } else {
+                        replaceTargetId = weId
+                        pickerMode = ExercisePickerMode.REPLACE
+                    }
+                },
                 onRemoveRound = {
                     val roundIndex = round.roundNumber - 1
                     if (viewModel.roundHasLoggedValues(roundIndex)) {
@@ -676,31 +705,37 @@ private fun ColumnScope.RegularWorkoutBody(
     var pickerMode by pickerModeState
     var replaceTargetId by replaceTargetIdState
     var pendingReplaceTargetId by pendingReplaceTargetIdState
-    val displayConfig = WorkoutLoggerDisplayConfig(
-        rpeTrackingEnabled = uiState.rpeTrackingEnabled,
-        inlineTimerEnabled = uiState.inlineTimerEnabled,
-        isEditMode = uiState.isEditMode,
-        plateCalculator = uiState.plateCalculator,
-        warmupCalculatorEnabled = uiState.warmupCalculatorEnabled,
-        weightUnit = uiState.weightUnit,
-    )
+    val displayConfig =
+        WorkoutLoggerDisplayConfig(
+            rpeTrackingEnabled = uiState.rpeTrackingEnabled,
+            inlineTimerEnabled = uiState.inlineTimerEnabled,
+            isEditMode = uiState.isEditMode,
+            plateCalculator = uiState.plateCalculator,
+            warmupCalculatorEnabled = uiState.warmupCalculatorEnabled,
+            weightUnit = uiState.weightUnit,
+        )
 
     // M20a drag reorder: the ViewModel's reorderExercises() is write-through (one
     // persist{} batch per call) and Reorderable's onMove fires on every hover swap, so
     // a screen-level optimistic copy absorbs the swaps and the ViewModel gets exactly
     // one call on drop. One list instance for the screen's life (see SyncOptimisticList).
     val localExercises = remember { mutableStateListOf<WorkoutExerciseUiModel>().apply { addAll(uiState.exercises) } }
-    val reorderState = rememberReorderableLazyListState(listState) { from, to ->
-        val fromKey = from.key as? String ?: return@rememberReorderableLazyListState
-        val toKey = to.key as? String ?: return@rememberReorderableLazyListState
-        val fromIndex = localExercises.indexOfFirst { it.id == fromKey }
-        val toIndex = localExercises.indexOfFirst { it.id == toKey }
-        if (fromIndex >= 0 && toIndex >= 0) localExercises.add(toIndex, localExercises.removeAt(fromIndex))
-    }
+    val reorderState =
+        rememberReorderableLazyListState(listState) { from, to ->
+            val fromKey = from.key as? String ?: return@rememberReorderableLazyListState
+            val toKey = to.key as? String ?: return@rememberReorderableLazyListState
+            val fromIndex = localExercises.indexOfFirst { it.id == fromKey }
+            val toIndex = localExercises.indexOfFirst { it.id == toKey }
+            if (fromIndex >= 0 && toIndex >= 0) localExercises.add(toIndex, localExercises.removeAt(fromIndex))
+        }
     SyncOptimisticList(localExercises, uiState.exercises, reorderState.isAnyItemDragging)
     val commitOrder = { viewModel.reorderExercises(localExercises.map { it.id }) }
+
     // Accessibility "Move up/down" (DragHandle custom actions): one slot, then commit.
-    fun nudge(id: String, delta: Int) {
+    fun nudge(
+        id: String,
+        delta: Int,
+    ) {
         val from = localExercises.indexOfFirst { it.id == id }
         val to = from + delta
         if (from < 0 || to !in localExercises.indices) return
@@ -728,7 +763,14 @@ private fun ColumnScope.RegularWorkoutBody(
                     isSupersetSource = exercise.id == uiState.supersetSourceExerciseId,
                     callbacks = workoutCallbacks,
                     onExerciseClick = { onExerciseClick(exercise.exerciseId) },
-                    onOpenReplacePicker = { if (uiState.exercises.hasCompletedSets(exercise.id)) pendingReplaceTargetId = exercise.id else { replaceTargetId = exercise.id; pickerMode = ExercisePickerMode.REPLACE } },
+                    onOpenReplacePicker = {
+                        if (uiState.exercises.hasCompletedSets(exercise.id)) {
+                            pendingReplaceTargetId = exercise.id
+                        } else {
+                            replaceTargetId = exercise.id
+                            pickerMode = ExercisePickerMode.REPLACE
+                        }
+                    },
                     onRpeChange = { setId, rpe -> viewModel.updateRpe(exercise.id, setId, rpe) },
                     inlineTimerSetId = if (uiState.inlineTimerExerciseId == exercise.id) uiState.inlineTimerSetId else null,
                     inlineTimerSecondsFlow = viewModel.inlineTimerSecondsFlow,
@@ -794,7 +836,10 @@ private fun WorkoutStatsText(elapsedSecondsFlow: Flow<Long>) {
 
 /** Compact live-heart-rate chip beside the session timer. */
 @Composable
-private fun HeartRateChip(liveBpmFlow: Flow<HeartRateSample?>, modifier: Modifier = Modifier) {
+private fun HeartRateChip(
+    liveBpmFlow: Flow<HeartRateSample?>,
+    modifier: Modifier = Modifier,
+) {
     val sample by liveBpmFlow.collectAsStateWithLifecycle(null)
     val value = sample?.bpm ?: return
     Surface(
@@ -818,7 +863,6 @@ private fun formatElapsed(totalSeconds: Long): String {
     val s = totalSeconds % 60
     return if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%d:%02d".format(m, s)
 }
-
 
 /**
  * §5.1.10's replacement for the live stopwatch: the workout's date and duration, both editable.
@@ -867,15 +911,21 @@ private fun EditDateDurationRows(
     }
 }
 
-private fun formatEditDate(millis: Long): String =
-    Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("d MMM yyyy"))
+private fun formatEditDate(millis: Long): String = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("d MMM yyyy"))
 
-private fun formatEditDateTime(millis: Long, clock: DateTimeFormatter): String {
+private fun formatEditDateTime(
+    millis: Long,
+    clock: DateTimeFormatter,
+): String {
     val zoned = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
     return zoned.format(DateTimeFormatter.ofPattern("d MMM yyyy")) + ", " + zoned.format(clock)
 }
 
-private fun formatVolumeShort(kg: Double, unit: com.enil.logez.core.domain.model.WeightUnit): String = com.enil.logez.core.designsystem.formatWeight(kg, unit)
+private fun formatVolumeShort(
+    kg: Double,
+    unit: com.enil.logez.core.domain.model.WeightUnit,
+): String =
+    com.enil.logez.core.designsystem
+        .formatWeight(kg, unit)
 
-private fun List<WorkoutExerciseUiModel>.hasCompletedSets(workoutExerciseId: String): Boolean =
-    any { it.id == workoutExerciseId && it.sets.any { s -> s.isCompleted } }
+private fun List<WorkoutExerciseUiModel>.hasCompletedSets(workoutExerciseId: String): Boolean = any { it.id == workoutExerciseId && it.sets.any { s -> s.isCompleted } }

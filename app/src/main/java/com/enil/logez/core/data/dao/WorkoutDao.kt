@@ -50,8 +50,13 @@ interface WorkoutDao {
      * 25 hours long across a DST change is still exactly one day — which a fixed +86_400_000 would
      * get wrong twice a year.
      */
-    @Query("SELECT * FROM workouts WHERE status = 'COMPLETED' AND started_at >= :fromMillis AND started_at < :untilMillis ORDER BY started_at ASC")
-    suspend fun getCompletedWorkoutsBetween(fromMillis: Long, untilMillis: Long): List<WorkoutEntity>
+    @Query(
+        "SELECT * FROM workouts WHERE status = 'COMPLETED' AND started_at >= :fromMillis AND started_at < :untilMillis ORDER BY started_at ASC",
+    )
+    suspend fun getCompletedWorkoutsBetween(
+        fromMillis: Long,
+        untilMillis: Long,
+    ): List<WorkoutEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertWorkoutExercises(exercises: List<WorkoutExerciseEntity>)
@@ -69,32 +74,60 @@ interface WorkoutDao {
     // whole-row @Update reconstructed from the UI model would need every field (orderIndex,
     // completedAt, ...) the UI doesn't track, silently clobbering them on every keystroke.
     @Query("UPDATE workout_sets SET weight_kg = :kg WHERE id = :id")
-    suspend fun updateWorkoutSetWeight(id: String, kg: Double?)
+    suspend fun updateWorkoutSetWeight(
+        id: String,
+        kg: Double?,
+    )
 
     @Query("UPDATE workout_sets SET reps = :reps WHERE id = :id")
-    suspend fun updateWorkoutSetReps(id: String, reps: Int?)
+    suspend fun updateWorkoutSetReps(
+        id: String,
+        reps: Int?,
+    )
 
     @Query("UPDATE workout_sets SET duration_seconds = :seconds WHERE id = :id")
-    suspend fun updateWorkoutSetDuration(id: String, seconds: Int?)
+    suspend fun updateWorkoutSetDuration(
+        id: String,
+        seconds: Int?,
+    )
 
     @Query("UPDATE workout_sets SET distance_meters = :meters WHERE id = :id")
-    suspend fun updateWorkoutSetDistance(id: String, meters: Double?)
+    suspend fun updateWorkoutSetDistance(
+        id: String,
+        meters: Double?,
+    )
 
     @Query("UPDATE workout_sets SET custom_metric = :value WHERE id = :id")
-    suspend fun updateWorkoutSetCustomMetric(id: String, value: Double?)
+    suspend fun updateWorkoutSetCustomMetric(
+        id: String,
+        value: Double?,
+    )
 
     @Query("UPDATE workout_sets SET rpe = :rpe WHERE id = :id")
-    suspend fun updateWorkoutSetRpe(id: String, rpe: Double?)
+    suspend fun updateWorkoutSetRpe(
+        id: String,
+        rpe: Double?,
+    )
 
     @Query("UPDATE workout_sets SET set_type = :type WHERE id = :id")
-    suspend fun updateWorkoutSetType(id: String, type: SetType)
+    suspend fun updateWorkoutSetType(
+        id: String,
+        type: SetType,
+    )
 
     @Query("UPDATE workout_sets SET is_completed = :completed, completed_at = :completedAt WHERE id = :id")
-    suspend fun updateWorkoutSetCompletion(id: String, completed: Boolean, completedAt: Long?)
+    suspend fun updateWorkoutSetCompletion(
+        id: String,
+        completed: Boolean,
+        completedAt: Long?,
+    )
 
     /** M11 circuits: removing round k re-indexes every exercise's later rounds down by one. */
     @Query("UPDATE workout_sets SET order_index = :orderIndex WHERE id = :id")
-    suspend fun updateWorkoutSetOrderIndex(id: String, orderIndex: Int)
+    suspend fun updateWorkoutSetOrderIndex(
+        id: String,
+        orderIndex: Int,
+    )
 
     @Query("DELETE FROM workout_sets WHERE id = :id")
     suspend fun deleteWorkoutSetById(id: String)
@@ -103,7 +136,10 @@ interface WorkoutDao {
     suspend fun deleteWorkoutExerciseById(id: String)
 
     @Query("UPDATE workout_exercises SET order_index = :orderIndex WHERE id = :id")
-    suspend fun updateWorkoutExerciseOrderIndex(id: String, orderIndex: Int)
+    suspend fun updateWorkoutExerciseOrderIndex(
+        id: String,
+        orderIndex: Int,
+    )
 
     /**
      * M20a: one transaction for a whole permutation, mirroring [RoutineDao.reorderRoutines] — the
@@ -116,20 +152,36 @@ interface WorkoutDao {
     }
 
     @Query("UPDATE workout_exercises SET superset_group = :supersetGroup WHERE id = :id")
-    suspend fun updateWorkoutExerciseSuperset(id: String, supersetGroup: Int?)
+    suspend fun updateWorkoutExerciseSuperset(
+        id: String,
+        supersetGroup: Int?,
+    )
 
     @Query("UPDATE workout_exercises SET notes = :notes WHERE id = :id")
-    suspend fun updateWorkoutExerciseNotes(id: String, notes: String?)
+    suspend fun updateWorkoutExerciseNotes(
+        id: String,
+        notes: String?,
+    )
 
     @Query("UPDATE workout_exercises SET rest_timer_seconds = :seconds WHERE id = :id")
-    suspend fun updateWorkoutExerciseRestTimer(id: String, seconds: Int?)
+    suspend fun updateWorkoutExerciseRestTimer(
+        id: String,
+        seconds: Int?,
+    )
 
     @Query("UPDATE workout_exercises SET exercise_id = :newExerciseId WHERE id = :id")
-    suspend fun updateWorkoutExerciseExerciseId(id: String, newExerciseId: String)
+    suspend fun updateWorkoutExerciseExerciseId(
+        id: String,
+        newExerciseId: String,
+    )
 
     /** §5.1.3 Replace Exercise: swaps the exercise id, rewrites the *same* set rows with carried-over values. */
     @Transaction
-    suspend fun replaceWorkoutExerciseExercise(workoutExerciseId: String, newExerciseId: String, carriedOverSets: List<WorkoutSetEntity>) {
+    suspend fun replaceWorkoutExerciseExercise(
+        workoutExerciseId: String,
+        newExerciseId: String,
+        carriedOverSets: List<WorkoutSetEntity>,
+    ) {
         updateWorkoutExerciseExerciseId(workoutExerciseId, newExerciseId)
         carriedOverSets.forEach { updateWorkoutSet(it) }
     }
@@ -384,7 +436,10 @@ interface WorkoutDao {
           AND (started_at < :startedAt OR (started_at = :startedAt AND id <= :workoutId))
         """,
     )
-    suspend fun countCompletedWorkoutsUpTo(startedAt: Long, workoutId: String): Int
+    suspend fun countCompletedWorkoutsUpTo(
+        startedAt: Long,
+        workoutId: String,
+    ): Int
 }
 
 /**

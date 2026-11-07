@@ -3,10 +3,10 @@ package com.enil.logez.core.wellness
 import com.enil.logez.core.common.AppLogger
 import com.enil.logez.core.data.entity.WorkoutHeartRateSampleEntity
 import com.enil.logez.core.domain.repository.WorkoutHeartRateSampleRepository
+import kotlinx.coroutines.CancellationException
 import java.time.Instant
 import java.util.UUID
 import javax.inject.Inject
-import kotlinx.coroutines.CancellationException
 
 /**
  * Copies a finished workout's heart rate from Health Connect into LogEZ's own table, adding only
@@ -22,38 +22,44 @@ import kotlinx.coroutines.CancellationException
  * Never removes anything. A later read that returns less (data deleted in Health Connect, or
  * access withdrawn) leaves the saved readings as they are.
  */
-class WorkoutHeartRateBackfill @Inject constructor(
-    private val healthMetricsSource: HealthMetricsSource,
-    private val heartRateSampleRepository: WorkoutHeartRateSampleRepository,
-    private val logger: AppLogger,
-) {
-    /** How many new readings were saved; 0 when there was nothing new, no access, or a failure. */
-    suspend fun backfill(workoutId: String, startedAtMillis: Long, endedAtMillis: Long): Int {
-        if (endedAtMillis <= startedAtMillis) return 0
-        return try {
-            if (!healthMetricsSource.canRead(HealthDataType.HEART_RATE)) return 0
-            val read = healthMetricsSource.readHeartRateSamples(Instant.ofEpochMilli(startedAtMillis), Instant.ofEpochMilli(endedAtMillis))
-            if (read.isEmpty()) return 0
-            val known = heartRateSampleRepository.getForWorkout(workoutId).map { it.recordedAt to it.bpm }.toSet()
-            val fresh = read.map { it.time.toEpochMilli() to it.bpm }.distinct().filterNot { it in known }
-            if (fresh.isEmpty()) return 0
-            heartRateSampleRepository.insertAll(
-                fresh.map { (recordedAt, bpm) ->
-                    WorkoutHeartRateSampleEntity(id = UUID.randomUUID().toString(), workoutId = workoutId, recordedAt = recordedAt, bpm = bpm)
-                },
-            )
-            fresh.size
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            // Best effort: a Health Connect or Room failure here must never break the screen or the
-            // save that triggered it.
-            logger.e(TAG, "Heart-rate backfill failed for workout $workoutId", e)
-            0
+class WorkoutHeartRateBackfill
+    @Inject
+    constructor(
+        private val healthMetricsSource: HealthMetricsSource,
+        private val heartRateSampleRepository: WorkoutHeartRateSampleRepository,
+        private val logger: AppLogger,
+    ) {
+        /** How many new readings were saved; 0 when there was nothing new, no access, or a failure. */
+        suspend fun backfill(
+            workoutId: String,
+            startedAtMillis: Long,
+            endedAtMillis: Long,
+        ): Int {
+            if (endedAtMillis <= startedAtMillis) return 0
+            return try {
+                if (!healthMetricsSource.canRead(HealthDataType.HEART_RATE)) return 0
+                val read = healthMetricsSource.readHeartRateSamples(Instant.ofEpochMilli(startedAtMillis), Instant.ofEpochMilli(endedAtMillis))
+                if (read.isEmpty()) return 0
+                val known = heartRateSampleRepository.getForWorkout(workoutId).map { it.recordedAt to it.bpm }.toSet()
+                val fresh = read.map { it.time.toEpochMilli() to it.bpm }.distinct().filterNot { it in known }
+                if (fresh.isEmpty()) return 0
+                heartRateSampleRepository.insertAll(
+                    fresh.map { (recordedAt, bpm) ->
+                        WorkoutHeartRateSampleEntity(id = UUID.randomUUID().toString(), workoutId = workoutId, recordedAt = recordedAt, bpm = bpm)
+                    },
+                )
+                fresh.size
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Best effort: a Health Connect or Room failure here must never break the screen or the
+                // save that triggered it.
+                logger.e(TAG, "Heart-rate backfill failed for workout $workoutId", e)
+                0
+            }
+        }
+
+        private companion object {
+            const val TAG = "WorkoutHeartRateBackfill"
         }
     }
-
-    private companion object {
-        const val TAG = "WorkoutHeartRateBackfill"
-    }
-}

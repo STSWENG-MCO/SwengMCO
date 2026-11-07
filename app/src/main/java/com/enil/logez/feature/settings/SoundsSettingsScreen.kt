@@ -43,7 +43,7 @@ internal interface SettingsAudioEntryPoint {
 }
 
 /** Only the timer-tone picker is still a dialog — the three volumes are inline sliders now. */
-private enum class SoundsDialog { TIMER_SOUND }
+private enum class SoundsDialog { TIMER_SOUND, }
 
 /** The audio layer ships exactly five timer tones (SoundPoolWorkoutAudioPlayer ids 1..5). */
 private val TIMER_SOUND_IDS = (1..5).toList()
@@ -67,10 +67,12 @@ fun SoundsSettingsScreen(
     var openDialog by remember { mutableStateOf<SoundsDialog?>(null) }
 
     val context = LocalContext.current
-    val audioPlayer = remember {
-        EntryPointAccessors.fromApplication(context.applicationContext, SettingsAudioEntryPoint::class.java)
-            .workoutAudioPlayer()
-    }
+    val audioPlayer =
+        remember {
+            EntryPointAccessors
+                .fromApplication(context.applicationContext, SettingsAudioEntryPoint::class.java)
+                .workoutAudioPlayer()
+        }
 
     Scaffold(
         topBar = {
@@ -129,20 +131,21 @@ fun SoundsSettingsScreen(
     }
 
     when (openDialog) {
-        SoundsDialog.TIMER_SOUND -> SettingsRadioDialog(
-            title = stringResource(R.string.settings_timer_sound),
-            options = TIMER_SOUND_IDS,
-            selected = settings.timerSound,
-            optionLabel = { stringResource(R.string.settings_timer_sound_option, it) },
-            onSelect = { soundId ->
-                viewModel.setTimerSound(soundId)
-                // Preview at the configured timer volume; if that's silenced, preview at the
-                // fallback so the pick is still audible — true silence would read as broken.
-                val previewVolume = if (settings.timerVolume <= 0f) FALLBACK_PREVIEW_VOLUME else settings.timerVolume
-                audioPlayer.playTimerSound(soundId, previewVolume)
-            },
-            onDismiss = { openDialog = null },
-        )
+        SoundsDialog.TIMER_SOUND ->
+            SettingsRadioDialog(
+                title = stringResource(R.string.settings_timer_sound),
+                options = TIMER_SOUND_IDS,
+                selected = settings.timerSound,
+                optionLabel = { stringResource(R.string.settings_timer_sound_option, it) },
+                onSelect = { soundId ->
+                    viewModel.setTimerSound(soundId)
+                    // Preview at the configured timer volume; if that's silenced, preview at the
+                    // fallback so the pick is still audible — true silence would read as broken.
+                    val previewVolume = if (settings.timerVolume <= 0f) FALLBACK_PREVIEW_VOLUME else settings.timerVolume
+                    audioPlayer.playTimerSound(soundId, previewVolume)
+                },
+                onDismiss = { openDialog = null },
+            )
         null -> Unit
     }
 }

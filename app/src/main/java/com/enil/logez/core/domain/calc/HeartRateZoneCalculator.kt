@@ -7,7 +7,11 @@ package com.enil.logez.core.domain.calc
  * (see that field's own doc comment), so there is no default/estimated zone, only "none yet" until
  * the Owner sets it once in Settings.
  */
-enum class HeartRateZone(val number: Int, val label: String, val minPercentOfMax: Double) {
+enum class HeartRateZone(
+    val number: Int,
+    val label: String,
+    val minPercentOfMax: Double,
+) {
     ZONE_1(1, "Warm Up", 0.0),
     ZONE_2(2, "Fat Burn", 0.6),
     ZONE_3(3, "Cardio", 0.7),
@@ -17,7 +21,10 @@ enum class HeartRateZone(val number: Int, val label: String, val minPercentOfMax
 
 object HeartRateZoneCalculator {
     /** Null if [maxHeartRateBpm] isn't a usable basis (unset or non-positive). */
-    fun zoneFor(bpm: Long, maxHeartRateBpm: Int?): HeartRateZone? {
+    fun zoneFor(
+        bpm: Long,
+        maxHeartRateBpm: Int?,
+    ): HeartRateZone? {
         if (maxHeartRateBpm == null || maxHeartRateBpm <= 0) return null
         val percentOfMax = bpm.toDouble() / maxHeartRateBpm
         return HeartRateZone.entries.last { percentOfMax >= it.minPercentOfMax }

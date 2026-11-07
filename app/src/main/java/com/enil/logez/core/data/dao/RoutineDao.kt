@@ -33,10 +33,17 @@ interface RoutineDao {
     suspend fun getAllFoldersOnce(): List<RoutineFolderEntity>
 
     @Query("UPDATE routine_folders SET order_index = :orderIndex WHERE id = :id")
-    suspend fun updateFolderOrderIndex(id: String, orderIndex: Int)
+    suspend fun updateFolderOrderIndex(
+        id: String,
+        orderIndex: Int,
+    )
 
     @Query("UPDATE routine_folders SET name = :name, updated_at = :updatedAt WHERE id = :id")
-    suspend fun renameFolder(id: String, name: String, updatedAt: Long)
+    suspend fun renameFolder(
+        id: String,
+        name: String,
+        updatedAt: Long,
+    )
 
     /** New folders insert at index 0 (see the entity doc comment) — shifts existing folders down. */
     @Transaction
@@ -77,10 +84,17 @@ interface RoutineDao {
     suspend fun getRoutinesInFolderOnce(folderId: String?): List<RoutineEntity>
 
     @Query("UPDATE routines SET order_index = :orderIndex WHERE id = :id")
-    suspend fun updateRoutineOrderIndex(id: String, orderIndex: Int)
+    suspend fun updateRoutineOrderIndex(
+        id: String,
+        orderIndex: Int,
+    )
 
     @Query("UPDATE routines SET folder_id = :folderId, updated_at = :updatedAt WHERE id = :id")
-    suspend fun setRoutineFolder(id: String, folderId: String?, updatedAt: Long)
+    suspend fun setRoutineFolder(
+        id: String,
+        folderId: String?,
+        updatedAt: Long,
+    )
 
     @Transaction
     suspend fun reorderRoutines(orderedIds: List<String>) {
@@ -89,7 +103,11 @@ interface RoutineDao {
 
     /** Moving into a bucket also re-homes the routine at the top of its new bucket (matches folder/routine creation convention). */
     @Transaction
-    suspend fun moveRoutineToFolder(id: String, folderId: String?, updatedAt: Long) {
+    suspend fun moveRoutineToFolder(
+        id: String,
+        folderId: String?,
+        updatedAt: Long,
+    ) {
         getRoutinesInFolderOnce(folderId).forEach { updateRoutineOrderIndex(it.id, it.orderIndex + 1) }
         setRoutineFolder(id, folderId, updatedAt)
         updateRoutineOrderIndex(id, 0)
@@ -97,7 +115,11 @@ interface RoutineDao {
 
     /** New/duplicated routines insert at the top of their bucket (folder or root) — same convention as folders. */
     @Transaction
-    suspend fun createRoutineAtTop(routine: RoutineEntity, exercises: List<RoutineExerciseEntity>, sets: List<RoutineSetEntity>) {
+    suspend fun createRoutineAtTop(
+        routine: RoutineEntity,
+        exercises: List<RoutineExerciseEntity>,
+        sets: List<RoutineSetEntity>,
+    ) {
         getRoutinesInFolderOnce(routine.folderId).forEach { updateRoutineOrderIndex(it.id, it.orderIndex + 1) }
         upsertRoutine(routine)
         insertRoutineExercises(exercises)
@@ -106,7 +128,11 @@ interface RoutineDao {
 
     /** Routine Builder's edit-mode save: full structural replace, keeping the routine's existing position. */
     @Transaction
-    suspend fun updateRoutineStructure(routine: RoutineEntity, exercises: List<RoutineExerciseEntity>, sets: List<RoutineSetEntity>) {
+    suspend fun updateRoutineStructure(
+        routine: RoutineEntity,
+        exercises: List<RoutineExerciseEntity>,
+        sets: List<RoutineSetEntity>,
+    ) {
         deleteExercisesForRoutine(routine.id) // cascades routine_sets via FK
         upsertRoutine(routine)
         insertRoutineExercises(exercises)

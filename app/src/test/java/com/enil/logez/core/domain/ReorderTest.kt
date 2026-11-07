@@ -10,10 +10,14 @@ import org.junit.Test
  * snapshot taken mid-drag.
  */
 class ReorderTest {
-    private data class Item(val id: String)
+    private data class Item(
+        val id: String,
+    )
 
-    private fun reorder(items: List<String>, orderedIds: List<String>) =
-        items.map { Item(it) }.reorderedBy(orderedIds) { it.id }.map { it.id }
+    private fun reorder(
+        items: List<String>,
+        orderedIds: List<String>,
+    ) = items.map { Item(it) }.reorderedBy(orderedIds) { it.id }.map { it.id }
 
     @Test
     fun `a full id list permutes the items in that order`() {

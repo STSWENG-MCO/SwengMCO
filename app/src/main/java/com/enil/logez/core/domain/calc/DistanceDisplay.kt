@@ -17,5 +17,8 @@ object DistanceDisplay {
 
     fun unitMeters(unit: DistanceUnit): Double = if (unit == DistanceUnit.MILES) METERS_PER_MILE else METERS_PER_KM
 
-    fun toDisplay(meters: Double, unit: DistanceUnit): Double = meters / unitMeters(unit)
+    fun toDisplay(
+        meters: Double,
+        unit: DistanceUnit,
+    ): Double = meters / unitMeters(unit)
 }

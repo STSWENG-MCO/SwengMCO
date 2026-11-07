@@ -19,9 +19,18 @@ import java.time.ZoneId
  * warm-up-inclusion semantics can never drift between the dashboard and Goals.
  */
 object GoalProgressCalculator {
-    data class Progress(val current: Double, val target: Double, val periodStart: LocalDate, val periodEnd: LocalDate)
+    data class Progress(
+        val current: Double,
+        val target: Double,
+        val periodStart: LocalDate,
+        val periodEnd: LocalDate,
+    )
 
-    fun currentPeriodWindow(period: GoalPeriod, today: LocalDate, firstDayOfWeek: DayOfWeek): ClosedRange<LocalDate> =
+    fun currentPeriodWindow(
+        period: GoalPeriod,
+        today: LocalDate,
+        firstDayOfWeek: DayOfWeek,
+    ): ClosedRange<LocalDate> =
         when (period) {
             GoalPeriod.DAILY -> today..today
             GoalPeriod.WEEKLY -> {
@@ -42,19 +51,22 @@ object GoalProgressCalculator {
     ): Progress {
         val window = currentPeriodWindow(goal.period, today, firstDayOfWeek)
         val totals = DashboardAggregator.periodTotals(workouts, sets, window, zone, includeWarmupsInStats)
-        val current = when (goal.metric) {
-            GoalMetric.VOLUME -> totals.volumeKg
-            GoalMetric.DURATION -> totals.durationSeconds.toDouble()
-            GoalMetric.WORKOUT_COUNT -> totals.workouts.toDouble()
-            GoalMetric.REPS -> {
-                val workoutIds = workouts
-                    .filter { DashboardAggregator.localDate(it.startedAt, zone) in window }
-                    .map { it.id }.toHashSet()
-                sets
-                    .filter { it.set.workoutId in workoutIds && isIncluded(it.set, includeWarmupsInStats) }
-                    .sumOf { (it.set.reps ?: 0).toDouble() }
+        val current =
+            when (goal.metric) {
+                GoalMetric.VOLUME -> totals.volumeKg
+                GoalMetric.DURATION -> totals.durationSeconds.toDouble()
+                GoalMetric.WORKOUT_COUNT -> totals.workouts.toDouble()
+                GoalMetric.REPS -> {
+                    val workoutIds =
+                        workouts
+                            .filter { DashboardAggregator.localDate(it.startedAt, zone) in window }
+                            .map { it.id }
+                            .toHashSet()
+                    sets
+                        .filter { it.set.workoutId in workoutIds && isIncluded(it.set, includeWarmupsInStats) }
+                        .sumOf { (it.set.reps ?: 0).toDouble() }
+                }
             }
-        }
         return Progress(current = current, target = goal.targetValue, periodStart = window.start, periodEnd = window.endInclusive)
     }
 }

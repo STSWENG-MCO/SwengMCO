@@ -15,6 +15,8 @@ interface ElapsedRealtimeClock {
 }
 
 @Singleton
-class SystemElapsedRealtimeClock @Inject constructor() : ElapsedRealtimeClock {
-    override fun elapsedRealtimeMillis(): Long = android.os.SystemClock.elapsedRealtime()
-}
+class SystemElapsedRealtimeClock
+    @Inject
+    constructor() : ElapsedRealtimeClock {
+        override fun elapsedRealtimeMillis(): Long = android.os.SystemClock.elapsedRealtime()
+    }

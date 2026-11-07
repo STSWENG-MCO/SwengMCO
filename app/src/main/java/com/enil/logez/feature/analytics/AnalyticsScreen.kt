@@ -9,19 +9,21 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
+import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -41,6 +43,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
@@ -60,8 +63,8 @@ import com.enil.logez.core.designsystem.Radius
 import com.enil.logez.core.designsystem.RefreshOnResume
 import com.enil.logez.core.designsystem.ScreenTitle
 import com.enil.logez.core.designsystem.Spacing
-import com.enil.logez.core.designsystem.logEzTopAppBarColors
 import com.enil.logez.core.designsystem.currentLocale
+import com.enil.logez.core.designsystem.logEzTopAppBarColors
 import com.enil.logez.core.domain.calc.BodyRegion
 import com.enil.logez.core.domain.calc.ChartRange
 import com.enil.logez.core.domain.calc.DashboardAggregator.TrainingMetric
@@ -69,13 +72,9 @@ import com.enil.logez.core.domain.calc.MuscleStatsCalculator
 import com.enil.logez.core.domain.calc.RegionShare
 import com.enil.logez.core.domain.calc.StatBucket
 import com.enil.logez.core.domain.model.MuscleGroup
-import androidx.compose.material.icons.outlined.BarChart
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.ui.semantics.Role
 
 /**
  * PHASE2_PLAN.md §5.2 "Analytics dashboard" — scrollable column of stat cards. Every §8-owned
@@ -125,7 +124,9 @@ fun AnalyticsScreen(
         }
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(Spacing.md),
+            contentPadding =
+                androidx.compose.foundation.layout
+                    .PaddingValues(Spacing.md),
             verticalArrangement = Arrangement.spacedBy(Spacing.md),
         ) {
             item(key = "training") { TrainingCard(uiState, viewModel) }
@@ -147,7 +148,10 @@ fun AnalyticsScreen(
 // --- shared bits ---
 
 @Composable
-internal fun RangeChips(selected: ChartRange, onSelect: (ChartRange) -> Unit) {
+internal fun RangeChips(
+    selected: ChartRange,
+    onSelect: (ChartRange) -> Unit,
+) {
     Row(horizontalArrangement = Arrangement.spacedBy(Spacing.xs)) {
         ChartRange.entries.forEach { range ->
             RangeChip(rangeLabel(range), selected = range == selected, onClick = { onSelect(range) })
@@ -166,56 +170,67 @@ internal fun RangeChips(selected: ChartRange, onSelect: (ChartRange) -> Unit) {
  * shouting rows of chips stacked on top of each other.
  */
 @Composable
-private fun MetricChip(label: String, selected: Boolean, onClick: () -> Unit) {
+private fun MetricChip(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
     val shape = RoundedCornerShape(Radius.pill)
     val primary = MaterialTheme.colorScheme.primary
     ChipTouchTarget(selected = selected, onClick = onClick) {
-    Box(
-        modifier = Modifier
-            .clip(shape)
-            .background(if (selected) primary else Color.Transparent)
-            .let { if (selected) it else it.border(1.dp, MaterialTheme.colorScheme.outline, shape) }
-            .padding(horizontal = Spacing.sm, vertical = Spacing.xs),
-    ) {
-        Text(
-            label.uppercase(currentLocale()),
-            style = LogEzMono.dataSmall.copy(
-                fontWeight = FontWeight.Medium,
-                letterSpacing = 0.08.em,
-                color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-            ),
-        )
-    }
+        Box(
+            modifier =
+                Modifier
+                    .clip(shape)
+                    .background(if (selected) primary else Color.Transparent)
+                    .let { if (selected) it else it.border(1.dp, MaterialTheme.colorScheme.outline, shape) }
+                    .padding(horizontal = Spacing.sm, vertical = Spacing.xs),
+        ) {
+            Text(
+                label.uppercase(currentLocale()),
+                style =
+                    LogEzMono.dataSmall.copy(
+                        fontWeight = FontWeight.Medium,
+                        letterSpacing = 0.08.em,
+                        color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
+            )
+        }
     }
 }
 
 /** The quiet chip: rounded-rect (not a pill), smaller, selected = a green *tint* rather than a fill. */
 @Composable
-private fun RangeChip(label: String, selected: Boolean, onClick: () -> Unit) {
+private fun RangeChip(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
     val shape = RoundedCornerShape(Radius.sm)
     val primary = MaterialTheme.colorScheme.primary
     ChipTouchTarget(selected = selected, onClick = onClick) {
-    Box(
-        modifier = Modifier
-            .clip(shape)
-            .background(if (selected) primary.copy(alpha = 0.14f) else Color.Transparent)
-            .border(
-                1.dp,
-                if (selected) primary.copy(alpha = 0.35f) else MaterialTheme.colorScheme.outlineVariant,
-                shape,
+        Box(
+            modifier =
+                Modifier
+                    .clip(shape)
+                    .background(if (selected) primary.copy(alpha = 0.14f) else Color.Transparent)
+                    .border(
+                        1.dp,
+                        if (selected) primary.copy(alpha = 0.35f) else MaterialTheme.colorScheme.outlineVariant,
+                        shape,
+                    ).padding(horizontal = Spacing.xs, vertical = Spacing.xxs),
+        ) {
+            Text(
+                label.uppercase(currentLocale()),
+                style =
+                    LogEzMono.dataSmall.copy(
+                        fontSize = 10.sp,
+                        lineHeight = 14.sp,
+                        letterSpacing = 0.06.em,
+                        color = if (selected) primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
             )
-            .padding(horizontal = Spacing.xs, vertical = Spacing.xxs),
-    ) {
-        Text(
-            label.uppercase(currentLocale()),
-            style = LogEzMono.dataSmall.copy(
-                fontSize = 10.sp,
-                lineHeight = 14.sp,
-                letterSpacing = 0.06.em,
-                color = if (selected) primary else MaterialTheme.colorScheme.onSurfaceVariant,
-            ),
-        )
-    }
+        }
     }
 }
 
@@ -225,11 +240,16 @@ private fun RangeChip(label: String, selected: Boolean, onClick: () -> Unit) {
  * to TalkBack as a selectable tab with its selected state (2026-09-25 accessibility pass).
  */
 @Composable
-private fun ChipTouchTarget(selected: Boolean, onClick: () -> Unit, content: @Composable () -> Unit) {
+private fun ChipTouchTarget(
+    selected: Boolean,
+    onClick: () -> Unit,
+    content: @Composable () -> Unit,
+) {
     Box(
-        modifier = Modifier
-            .heightIn(min = 48.dp)
-            .selectable(selected = selected, role = Role.Tab, onClick = onClick),
+        modifier =
+            Modifier
+                .heightIn(min = 48.dp)
+                .selectable(selected = selected, role = Role.Tab, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         content()
@@ -241,26 +261,31 @@ private fun ChipTouchTarget(selected: Boolean, onClick: () -> Unit, content: @Co
  * lab display. Split in two so the number can be big without the period label pushing it to wrap.
  */
 @Composable
-private fun ChartReadout(label: String, value: String) {
+private fun ChartReadout(
+    label: String,
+    value: String,
+) {
     Column {
         Text(
             label.uppercase(currentLocale()),
-            style = LogEzMono.dataSmall.copy(
-                letterSpacing = 0.08.em,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            ),
+            style =
+                LogEzMono.dataSmall.copy(
+                    letterSpacing = 0.08.em,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
         )
         Text(value, style = LogEzMono.dataLarge.copy(color = MaterialTheme.colorScheme.tertiary))
     }
 }
 
 @Composable
-internal fun rangeLabel(range: ChartRange): String = when (range) {
-    ChartRange.LAST_30_DAYS -> stringResource(R.string.chart_range_30d)
-    ChartRange.LAST_3_MONTHS -> stringResource(R.string.chart_range_3m)
-    ChartRange.LAST_YEAR -> stringResource(R.string.chart_range_1y)
-    ChartRange.ALL_TIME -> stringResource(R.string.chart_range_all)
-}
+internal fun rangeLabel(range: ChartRange): String =
+    when (range) {
+        ChartRange.LAST_30_DAYS -> stringResource(R.string.chart_range_30d)
+        ChartRange.LAST_3_MONTHS -> stringResource(R.string.chart_range_3m)
+        ChartRange.LAST_YEAR -> stringResource(R.string.chart_range_1y)
+        ChartRange.ALL_TIME -> stringResource(R.string.chart_range_all)
+    }
 
 /**
  * v4.0 card headings — display face, all-caps, letter-spaced, like the mockup's stencilled
@@ -277,31 +302,46 @@ private fun CardTitle(text: String) {
 }
 
 private val weekLabelFormatter = DateTimeFormatter.ofPattern("d MMM", Locale.getDefault())
+
 internal fun weekLabel(week: LocalDate): String = weekLabelFormatter.format(week)
 
 private val monthAxisFormatter = DateTimeFormatter.ofPattern("MMM", Locale.getDefault())
 private val monthReadoutFormatter = DateTimeFormatter.ofPattern("MMM yyyy", Locale.getDefault())
 
 /** Axis label for one set-count bucket — a MONTH bucket is a month, never a "1 Jun" day label. */
-internal fun bucketAxisLabel(bucketStart: LocalDate, bucket: StatBucket): String = when (bucket) {
-    StatBucket.WEEK -> weekLabel(bucketStart)
-    StatBucket.MONTH -> monthAxisFormatter.format(bucketStart)
-}
+internal fun bucketAxisLabel(
+    bucketStart: LocalDate,
+    bucket: StatBucket,
+): String =
+    when (bucket) {
+        StatBucket.WEEK -> weekLabel(bucketStart)
+        StatBucket.MONTH -> monthAxisFormatter.format(bucketStart)
+    }
 
 /** Readout label: a WEEK bucket is a range ("Week of 10 Aug"), never a bare day date. */
 @Composable
-internal fun bucketReadoutLabel(bucketStart: LocalDate, bucket: StatBucket): String = when (bucket) {
-    StatBucket.WEEK -> stringResource(R.string.analytics_body_week_prefix, weekLabel(bucketStart))
-    StatBucket.MONTH -> monthReadoutFormatter.format(bucketStart)
-}
+internal fun bucketReadoutLabel(
+    bucketStart: LocalDate,
+    bucket: StatBucket,
+): String =
+    when (bucket) {
+        StatBucket.WEEK -> stringResource(R.string.analytics_body_week_prefix, weekLabel(bucketStart))
+        StatBucket.MONTH -> monthReadoutFormatter.format(bucketStart)
+    }
 
 /** A share row: name, proportional bar, count + percent — used by both distribution surfaces. */
 @Composable
-internal fun ShareRow(share: MuscleStatsCalculator.GroupShare, maxCount: Int, onClick: (() -> Unit)? = null) {
+internal fun ShareRow(
+    share: MuscleStatsCalculator.GroupShare,
+    maxCount: Int,
+    onClick: (() -> Unit)? = null,
+) {
     Row(
-        modifier = Modifier.fillMaxWidth()
-            .let { if (onClick != null) it.clickable(onClick = onClick) else it }
-            .padding(vertical = Spacing.xxs),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .let { if (onClick != null) it.clickable(onClick = onClick) else it }
+                .padding(vertical = Spacing.xxs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -310,14 +350,18 @@ internal fun ShareRow(share: MuscleStatsCalculator.GroupShare, maxCount: Int, on
             modifier = Modifier.width(110.dp),
         )
         Box(
-            modifier = Modifier.weight(1f).height(8.dp)
-                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp)),
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .height(8.dp)
+                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp)),
         ) {
             Box(
-                modifier = Modifier
-                    .fillMaxWidth(fraction = if (maxCount == 0) 0f else share.setCount.toFloat() / maxCount)
-                    .height(8.dp)
-                    .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(4.dp)),
+                modifier =
+                    Modifier
+                        .fillMaxWidth(fraction = if (maxCount == 0) 0f else share.setCount.toFloat() / maxCount)
+                        .height(8.dp)
+                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(4.dp)),
             )
         }
         Text(
@@ -331,7 +375,10 @@ internal fun ShareRow(share: MuscleStatsCalculator.GroupShare, maxCount: Int, on
 // --- card 1: training charts ---
 
 @Composable
-private fun TrainingCard(uiState: AnalyticsUiState, viewModel: AnalyticsViewModel) {
+private fun TrainingCard(
+    uiState: AnalyticsUiState,
+    viewModel: AnalyticsViewModel,
+) {
     val card = uiState.training
     LogEzCard {
         Column(modifier = Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
@@ -379,7 +426,10 @@ private val stepsDayFormatter = DateTimeFormatter.ofPattern("d MMM", Locale.getD
  * granularity is more useful than folding 30 days into ~4 weekly bars would be.
  */
 @Composable
-private fun StepsCard(uiState: AnalyticsUiState, viewModel: AnalyticsViewModel) {
+private fun StepsCard(
+    uiState: AnalyticsUiState,
+    viewModel: AnalyticsViewModel,
+) {
     val card = uiState.steps
     LogEzCard {
         Column(modifier = Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
@@ -406,12 +456,13 @@ private fun StepsCard(uiState: AnalyticsUiState, viewModel: AnalyticsViewModel) 
 }
 
 @Composable
-internal fun trainingMetricLabel(metric: TrainingMetric): String = when (metric) {
-    TrainingMetric.VOLUME -> stringResource(R.string.analytics_metric_volume)
-    TrainingMetric.REPS -> stringResource(R.string.analytics_metric_reps)
-    TrainingMetric.DURATION -> stringResource(R.string.analytics_metric_duration)
-    TrainingMetric.FREQUENCY -> stringResource(R.string.analytics_metric_frequency)
-}
+internal fun trainingMetricLabel(metric: TrainingMetric): String =
+    when (metric) {
+        TrainingMetric.VOLUME -> stringResource(R.string.analytics_metric_volume)
+        TrainingMetric.REPS -> stringResource(R.string.analytics_metric_reps)
+        TrainingMetric.DURATION -> stringResource(R.string.analytics_metric_duration)
+        TrainingMetric.FREQUENCY -> stringResource(R.string.analytics_metric_frequency)
+    }
 
 // --- card 2: muscle distribution (chart) ---
 
@@ -462,7 +513,10 @@ private fun DistributionCard(
 }
 
 @Composable
-private fun PeriodTiles(totals: com.enil.logez.core.domain.calc.DashboardAggregator.PeriodTotals, uiState: AnalyticsUiState) {
+private fun PeriodTiles(
+    totals: com.enil.logez.core.domain.calc.DashboardAggregator.PeriodTotals,
+    uiState: AnalyticsUiState,
+) {
     Row(horizontalArrangement = Arrangement.spacedBy(Spacing.md), modifier = Modifier.fillMaxWidth()) {
         Tile(stringResource(R.string.analytics_tile_workouts), totals.workouts.toString(), Modifier.weight(1f))
         Tile(stringResource(R.string.analytics_tile_duration), AnalyticsFormatters.durationHoursMinutes(totals.durationSeconds), Modifier.weight(1f))
@@ -472,7 +526,11 @@ private fun PeriodTiles(totals: com.enil.logez.core.domain.calc.DashboardAggrega
 }
 
 @Composable
-internal fun Tile(label: String, value: String, modifier: Modifier = Modifier) {
+internal fun Tile(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+) {
     Column(modifier = modifier) {
         Text(value, style = LogEzMono.dataMedium)
         Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -482,16 +540,17 @@ internal fun Tile(label: String, value: String, modifier: Modifier = Modifier) {
 // --- card 2b: muscle balance radar (M20c, ADR-0009) ---
 
 @Composable
-private fun bodyRegionLabel(region: BodyRegion): String = when (region) {
-    BodyRegion.CHEST -> stringResource(R.string.muscle_region_chest)
-    BodyRegion.BACK -> stringResource(R.string.muscle_region_back)
-    BodyRegion.SHOULDERS -> stringResource(R.string.muscle_region_shoulders)
-    BodyRegion.ARMS -> stringResource(R.string.muscle_region_arms)
-    BodyRegion.CORE -> stringResource(R.string.muscle_region_core)
-    BodyRegion.QUADS -> stringResource(R.string.muscle_region_quads)
-    BodyRegion.HAMSTRINGS_GLUTES -> stringResource(R.string.muscle_region_hamstrings_glutes)
-    BodyRegion.LOWER_LEG -> stringResource(R.string.muscle_region_lower_leg)
-}
+private fun bodyRegionLabel(region: BodyRegion): String =
+    when (region) {
+        BodyRegion.CHEST -> stringResource(R.string.muscle_region_chest)
+        BodyRegion.BACK -> stringResource(R.string.muscle_region_back)
+        BodyRegion.SHOULDERS -> stringResource(R.string.muscle_region_shoulders)
+        BodyRegion.ARMS -> stringResource(R.string.muscle_region_arms)
+        BodyRegion.CORE -> stringResource(R.string.muscle_region_core)
+        BodyRegion.QUADS -> stringResource(R.string.muscle_region_quads)
+        BodyRegion.HAMSTRINGS_GLUTES -> stringResource(R.string.muscle_region_hamstrings_glutes)
+        BodyRegion.LOWER_LEG -> stringResource(R.string.muscle_region_lower_leg)
+    }
 
 /**
  * The short form that goes on a radar spoke. KoalaPlot's measure policy shrinks the wheel until the
@@ -499,6 +558,7 @@ private fun bodyRegionLabel(region: BodyRegion): String = when (region) {
  * spelling every region out in full measures down to roughly a third of the wheel. The legend below
  * the wheel carries the full name for each spoke, so these only have to be recognisable.
  */
+
 /**
  * M20c (ADR-0009): a radar/spider plot of set share per [BodyRegion], sitting beside the existing
  * numeric distribution list above it -- same [DistributionCardState.range] (the range chips here
@@ -509,7 +569,10 @@ private fun bodyRegionLabel(region: BodyRegion): String = when (region) {
  */
 @OptIn(io.github.koalaplot.core.util.ExperimentalKoalaPlotApi::class)
 @Composable
-private fun MuscleBalanceCard(uiState: AnalyticsUiState, viewModel: AnalyticsViewModel) {
+private fun MuscleBalanceCard(
+    uiState: AnalyticsUiState,
+    viewModel: AnalyticsViewModel,
+) {
     val card = uiState.distribution
     LogEzCard {
         Column(modifier = Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
@@ -565,7 +628,8 @@ private fun BalanceLegend(shares: List<RegionShare>) {
                 horizontalArrangement = Arrangement.spacedBy(Spacing.md),
             ) {
                 BalanceLegendEntry(shares[row], Modifier.weight(1f))
-                shares.getOrNull(row + rows)
+                shares
+                    .getOrNull(row + rows)
                     ?.let { BalanceLegendEntry(it, Modifier.weight(1f)) }
                     ?: Spacer(Modifier.weight(1f))
             }
@@ -574,7 +638,10 @@ private fun BalanceLegend(shares: List<RegionShare>) {
 }
 
 @Composable
-private fun BalanceLegendEntry(share: RegionShare, modifier: Modifier = Modifier) {
+private fun BalanceLegendEntry(
+    share: RegionShare,
+    modifier: Modifier = Modifier,
+) {
     Row(
         modifier = modifier.padding(vertical = Spacing.xxs),
         verticalAlignment = Alignment.CenterVertically,
@@ -596,7 +663,10 @@ private fun BalanceLegendEntry(share: RegionShare, modifier: Modifier = Modifier
 // --- card 3: muscle distribution (body) ---
 
 @Composable
-private fun BodyCard(uiState: AnalyticsUiState, viewModel: AnalyticsViewModel) {
+private fun BodyCard(
+    uiState: AnalyticsUiState,
+    viewModel: AnalyticsViewModel,
+) {
     val card = uiState.body
     LogEzCard {
         Column(modifier = Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
@@ -687,9 +757,11 @@ private fun SetCountCard(
             )
             card.muscles.forEach { row ->
                 Row(
-                    modifier = Modifier.fillMaxWidth()
-                        .clickable { viewModel.toggleMuscle(row.group) }
-                        .padding(vertical = Spacing.xxs),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable { viewModel.toggleMuscle(row.group) }
+                            .padding(vertical = Spacing.xxs),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
@@ -700,9 +772,10 @@ private fun SetCountCard(
                     )
                     Text(
                         pluralStringResource(R.plurals.analytics_set_count, row.setCount, row.setCount),
-                        style = LogEzMono.dataSmall.copy(
-                            color = if (row.included) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline,
-                        ),
+                        style =
+                            LogEzMono.dataSmall.copy(
+                                color = if (row.included) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline,
+                            ),
                     )
                     IconButton(onClick = { onMuscleClick(row.group) }) {
                         Icon(
@@ -735,9 +808,11 @@ private fun MainExercisesCard(
             } else {
                 card.rows.forEach { row ->
                     Row(
-                        modifier = Modifier.fillMaxWidth()
-                            .clickable { onExerciseClick(row.exerciseId) }
-                            .padding(vertical = Spacing.xs),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable { onExerciseClick(row.exerciseId) }
+                                .padding(vertical = Spacing.xs),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(row.exerciseName, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))

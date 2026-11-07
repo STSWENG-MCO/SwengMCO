@@ -12,14 +12,21 @@ import org.junit.Test
  */
 class WorkoutTabReorderTest {
     private fun folder(id: String) = RoutineFolderEntity(id = id, name = id, orderIndex = 0, createdAt = 0, updatedAt = 0)
-    private fun routine(id: String, folderId: String?) =
-        RoutineCardModel(RoutineEntity(id = id, folderId = folderId, name = id, notes = null, orderIndex = 0, createdAt = 0, updatedAt = 0), exercisePreview = "")
+
+    private fun routine(
+        id: String,
+        folderId: String?,
+    ) = RoutineCardModel(
+        RoutineEntity(id = id, folderId = folderId, name = id, notes = null, orderIndex = 0, createdAt = 0, updatedAt = 0),
+        exercisePreview = "",
+    )
 
     private fun fixture(): Pair<MutableList<FolderSection>, MutableList<RoutineCardModel>> {
-        val folders = mutableListOf(
-            FolderSection(folder("fA"), listOf(routine("a1", "fA"), routine("a2", "fA"))),
-            FolderSection(folder("fB"), listOf(routine("b1", "fB"))),
-        )
+        val folders =
+            mutableListOf(
+                FolderSection(folder("fA"), listOf(routine("a1", "fA"), routine("a2", "fA"))),
+                FolderSection(folder("fB"), listOf(routine("b1", "fB"))),
+            )
         val root = mutableListOf(routine("r1", null), routine("r2", null), routine("r3", null))
         return folders to root
     }
@@ -99,11 +106,12 @@ class WorkoutTabReorderTest {
     // --- Three-folder fixture: distinguishes a true move-to-index from an adjacent swap, and pins
     // moving a folder or a routine past more than one neighbour in one drop.
 
-    private fun threeFolderFixture(): MutableList<FolderSection> = mutableListOf(
-        FolderSection(folder("fA"), listOf(routine("a1", "fA"), routine("a2", "fA"), routine("a3", "fA"))),
-        FolderSection(folder("fB"), listOf(routine("b1", "fB"))),
-        FolderSection(folder("fC"), listOf(routine("c1", "fC"))),
-    )
+    private fun threeFolderFixture(): MutableList<FolderSection> =
+        mutableListOf(
+            FolderSection(folder("fA"), listOf(routine("a1", "fA"), routine("a2", "fA"), routine("a3", "fA"))),
+            FolderSection(folder("fB"), listOf(routine("b1", "fB"))),
+            FolderSection(folder("fC"), listOf(routine("c1", "fC"))),
+        )
 
     @Test
     fun `a folder dragged past two neighbours lands at that index, not merely swapped with one`() {

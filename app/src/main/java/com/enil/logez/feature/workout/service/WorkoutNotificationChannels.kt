@@ -26,24 +26,26 @@ object WorkoutNotificationChannels {
 
     fun ensureCreated(context: Context) {
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
-        val ongoing = NotificationChannel(
-            WORKOUT_ONGOING,
-            context.getString(R.string.notification_channel_workout_ongoing_name),
-            NotificationManager.IMPORTANCE_LOW,
-        ).apply {
-            description = context.getString(R.string.notification_channel_workout_ongoing_description)
-            setSound(null, null)
-            setShowBadge(false)
-        }
-        val restTimer = NotificationChannel(
-            REST_TIMER,
-            context.getString(R.string.notification_channel_rest_timer_name),
-            NotificationManager.IMPORTANCE_HIGH,
-        ).apply {
-            description = context.getString(R.string.notification_channel_rest_timer_description)
-            setSound(null, null)
-            enableVibration(true)
-        }
+        val ongoing =
+            NotificationChannel(
+                WORKOUT_ONGOING,
+                context.getString(R.string.notification_channel_workout_ongoing_name),
+                NotificationManager.IMPORTANCE_LOW,
+            ).apply {
+                description = context.getString(R.string.notification_channel_workout_ongoing_description)
+                setSound(null, null)
+                setShowBadge(false)
+            }
+        val restTimer =
+            NotificationChannel(
+                REST_TIMER,
+                context.getString(R.string.notification_channel_rest_timer_name),
+                NotificationManager.IMPORTANCE_HIGH,
+            ).apply {
+                description = context.getString(R.string.notification_channel_rest_timer_description)
+                setSound(null, null)
+                enableVibration(true)
+            }
         manager.createNotificationChannels(listOf(ongoing, restTimer))
         manager.deleteNotificationChannel(LEGACY_PR_ALERTS) // no-op on a fresh install
     }
