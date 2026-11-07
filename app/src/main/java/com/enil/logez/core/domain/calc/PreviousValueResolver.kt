@@ -23,11 +23,12 @@ fun resolvePreviousWorkoutSets(
     beforeStartedAt: Long? = null,
 ): List<StatSet> {
     val inWindow = if (beforeStartedAt == null) rows else rows.filter { it.workoutStartedAt < beforeStartedAt }
-    val candidates = if (mode == PreviousValuesMode.SAME_ROUTINE) {
-        inWindow.filter { it.routineId == currentRoutineId }
-    } else {
-        inWindow
-    }
+    val candidates =
+        if (mode == PreviousValuesMode.SAME_ROUTINE) {
+            inWindow.filter { it.routineId == currentRoutineId }
+        } else {
+            inWindow
+        }
     val mostRecentWorkoutId = candidates.firstOrNull()?.workoutId ?: return emptyList()
     return candidates.filter { it.workoutId == mostRecentWorkoutId }
 }

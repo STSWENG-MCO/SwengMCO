@@ -23,9 +23,7 @@ import com.enil.logez.feature.workout.session.SetCompletionUseCase
 import com.enil.logez.feature.workout.session.WorkoutSessionController
 import com.enil.logez.feature.workout.session.WorkoutSessionState
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
@@ -34,6 +32,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 /**
  * PHASE2_PLAN.md §9.2 — thin shell. All actual timer/duration logic lives in
@@ -45,12 +44,19 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class WorkoutSessionService : Service() {
     @Inject lateinit var sessionController: WorkoutSessionController
+
     @Inject lateinit var setCompletionUseCase: SetCompletionUseCase
+
     @Inject lateinit var workoutRepository: WorkoutRepository
+
     @Inject lateinit var settingsRepository: SettingsRepository
+
     @Inject lateinit var audioPlayer: WorkoutAudioPlayer
+
     @Inject lateinit var hapticsPlayer: WorkoutHapticsPlayer
+
     @Inject lateinit var elapsedRealtimeClock: ElapsedRealtimeClock
+
     @Inject lateinit var logger: AppLogger
 
     // `var`, not `val`: stopSelfCleanly() cancels the job, and a cancelled SupervisorJob can never
@@ -59,9 +65,11 @@ class WorkoutSessionService : Service() {
     private var serviceJob = SupervisorJob()
     private var serviceScope = CoroutineScope(serviceJob)
     private var collectorsStarted = false
+
     /** True while this instance holds a live foreground session; see the notification-action check. */
     private var promoted = false
     private var wakeLock: PowerManager.WakeLock? = null
+
     /** Guards [wakeLock]: the wake-lock collector runs on [serviceScope]'s (non-main) dispatcher
      * while [onDestroy] runs on the main thread — without this, acquire-then-assign in
      * [acquireWakeLock] can race a concurrent [releaseWakeLock] reading the field before the
@@ -75,7 +83,11 @@ class WorkoutSessionService : Service() {
         WorkoutNotificationChannels.ensureCreated(this)
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int,
+    ): Int {
         // Stop first, before any foreground promotion: stopWorkoutSessionService() sends this
         // through a plain startService(), so there is no startForegroundService() contract to
         // honour, and promoting a service only to tear it down again posted a notification for
@@ -210,20 +222,23 @@ class WorkoutSessionService : Service() {
         }
     }
 
-    private fun acquireWakeLock(deadlineElapsedRealtimeMillis: Long) = synchronized(wakeLockGuard) {
-        val remainingMs = (deadlineElapsedRealtimeMillis - elapsedRealtimeClock.elapsedRealtimeMillis()).coerceAtLeast(0)
-        val timeoutMs = (remainingMs + WAKE_LOCK_SLACK_MS).coerceAtMost(MAX_REST_TIMER_MS + WAKE_LOCK_SLACK_MS)
-        val powerManager = getSystemService(POWER_SERVICE) as? PowerManager ?: return@synchronized
-        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "logez:restTimer").apply {
-            setReferenceCounted(false)
-            acquire(timeoutMs)
+    private fun acquireWakeLock(deadlineElapsedRealtimeMillis: Long) =
+        synchronized(wakeLockGuard) {
+            val remainingMs = (deadlineElapsedRealtimeMillis - elapsedRealtimeClock.elapsedRealtimeMillis()).coerceAtLeast(0)
+            val timeoutMs = (remainingMs + WAKE_LOCK_SLACK_MS).coerceAtMost(MAX_REST_TIMER_MS + WAKE_LOCK_SLACK_MS)
+            val powerManager = getSystemService(POWER_SERVICE) as? PowerManager ?: return@synchronized
+            wakeLock =
+                powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "logez:restTimer").apply {
+                    setReferenceCounted(false)
+                    acquire(timeoutMs)
+                }
         }
-    }
 
-    private fun releaseWakeLock() = synchronized(wakeLockGuard) {
-        wakeLock?.let { if (it.isHeld) it.release() }
-        wakeLock = null
-    }
+    private fun releaseWakeLock() =
+        synchronized(wakeLockGuard) {
+            wakeLock?.let { if (it.isHeld) it.release() }
+            wakeLock = null
+        }
 
     /**
      * Promotes this service with the `health` foreground-service type, which is the type Android
@@ -239,22 +254,23 @@ class WorkoutSessionService : Service() {
      *
      * Returns false instead of throwing when Android refuses, see the caller for why that is safe.
      */
-    private fun startForegroundSafely(notification: Notification): Boolean = try {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH)
-        } else {
-            startForeground(NOTIFICATION_ID, notification)
+    private fun startForegroundSafely(notification: Notification): Boolean =
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH)
+            } else {
+                startForeground(NOTIFICATION_ID, notification)
+            }
+            true
+        } catch (e: IllegalStateException) {
+            // ForegroundServiceStartNotAllowedException (API 31+) is an IllegalStateException.
+            logger.e(TAG, "Foreground promotion refused; stopping the workout session service", e)
+            false
+        } catch (e: SecurityException) {
+            // API 34+: a foreground-service type whose prerequisite is not met.
+            logger.e(TAG, "Foreground service type prerequisite not met; stopping the workout session service", e)
+            false
         }
-        true
-    } catch (e: IllegalStateException) {
-        // ForegroundServiceStartNotAllowedException (API 31+) is an IllegalStateException.
-        logger.e(TAG, "Foreground promotion refused; stopping the workout session service", e)
-        false
-    } catch (e: SecurityException) {
-        // API 34+: a foreground-service type whose prerequisite is not met.
-        logger.e(TAG, "Foreground service type prerequisite not met; stopping the workout session service", e)
-        false
-    }
 
     @SuppressLint("MissingPermission") // §9.3: NotificationManagerCompat.notify() safely no-ops if POST_NOTIFICATIONS was denied — the FGS itself keeps running either way.
     private fun postNotification(notification: Notification) {
@@ -263,32 +279,36 @@ class WorkoutSessionService : Service() {
 
     @SuppressLint("MissingPermission")
     private fun postRestEndHeadsUp() {
-        val notification = NotificationCompat.Builder(this, WorkoutNotificationChannels.REST_TIMER)
-            .setSmallIcon(R.drawable.ic_stat_logez)
-            .setContentTitle(getString(R.string.workout_rest_timer_label))
-            // The one notification whose entire job is reaching the user mid-set, on a screen that
-            // is almost certainly locked. Without this it defaults to VISIBILITY_PRIVATE and is
-            // redacted on a secure lock screen, unlike both ongoing notifications.
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setCategory(NotificationCompat.CATEGORY_WORKOUT)
-            .setAutoCancel(true)
-            .setContentIntent(openAppPendingIntent())
-            .setTimeoutAfter(REST_END_HEADS_UP_TIMEOUT_MS)
-            .build()
+        val notification =
+            NotificationCompat
+                .Builder(this, WorkoutNotificationChannels.REST_TIMER)
+                .setSmallIcon(R.drawable.ic_stat_logez)
+                .setContentTitle(getString(R.string.workout_rest_timer_label))
+                // The one notification whose entire job is reaching the user mid-set, on a screen that
+                // is almost certainly locked. Without this it defaults to VISIBILITY_PRIVATE and is
+                // redacted on a secure lock screen, unlike both ongoing notifications.
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setCategory(NotificationCompat.CATEGORY_WORKOUT)
+                .setAutoCancel(true)
+                .setContentIntent(openAppPendingIntent())
+                .setTimeoutAfter(REST_END_HEADS_UP_TIMEOUT_MS)
+                .build()
         NotificationManagerCompat.from(this).notify(REST_END_NOTIFICATION_ID, notification)
     }
 
     private fun buildNotification(state: WorkoutSessionState): Notification {
         val content = state.notificationContent
-        val builder = NotificationCompat.Builder(this, WorkoutNotificationChannels.WORKOUT_ONGOING)
-            .setSmallIcon(R.drawable.ic_stat_logez)
-            .setContentTitle(content?.title ?: getString(R.string.notification_workout_fallback_title))
-            .setContentText(content?.text.orEmpty())
-            .setOngoing(true)
-            .setOnlyAlertOnce(true)
-            .setCategory(NotificationCompat.CATEGORY_WORKOUT)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setContentIntent(openAppPendingIntent())
+        val builder =
+            NotificationCompat
+                .Builder(this, WorkoutNotificationChannels.WORKOUT_ONGOING)
+                .setSmallIcon(R.drawable.ic_stat_logez)
+                .setContentTitle(content?.title ?: getString(R.string.notification_workout_fallback_title))
+                .setContentText(content?.text.orEmpty())
+                .setOngoing(true)
+                .setOnlyAlertOnce(true)
+                .setCategory(NotificationCompat.CATEGORY_WORKOUT)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setContentIntent(openAppPendingIntent())
 
         val restDeadline = state.restDeadlineElapsedRealtimeMillis
         val workoutId = state.workoutId
@@ -320,31 +340,45 @@ class WorkoutSessionService : Service() {
     }
 
     private fun openAppPendingIntent(): PendingIntent {
-        val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-        }
+        val intent =
+            Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
         return PendingIntent.getActivity(this, REQUEST_OPEN_APP, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
 
-    private fun completeSetPendingIntent(workoutId: String, workoutExerciseId: String, setId: String): PendingIntent =
+    private fun completeSetPendingIntent(
+        workoutId: String,
+        workoutExerciseId: String,
+        setId: String,
+    ): PendingIntent =
         servicePendingIntent(REQUEST_COMPLETE_SET, ACTION_COMPLETE_SET, workoutId) {
             putExtra(EXTRA_WORKOUT_EXERCISE_ID, workoutExerciseId)
             putExtra(EXTRA_SET_ID, setId)
         }
 
-    private fun restAdjustPendingIntent(workoutId: String, deltaSeconds: Int): PendingIntent =
+    private fun restAdjustPendingIntent(
+        workoutId: String,
+        deltaSeconds: Int,
+    ): PendingIntent =
         servicePendingIntent(if (deltaSeconds < 0) REQUEST_REST_MINUS else REQUEST_REST_PLUS, ACTION_REST_ADJUST, workoutId) {
             putExtra(EXTRA_DELTA_SECONDS, deltaSeconds)
         }
 
-    private fun restSkipPendingIntent(workoutId: String): PendingIntent =
-        servicePendingIntent(REQUEST_REST_SKIP, ACTION_REST_SKIP, workoutId) {}
+    private fun restSkipPendingIntent(workoutId: String): PendingIntent = servicePendingIntent(REQUEST_REST_SKIP, ACTION_REST_SKIP, workoutId) {}
 
     /** Every action intent is stamped with the workout it was built for — see [isForCurrentSession]. */
-    private fun servicePendingIntent(requestCode: Int, action: String, workoutId: String, extras: Intent.() -> Unit): PendingIntent {
-        val intent = Intent(this, WorkoutSessionService::class.java).setAction(action)
-            .putExtra(EXTRA_WORKOUT_ID, workoutId)
-            .apply(extras)
+    private fun servicePendingIntent(
+        requestCode: Int,
+        action: String,
+        workoutId: String,
+        extras: Intent.() -> Unit,
+    ): PendingIntent {
+        val intent =
+            Intent(this, WorkoutSessionService::class.java)
+                .setAction(action)
+                .putExtra(EXTRA_WORKOUT_ID, workoutId)
+                .apply(extras)
         return PendingIntent.getService(this, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
 
@@ -354,8 +388,7 @@ class WorkoutSessionService : Service() {
      * window, an unscoped action would silently apply to the *new* workout's timer. Comparing the
      * stamped id against the live session drops those stale actions instead.
      */
-    private fun isForCurrentSession(intent: Intent): Boolean =
-        intent.getStringExtra(EXTRA_WORKOUT_ID) == sessionController.state.value.workoutId
+    private fun isForCurrentSession(intent: Intent): Boolean = intent.getStringExtra(EXTRA_WORKOUT_ID) == sessionController.state.value.workoutId
 
     private data class NotificationDisplayKey(
         val content: com.enil.logez.feature.workout.session.WorkoutNotificationContent?,

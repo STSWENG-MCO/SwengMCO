@@ -25,73 +25,107 @@ class InterruptedTrackingRecoveryTest {
     private val startedAt = 1_000_000L
     private val now = startedAt + 4_320_000L // 72 minutes later
 
-    private fun repo() = FakeWorkoutRepository(
-        workouts = listOf(
-            WorkoutEntity(
-                id = "run1", routineId = null, title = "Morning Run", notes = null,
-                status = WorkoutStatus.IN_PROGRESS, startedAt = startedAt, endedAt = null,
-                durationSeconds = 0, createdAt = startedAt, updatedAt = startedAt,
-                kind = WorkoutKind.GPS_TRACKED,
+    private fun repo() =
+        FakeWorkoutRepository(
+            workouts =
+                listOf(
+                    WorkoutEntity(
+                        id = "run1",
+                        routineId = null,
+                        title = "Morning Run",
+                        notes = null,
+                        status = WorkoutStatus.IN_PROGRESS,
+                        startedAt = startedAt,
+                        endedAt = null,
+                        durationSeconds = 0,
+                        createdAt = startedAt,
+                        updatedAt = startedAt,
+                        kind = WorkoutKind.GPS_TRACKED,
+                    ),
+                ),
+            exercises =
+                listOf(
+                    WorkoutExerciseEntity(
+                        id = "we1",
+                        workoutId = "run1",
+                        exerciseId = "ex1",
+                        orderIndex = 0,
+                        supersetGroup = null,
+                        restTimerSeconds = null,
+                        notes = null,
+                    ),
+                ),
+            sets =
+                listOf(
+                    WorkoutSetEntity(
+                        id = "set1",
+                        workoutExerciseId = "we1",
+                        orderIndex = 0,
+                        setType = SetType.NORMAL,
+                        weightKg = null,
+                        reps = null,
+                        durationSeconds = null,
+                        distanceMeters = null,
+                        rpe = null,
+                        customMetric = null,
+                        isCompleted = false,
+                        completedAt = null,
+                    ),
+                ),
+        )
+
+    private fun recovery(workoutRepo: FakeWorkoutRepository) =
+        InterruptedTrackingRecovery(
+            workoutRepo,
+            ActivityTrackingController(
+                workoutRepo,
+                FakeActivityTrackRepository(),
+                FakeLocationSource(),
+                FakeClock(now),
+                CoroutineScope(UnconfinedTestDispatcher()),
             ),
-        ),
-        exercises = listOf(
-            WorkoutExerciseEntity(
-                id = "we1", workoutId = "run1", exerciseId = "ex1", orderIndex = 0,
-                supersetGroup = null, restTimerSeconds = null, notes = null,
-            ),
-        ),
-        sets = listOf(
-            WorkoutSetEntity(
-                id = "set1", workoutExerciseId = "we1", orderIndex = 0, setType = SetType.NORMAL,
-                weightKg = null, reps = null, durationSeconds = null, distanceMeters = null,
-                rpe = null, customMetric = null, isCompleted = false, completedAt = null,
-            ),
-        ),
-    )
-
-    private fun recovery(workoutRepo: FakeWorkoutRepository) = InterruptedTrackingRecovery(
-        workoutRepo,
-        ActivityTrackingController(
-            workoutRepo, FakeActivityTrackRepository(), FakeLocationSource(), FakeClock(now),
-            CoroutineScope(UnconfinedTestDispatcher()),
-        ),
-        FakeClock(now),
-    )
+            FakeClock(now),
+        )
 
     @Test
-    fun `keepElapsedTime freezes the elapsed duration onto the workout`() = runTest {
-        val repo = repo()
-        assertTrue(recovery(repo).keepElapsedTime("run1"))
-        assertEquals(4_320, repo.getById("run1")?.durationSeconds)
-    }
+    fun `keepElapsedTime freezes the elapsed duration onto the workout`() =
+        runTest {
+            val repo = repo()
+            assertTrue(recovery(repo).keepElapsedTime("run1"))
+            assertEquals(4_320, repo.getById("run1")?.durationSeconds)
+        }
 
     @Test
-    fun `keepElapsedTime marks the set completed so saving does not purge the only row`() = runTest {
-        val repo = repo()
-        recovery(repo).keepElapsedTime("run1")
-        // WorkoutDao.finishWorkout deletes uncompleted sets before rebuilding PRs, so a blank set
-        // here would silently take the workout's only row with it.
-        val set = repo.getSetsForWorkoutExercise("we1").single()
-        assertTrue(set.isCompleted)
-        assertEquals(now, set.completedAt)
-    }
+    fun `keepElapsedTime marks the set completed so saving does not purge the only row`() =
+        runTest {
+            val repo = repo()
+            recovery(repo).keepElapsedTime("run1")
+            // WorkoutDao.finishWorkout deletes uncompleted sets before rebuilding PRs, so a blank set
+            // here would silently take the workout's only row with it.
+            val set = repo.getSetsForWorkoutExercise("we1").single()
+            assertTrue(set.isCompleted)
+            assertEquals(now, set.completedAt)
+        }
 
     @Test
-    fun `keepElapsedTime leaves the workout IN_PROGRESS for the save screen to finish`() = runTest {
-        val repo = repo()
-        recovery(repo).keepElapsedTime("run1")
-        assertEquals(WorkoutStatus.IN_PROGRESS, repo.getById("run1")?.status)
-    }
+    fun `keepElapsedTime leaves the workout IN_PROGRESS for the save screen to finish`() =
+        runTest {
+            val repo = repo()
+            recovery(repo).keepElapsedTime("run1")
+            assertEquals(WorkoutStatus.IN_PROGRESS, repo.getById("run1")?.status)
+        }
 
     @Test
-    fun `keepElapsedTime reports failure for a workout that is already gone`() = runTest {
-        assertEquals(false, recovery(repo()).keepElapsedTime("nope"))
-    }
+    fun `keepElapsedTime reports failure for a workout that is already gone`() =
+        runTest {
+            assertEquals(false, recovery(repo()).keepElapsedTime("nope"))
+        }
 
     @Test
-    fun `discard removes the workout entirely`() = runTest {
-        val repo = repo()
-        recovery(repo).discard("run1")
-        assertNull(repo.getById("run1"))
-    }
+    fun `discard removes the workout entirely`() =
+        runTest {
+            val repo = repo()
+            recovery(repo).discard("run1")
+            assertNull(repo.getById("run1"))
+        }
 }

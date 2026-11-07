@@ -40,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -55,7 +56,6 @@ import com.enil.logez.core.domain.model.Equipment
 import com.enil.logez.core.domain.model.MuscleGroup
 import com.enil.logez.core.domain.repository.Exercise
 import java.io.File
-import androidx.compose.ui.res.pluralStringResource
 
 enum class ExercisePickerMode { ADD, REPLACE }
 
@@ -112,11 +112,12 @@ fun ExercisePickerSheet(
                         icon = Icons.Outlined.Search,
                         title = stringResource(R.string.exercise_library_no_results_title),
                         subtitle = stringResource(R.string.exercise_library_no_results_subtitle),
-                        ctaLabel = if (uiState.searchQuery.isNotBlank()) {
-                            stringResource(R.string.exercise_library_create_from_query, uiState.searchQuery)
-                        } else {
-                            null
-                        },
+                        ctaLabel =
+                            if (uiState.searchQuery.isNotBlank()) {
+                                stringResource(R.string.exercise_library_create_from_query, uiState.searchQuery)
+                            } else {
+                                null
+                            },
                         onCtaClick = { onCreateExercise(uiState.searchQuery) },
                     )
                 } else {
@@ -198,22 +199,26 @@ private fun PickerRow(
         supportingContent = {
             Text(muscleGroupLabel(exercise.primaryMuscleGroup) + if (exercise.isCustom) stringResource(R.string.exercise_library_custom_badge) else "")
         },
-        trailingContent = if (mode == ExercisePickerMode.ADD) {
-            {
-                if (isSelected) {
-                    Icon(Icons.Outlined.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                } else {
-                    Checkbox(checked = false, onCheckedChange = { onClick() })
+        trailingContent =
+            if (mode == ExercisePickerMode.ADD) {
+                {
+                    if (isSelected) {
+                        Icon(Icons.Outlined.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    } else {
+                        Checkbox(checked = false, onCheckedChange = { onClick() })
+                    }
                 }
-            }
-        } else {
-            null
-        },
+            } else {
+                null
+            },
     )
 }
 
 @Composable
-private fun PickerEquipmentFilterChip(selected: Equipment?, onSelect: (Equipment?) -> Unit) {
+private fun PickerEquipmentFilterChip(
+    selected: Equipment?,
+    onSelect: (Equipment?) -> Unit,
+) {
     var expanded by remember { mutableStateOf(false) }
     Box {
         FilterChip(
@@ -222,16 +227,25 @@ private fun PickerEquipmentFilterChip(selected: Equipment?, onSelect: (Equipment
             label = { Text(selected?.let { equipmentLabel(it) } ?: stringResource(R.string.exercise_library_filter_equipment)) },
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(text = { Text(stringResource(R.string.exercise_library_filter_all)) }, onClick = { expanded = false; onSelect(null) })
+            DropdownMenuItem(text = { Text(stringResource(R.string.exercise_library_filter_all)) }, onClick = {
+                expanded = false
+                onSelect(null)
+            })
             Equipment.entries.forEach { eq ->
-                DropdownMenuItem(text = { Text(equipmentLabel(eq)) }, onClick = { expanded = false; onSelect(eq) })
+                DropdownMenuItem(text = { Text(equipmentLabel(eq)) }, onClick = {
+                    expanded = false
+                    onSelect(eq)
+                })
             }
         }
     }
 }
 
 @Composable
-private fun PickerMuscleFilterChip(selected: MuscleGroup?, onSelect: (MuscleGroup?) -> Unit) {
+private fun PickerMuscleFilterChip(
+    selected: MuscleGroup?,
+    onSelect: (MuscleGroup?) -> Unit,
+) {
     var expanded by remember { mutableStateOf(false) }
     Box {
         FilterChip(
@@ -240,9 +254,15 @@ private fun PickerMuscleFilterChip(selected: MuscleGroup?, onSelect: (MuscleGrou
             label = { Text(selected?.let { muscleGroupLabel(it) } ?: stringResource(R.string.exercise_library_filter_muscle)) },
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(text = { Text(stringResource(R.string.exercise_library_filter_all)) }, onClick = { expanded = false; onSelect(null) })
+            DropdownMenuItem(text = { Text(stringResource(R.string.exercise_library_filter_all)) }, onClick = {
+                expanded = false
+                onSelect(null)
+            })
             MuscleGroup.entries.forEach { m ->
-                DropdownMenuItem(text = { Text(muscleGroupLabel(m)) }, onClick = { expanded = false; onSelect(m) })
+                DropdownMenuItem(text = { Text(muscleGroupLabel(m)) }, onClick = {
+                    expanded = false
+                    onSelect(m)
+                })
             }
         }
     }

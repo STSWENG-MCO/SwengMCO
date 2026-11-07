@@ -1,5 +1,6 @@
 package com.enil.logez.feature.history
 
+import android.content.res.Resources
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,8 +17,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import com.enil.logez.feature.workout.finish.HeartRateCard
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.EmojiEvents
@@ -27,7 +28,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -48,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -68,28 +69,27 @@ import com.enil.logez.core.designsystem.Spacing
 import com.enil.logez.core.designsystem.StatCell
 import com.enil.logez.core.designsystem.SupersetPalette
 import com.enil.logez.core.designsystem.Warning500
+import com.enil.logez.core.designsystem.currentLocale
 import com.enil.logez.core.designsystem.formatTwoDecimals
 import com.enil.logez.core.designsystem.formatWeight
 import com.enil.logez.core.designsystem.logEzTopAppBarColors
-import com.enil.logez.core.designsystem.currentLocale
+import com.enil.logez.core.designsystem.rememberClockTimeFormatter
 import com.enil.logez.core.domain.model.DistanceUnit
-import com.enil.logez.core.domain.model.WeightUnit
 import com.enil.logez.core.domain.model.ExerciseType
 import com.enil.logez.core.domain.model.SetType
+import com.enil.logez.core.domain.model.WeightUnit
 import com.enil.logez.core.domain.model.WorkoutStructure
-import com.enil.logez.feature.activity.map.RouteMapView
-import com.enil.logez.feature.workout.StartResult
-import com.enil.logez.feature.workout.finish.labelRes
 import com.enil.logez.feature.activity.InterruptedTrackingDialog
+import com.enil.logez.feature.activity.map.RouteMapView
 import com.enil.logez.feature.workout.InProgressWorkout
+import com.enil.logez.feature.workout.StartResult
+import com.enil.logez.feature.workout.finish.HeartRateCard
+import com.enil.logez.feature.workout.finish.labelRes
 import com.enil.logez.feature.workout.rememberStartWorkoutSession
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import kotlinx.coroutines.launch
-import com.enil.logez.core.designsystem.rememberClockTimeFormatter
-import androidx.compose.ui.platform.LocalResources
-import android.content.res.Resources
 
 /** PHASE2_PLAN.md §5.2 "Workout Detail": read-only record of one completed workout. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -121,20 +121,25 @@ fun WorkoutDetailScreen(
     // composition only.
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) viewModel.refresh()
-        }
+        val observer =
+            LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME) viewModel.refresh()
+            }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    fun copyWorkout() = scope.launch {
-        menuExpanded = false
-        when (val result = viewModel.startCopy()) {
-            is StartResult.Started -> startSession(result.workoutId)
-            is StartResult.AlreadyInProgress -> { showResumeDialog = true; conflictingWorkoutId = result.workoutId }
+    fun copyWorkout() =
+        scope.launch {
+            menuExpanded = false
+            when (val result = viewModel.startCopy()) {
+                is StartResult.Started -> startSession(result.workoutId)
+                is StartResult.AlreadyInProgress -> {
+                    showResumeDialog = true
+                    conflictingWorkoutId = result.workoutId
+                }
+            }
         }
-    }
 
     Scaffold(
         topBar = {
@@ -156,7 +161,10 @@ fun WorkoutDetailScreen(
                         DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.history_detail_edit)) },
-                                onClick = { menuExpanded = false; onEdit(loadedWorkoutId) },
+                                onClick = {
+                                    menuExpanded = false
+                                    onEdit(loadedWorkoutId)
+                                },
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.history_detail_copy)) },
@@ -171,7 +179,10 @@ fun WorkoutDetailScreen(
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.action_delete)) },
-                                onClick = { menuExpanded = false; showDeleteConfirm = true },
+                                onClick = {
+                                    menuExpanded = false
+                                    showDeleteConfirm = true
+                                },
                             )
                         }
                     }
@@ -253,12 +264,14 @@ fun WorkoutDetailScreen(
         }
     }
 
-
     interruptedRun?.let { (workoutId, startedAt) ->
         InterruptedTrackingDialog(
             workoutId = workoutId,
             startedAt = startedAt,
-            onKeptTime = { id -> interruptedRun = null; onNavigateToFinish(id) },
+            onKeptTime = { id ->
+                interruptedRun = null
+                onNavigateToFinish(id)
+            },
             onDiscarded = { interruptedRun = null },
         )
     }
@@ -309,7 +322,11 @@ fun WorkoutDetailScreen(
 }
 
 @Composable
-private fun DetailStatCell(label: String, value: String, icon: ImageVector? = null) {
+private fun DetailStatCell(
+    label: String,
+    value: String,
+    icon: ImageVector? = null,
+) {
     StatCell(
         value = value,
         label = label,
@@ -323,8 +340,15 @@ private fun DetailStatCell(label: String, value: String, icon: ImageVector? = nu
 }
 
 /** M11: one round of a completed circuit — the exercises' rows at the same orderIndex, sequence order. */
-private data class DetailRound(val roundNumber: Int, val entries: List<DetailRoundEntry>)
-private data class DetailRoundEntry(val block: DetailExerciseBlock, val set: DetailSetRow?)
+private data class DetailRound(
+    val roundNumber: Int,
+    val entries: List<DetailRoundEntry>,
+)
+
+private data class DetailRoundEntry(
+    val block: DetailExerciseBlock,
+    val set: DetailSetRow?,
+)
 
 /**
  * Groups a circuit workout's post-purge blocks round-first, keyed by each row's `orderIndex`
@@ -345,7 +369,11 @@ private fun buildDetailRounds(blocks: List<DetailExerciseBlock>): List<DetailRou
 }
 
 @Composable
-private fun DetailRoundCard(round: DetailRound, weightUnit: WeightUnit, onExerciseClick: (String) -> Unit) {
+private fun DetailRoundCard(
+    round: DetailRound,
+    weightUnit: WeightUnit,
+    onExerciseClick: (String) -> Unit,
+) {
     LogEzCard(modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.sm)) {
         Column(modifier = Modifier.padding(Spacing.md)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -360,8 +388,9 @@ private fun DetailRoundCard(round: DetailRound, weightUnit: WeightUnit, onExerci
                     exercise?.name.orEmpty(),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary,
-                    modifier = (if (exercise != null) Modifier.clickable { onExerciseClick(exercise.id) } else Modifier)
-                        .padding(top = Spacing.sm),
+                    modifier =
+                        (if (exercise != null) Modifier.clickable { onExerciseClick(exercise.id) } else Modifier)
+                            .padding(top = Spacing.sm),
                 )
                 val set = entry.set
                 if (set == null) {
@@ -384,14 +413,23 @@ private fun RouteCard(routePoints: List<Pair<Double, Double>>) {
             RouteMapView(
                 routePoints = routePoints,
                 followLatest = false,
-                modifier = Modifier.fillMaxWidth().height(220.dp).padding(top = Spacing.sm).clip(RoundedCornerShape(Radius.sm)),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(220.dp)
+                        .padding(top = Spacing.sm)
+                        .clip(RoundedCornerShape(Radius.sm)),
             )
         }
     }
 }
 
 @Composable
-private fun ExerciseBlockCard(block: DetailExerciseBlock, weightUnit: WeightUnit, onExerciseClick: (String) -> Unit) {
+private fun ExerciseBlockCard(
+    block: DetailExerciseBlock,
+    weightUnit: WeightUnit,
+    onExerciseClick: (String) -> Unit,
+) {
     val supersetColor = block.workoutExercise.supersetGroup?.let { SupersetPalette[it % SupersetPalette.size] }
     LogEzCard(modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.sm)) {
         Row(modifier = Modifier.height(IntrinsicSize.Min)) {
@@ -423,13 +461,20 @@ private fun ExerciseBlockCard(block: DetailExerciseBlock, weightUnit: WeightUnit
 }
 
 @Composable
-private fun DetailSetRowView(position: Int, set: DetailSetRow, exerciseType: ExerciseType?, weightUnit: WeightUnit, positionLabel: Boolean = true) {
-    val (badgeLabel, badgeColor) = when (set.setType) {
-        SetType.NORMAL -> position.toString() to MaterialTheme.colorScheme.onSurface
-        SetType.WARMUP -> "W" to Warning500
-        SetType.FAILURE -> "F" to Danger500
-        SetType.DROPSET -> "D" to SupersetPalette[4]
-    }
+private fun DetailSetRowView(
+    position: Int,
+    set: DetailSetRow,
+    exerciseType: ExerciseType?,
+    weightUnit: WeightUnit,
+    positionLabel: Boolean = true,
+) {
+    val (badgeLabel, badgeColor) =
+        when (set.setType) {
+            SetType.NORMAL -> position.toString() to MaterialTheme.colorScheme.onSurface
+            SetType.WARMUP -> "W" to Warning500
+            SetType.FAILURE -> "F" to Danger500
+            SetType.DROPSET -> "D" to SupersetPalette[4]
+        }
     Row(
         modifier = Modifier.fillMaxWidth().padding(top = Spacing.sm),
         verticalAlignment = Alignment.CenterVertically,
@@ -459,7 +504,14 @@ private fun DetailSetRowView(position: Int, set: DetailSetRow, exerciseType: Exe
     }
 }
 
-private fun formatDetailSetValue(res: Resources, position: Int, set: DetailSetRow, exerciseType: ExerciseType?, weightUnit: WeightUnit, positionLabel: Boolean = true): String {
+private fun formatDetailSetValue(
+    res: Resources,
+    position: Int,
+    set: DetailSetRow,
+    exerciseType: ExerciseType?,
+    weightUnit: WeightUnit,
+    positionLabel: Boolean = true,
+): String {
     // Plurals, not "$it reps": a one-rep set used to read "1 reps".
     fun reps(n: Int) = res.getQuantityString(R.plurals.set_reps, n, n)
     if (!set.isCompleted) return "—"
@@ -508,6 +560,14 @@ private fun formatDetailDuration(totalSeconds: Int): String {
     return if (h > 0) "${h}h ${m}m" else "${m}m"
 }
 
-private fun formatDetailVolume(kg: Double, unit: WeightUnit): String = formatWeight(kg, unit)
+private fun formatDetailVolume(
+    kg: Double,
+    unit: WeightUnit,
+): String = formatWeight(kg, unit)
 
-private fun formatDetailDistance(meters: Double, unit: DistanceUnit): String = com.enil.logez.core.designsystem.formatDistance(meters, unit)
+private fun formatDetailDistance(
+    meters: Double,
+    unit: DistanceUnit,
+): String =
+    com.enil.logez.core.designsystem
+        .formatDistance(meters, unit)

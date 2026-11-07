@@ -4,6 +4,12 @@ package com.enil.logez.feature.activity
  * carries only a workoutId and is asserted against by existing tests; a tracked run also needs the
  * created set's id to hand to the tracking service/controller. */
 sealed class ActivityTrackingStartResult {
-    data class Started(val workoutId: String, val workoutSetId: String) : ActivityTrackingStartResult()
-    data class AlreadyInProgress(val workoutId: String) : ActivityTrackingStartResult()
+    data class Started(
+        val workoutId: String,
+        val workoutSetId: String,
+    ) : ActivityTrackingStartResult()
+
+    data class AlreadyInProgress(
+        val workoutId: String,
+    ) : ActivityTrackingStartResult()
 }

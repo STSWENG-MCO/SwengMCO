@@ -28,7 +28,10 @@ enum class PermissionDenial {
  * Classifies a denial right after a request returned. Android reports no rationale for a
  * permission it will no longer ask about, which is the only signal an app gets for "blocked".
  */
-fun classifyDenial(context: Context, permission: String): PermissionDenial {
+fun classifyDenial(
+    context: Context,
+    permission: String,
+): PermissionDenial {
     val activity = context.findActivity() ?: return PermissionDenial.Declined
     return if (ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)) {
         PermissionDenial.Declined
@@ -39,13 +42,15 @@ fun classifyDenial(context: Context, permission: String): PermissionDenial {
 
 /** Opens this app's page in Android's settings, where a blocked permission can be turned on. */
 fun openAppDetailsSettings(context: Context) {
-    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
-        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    val intent =
+        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     runCatching { context.startActivity(intent) }
 }
 
-private tailrec fun Context.findActivity(): Activity? = when (this) {
-    is Activity -> this
-    is ContextWrapper -> baseContext.findActivity()
-    else -> null
-}
+private tailrec fun Context.findActivity(): Activity? =
+    when (this) {
+        is Activity -> this
+        is ContextWrapper -> baseContext.findActivity()
+        else -> null
+    }

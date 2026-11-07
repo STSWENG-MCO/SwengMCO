@@ -23,28 +23,31 @@ interface WorkoutHapticsPlayer {
 }
 
 @Singleton
-class SystemWorkoutHapticsPlayer @Inject constructor(
-    @ApplicationContext private val context: Context,
-) : WorkoutHapticsPlayer {
-    private val vibrator: Vibrator =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            (context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
-        } else {
-            @Suppress("DEPRECATION")
-            context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+class SystemWorkoutHapticsPlayer
+    @Inject
+    constructor(
+        @ApplicationContext private val context: Context,
+    ) : WorkoutHapticsPlayer {
+        private val vibrator: Vibrator =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                (context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
+            } else {
+                @Suppress("DEPRECATION")
+                context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            }
+
+        override fun vibrateRestEnd() {
+            val effect = VibrationEffect.createWaveform(longArrayOf(0, 120, 100, 120), -1)
+            vibrator.vibrate(effect)
         }
 
-    override fun vibrateRestEnd() {
-        val effect = VibrationEffect.createWaveform(longArrayOf(0, 120, 100, 120), -1)
-        vibrator.vibrate(effect)
-    }
-
-    override fun vibrateSetComplete() {
-        val effect = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
-        } else {
-            VibrationEffect.createOneShot(30, VibrationEffect.DEFAULT_AMPLITUDE)
+        override fun vibrateSetComplete() {
+            val effect =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
+                } else {
+                    VibrationEffect.createOneShot(30, VibrationEffect.DEFAULT_AMPLITUDE)
+                }
+            vibrator.vibrate(effect)
         }
-        vibrator.vibrate(effect)
     }
-}

@@ -25,8 +25,7 @@ data class CircuitRoundEntry(
 )
 
 /** The circuit's round count: the LARGEST per-exercise row count, so no logged row is ever hidden. */
-fun circuitRoundCount(exercises: List<WorkoutExerciseUiModel>): Int =
-    exercises.maxOfOrNull { it.sets.size } ?: 0
+fun circuitRoundCount(exercises: List<WorkoutExerciseUiModel>): Int = exercises.maxOfOrNull { it.sets.size } ?: 0
 
 /** Flips exercise-major rows into round-major cards. Empty when there are no exercises (or none has a row). */
 fun buildCircuitRounds(exercises: List<WorkoutExerciseUiModel>): List<CircuitRound> {

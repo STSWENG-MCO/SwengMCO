@@ -9,38 +9,39 @@ package com.enil.logez.feature.privacy
  * committed file.
  */
 object PrivacyPolicyHtml {
-    fun render(document: PrivacyPolicyDocument): String = buildString {
-        appendLine("<!DOCTYPE html>")
-        appendLine("<html lang=\"en\">")
-        appendLine("<head>")
-        appendLine("<meta charset=\"utf-8\">")
-        appendLine("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">")
-        appendLine("<title>${escape(document.title)}</title>")
-        appendLine("<style>")
-        appendLine(CSS)
-        appendLine("</style>")
-        appendLine("</head>")
-        appendLine("<body>")
-        appendLine("<main>")
-        appendLine("<h1>${escape(document.title)}</h1>")
-        appendLine("<p class=\"effective\">Effective ${escape(document.effectiveDate)}</p>")
-        document.sections.forEach { section ->
-            appendLine("<h2>${escape(section.heading)}</h2>")
-            section.blocks.forEach { block ->
-                when (block) {
-                    is PolicyBlock.Paragraph -> appendLine("<p>${linkify(block.text)}</p>")
-                    is PolicyBlock.Bullets -> {
-                        appendLine("<ul>")
-                        block.items.forEach { appendLine("<li>${linkify(it)}</li>") }
-                        appendLine("</ul>")
+    fun render(document: PrivacyPolicyDocument): String =
+        buildString {
+            appendLine("<!DOCTYPE html>")
+            appendLine("<html lang=\"en\">")
+            appendLine("<head>")
+            appendLine("<meta charset=\"utf-8\">")
+            appendLine("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">")
+            appendLine("<title>${escape(document.title)}</title>")
+            appendLine("<style>")
+            appendLine(CSS)
+            appendLine("</style>")
+            appendLine("</head>")
+            appendLine("<body>")
+            appendLine("<main>")
+            appendLine("<h1>${escape(document.title)}</h1>")
+            appendLine("<p class=\"effective\">Effective ${escape(document.effectiveDate)}</p>")
+            document.sections.forEach { section ->
+                appendLine("<h2>${escape(section.heading)}</h2>")
+                section.blocks.forEach { block ->
+                    when (block) {
+                        is PolicyBlock.Paragraph -> appendLine("<p>${linkify(block.text)}</p>")
+                        is PolicyBlock.Bullets -> {
+                            appendLine("<ul>")
+                            block.items.forEach { appendLine("<li>${linkify(it)}</li>") }
+                            appendLine("</ul>")
+                        }
                     }
                 }
             }
+            appendLine("</main>")
+            appendLine("</body>")
+            appendLine("</html>")
         }
-        appendLine("</main>")
-        appendLine("</body>")
-        appendLine("</html>")
-    }
 
     /** Escapes, then turns https URLs and email addresses into links. */
     internal fun linkify(text: String): String {
@@ -57,16 +58,18 @@ object PrivacyPolicyHtml {
         return out.toString()
     }
 
-    internal fun escape(text: String): String = text
-        .replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace("\"", "&quot;")
+    internal fun escape(text: String): String =
+        text
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
 
     /** A URL stops at whitespace; an email is the usual local@domain shape. Shared with the in-app screen. */
     internal val LINK = Regex("""https://[^\s]+[^\s.,;:)]|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}""")
 
-    private val CSS = """
+    private val CSS =
+        """
         :root { color-scheme: light dark; --bg: #ffffff; --fg: #15191c; --muted: #5b6770; --accent: #3d6b00; }
         @media (prefers-color-scheme: dark) { :root { --bg: #0a0d0f; --fg: #eef2ef; --muted: #9aa7a0; --accent: #b6ff3c; } }
         body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
@@ -77,5 +80,5 @@ object PrivacyPolicyHtml {
         a { color: var(--accent); overflow-wrap: anywhere; }
         ul { padding-left: 1.25em; }
         li { margin: 4px 0; }
-    """.trimIndent()
+        """.trimIndent()
 }

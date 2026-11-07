@@ -1,0 +1,15 @@
+root = true
+
+[*.{kt,kts}]
+# Jetpack Compose functions are PascalCase by convention (and by our team standard),
+# so ktlint's function-naming rule must not flag @Composable functions.
+ktlint_function_naming_ignore_when_annotated_with = Composable
+
+# Existing code has many long lines; not enforced for now.
+ktlint_standard_max-line-length = disabled
+
+# Comment/style rules the existing code doesn't follow and ktlint can't auto-fix.
+ktlint_standard_no-consecutive-comments = disabled
+ktlint_standard_filename = disabled
+ktlint_standard_if-else-wrapping = disabled
+ktlint_standard_comment-wrapping = disabled

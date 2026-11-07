@@ -1,7 +1,10 @@
 package com.enil.logez.core.domain.calc
 
 /** One exercise's structural shape — identity plus how many sets it carries. Values are deliberately absent. */
-data class ExerciseShape(val exerciseId: String, val setCount: Int)
+data class ExerciseShape(
+    val exerciseId: String,
+    val setCount: Int,
+)
 
 /**
  * PHASE2_PLAN.md §5.1.8(b) — decides whether the finish flow shows the "Update Routine vs Keep
@@ -13,6 +16,8 @@ data class ExerciseShape(val exerciseId: String, val setCount: Int)
  * Order matters: the same exercises performed in a different order *is* a structural change.
  */
 object RoutineStructureDiffer {
-    fun isStructurallyChanged(routineShape: List<ExerciseShape>, loggedShape: List<ExerciseShape>): Boolean =
-        routineShape != loggedShape
+    fun isStructurallyChanged(
+        routineShape: List<ExerciseShape>,
+        loggedShape: List<ExerciseShape>,
+    ): Boolean = routineShape != loggedShape
 }

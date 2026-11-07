@@ -21,26 +21,30 @@ import javax.inject.Singleton
  * its records stale forever.
  */
 @Singleton
-class WorkoutDeleter @Inject constructor(
-    private val workoutRepository: WorkoutRepository,
-    private val personalRecordsUpdater: PersonalRecordsUpdater,
-    private val transactionRunner: TransactionRunner,
-    private val widgetRefresher: WidgetRefresher = WidgetRefresher.NoOp,
-) {
-    suspend fun delete(workoutId: String) {
-        // DataStore, not Room — resolved before the transaction opens so it doesn't hold Room's
-        // transaction open across unrelated I/O (same care WorkoutFinisher takes).
-        val includeWarmups = personalRecordsUpdater.includeWarmupsInStats()
+class WorkoutDeleter
+    @Inject
+    constructor(
+        private val workoutRepository: WorkoutRepository,
+        private val personalRecordsUpdater: PersonalRecordsUpdater,
+        private val transactionRunner: TransactionRunner,
+        private val widgetRefresher: WidgetRefresher = WidgetRefresher.NoOp,
+    ) {
+        suspend fun delete(workoutId: String) {
+            // DataStore, not Room — resolved before the transaction opens so it doesn't hold Room's
+            // transaction open across unrelated I/O (same care WorkoutFinisher takes).
+            val includeWarmups = personalRecordsUpdater.includeWarmupsInStats()
 
-        transactionRunner.runInTransaction {
-            val touchedExerciseIds = workoutRepository.getSetsWithExerciseForWorkout(workoutId)
-                .map { it.exerciseId }
-                .toSet()
-            workoutRepository.deleteById(workoutId)
-            if (touchedExerciseIds.isNotEmpty()) {
-                personalRecordsUpdater.rebuildForExercises(touchedExerciseIds, workoutId, includeWarmups)
+            transactionRunner.runInTransaction {
+                val touchedExerciseIds =
+                    workoutRepository
+                        .getSetsWithExerciseForWorkout(workoutId)
+                        .map { it.exerciseId }
+                        .toSet()
+                workoutRepository.deleteById(workoutId)
+                if (touchedExerciseIds.isNotEmpty()) {
+                    personalRecordsUpdater.rebuildForExercises(touchedExerciseIds, workoutId, includeWarmups)
+                }
             }
+            widgetRefresher.refresh()
         }
-        widgetRefresher.refresh()
     }
-}

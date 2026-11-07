@@ -1,6 +1,5 @@
 package com.enil.logez.core.data.backup
 
-import java.io.File
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -8,6 +7,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
 
 /**
  * The backup's table lists are checked against the database's own entity list by reflection, so
@@ -24,23 +24,33 @@ class BackupTablesTest {
      * it is the authoritative list. Picking the highest version automatically means a future v10
      * is checked without anyone remembering to update this.
      */
-    private val schemaTables: Set<String> = run {
-        val dir = listOf(
-            File("schemas/com.enil.logez.core.data.LogEzDatabase"),
-            File("app/schemas/com.enil.logez.core.data.LogEzDatabase"),
-        ).firstOrNull { it.isDirectory } ?: error("no exported Room schema found")
+    private val schemaTables: Set<String> =
+        run {
+            val dir =
+                listOf(
+                    File("schemas/com.enil.logez.core.data.LogEzDatabase"),
+                    File("app/schemas/com.enil.logez.core.data.LogEzDatabase"),
+                ).firstOrNull { it.isDirectory } ?: error("no exported Room schema found")
 
-        val newest = dir.listFiles { f -> f.extension == "json" }
-            ?.maxByOrNull { it.nameWithoutExtension.toInt() }
-            ?: error("no schema JSON in $dir")
+            val newest =
+                dir
+                    .listFiles { f -> f.extension == "json" }
+                    ?.maxByOrNull { it.nameWithoutExtension.toInt() }
+                    ?: error("no schema JSON in $dir")
 
-        Json.parseToJsonElement(newest.readText())
-            .jsonObject.getValue("database")
-            .jsonObject.getValue("entities")
-            .jsonArray
-            .map { it.jsonObject.getValue("tableName").jsonPrimitive.content }
-            .toSet()
-    }
+            Json
+                .parseToJsonElement(newest.readText())
+                .jsonObject
+                .getValue("database")
+                .jsonObject
+                .getValue("entities")
+                .jsonArray
+                .map {
+                    it.jsonObject
+                        .getValue("tableName")
+                        .jsonPrimitive.content
+                }.toSet()
+        }
 
     @Test
     fun `the schema export was actually found, so the guards below mean something`() {
@@ -65,7 +75,10 @@ class BackupTablesTest {
 
     @Test
     fun `children are wiped before their parents`() {
-        fun before(child: String, parent: String) {
+        fun before(
+            child: String,
+            parent: String,
+        ) {
             val c = BackupTables.WIPE_ORDER.indexOf(child)
             val p = BackupTables.WIPE_ORDER.indexOf(parent)
             assert(c < p) { "$child must be wiped before $parent (got $c vs $p)" }
@@ -83,7 +96,10 @@ class BackupTablesTest {
 
     @Test
     fun `parents are inserted before their children`() {
-        fun before(parent: String, child: String) {
+        fun before(
+            parent: String,
+            child: String,
+        ) {
             val p = BackupTables.EXPORT_ORDER.indexOf(parent)
             val c = BackupTables.EXPORT_ORDER.indexOf(child)
             assert(p < c) { "$parent must be inserted before $child (got $p vs $c)" }
@@ -98,5 +114,4 @@ class BackupTablesTest {
         before(BackupTables.WORKOUT_SETS, BackupTables.ACTIVITY_TRACKS)
         before(BackupTables.WORKOUTS, BackupTables.WORKOUT_HEART_RATE_SAMPLES)
     }
-
 }

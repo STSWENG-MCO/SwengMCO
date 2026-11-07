@@ -3,8 +3,8 @@ package com.enil.logez.feature.activity.map
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -33,14 +33,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
@@ -125,8 +125,7 @@ private fun endpointsFeatures(points: List<Pair<Double, Double>>): FeatureCollec
     return FeatureCollection.fromFeatures(features)
 }
 
-private fun routeFeature(points: List<Pair<Double, Double>>): Feature =
-    Feature.fromGeometry(LineString.fromLngLats(points.map { (lat, lng) -> Point.fromLngLat(lng, lat) }))
+private fun routeFeature(points: List<Pair<Double, Double>>): Feature = Feature.fromGeometry(LineString.fromLngLats(points.map { (lat, lng) -> Point.fromLngLat(lng, lat) }))
 
 private fun routeBounds(points: List<Pair<Double, Double>>): LatLngBounds {
     val builder = LatLngBounds.Builder()
@@ -152,8 +151,7 @@ private fun isDegenerateRoute(points: List<Pair<Double, Double>>): Boolean {
     return latSpan < MIN_BOUNDS_SPAN_DEGREES && lngSpan < MIN_BOUNDS_SPAN_DEGREES
 }
 
-private fun routeCentroid(points: List<Pair<Double, Double>>): LatLng =
-    LatLng(points.sumOf { it.first } / points.size, points.sumOf { it.second } / points.size)
+private fun routeCentroid(points: List<Pair<Double, Double>>): LatLng = LatLng(points.sumOf { it.first } / points.size, points.sumOf { it.second } / points.size)
 
 /**
  * M21b, switched to live online tiles M21 (2026-09-12), from MapTiler to OpenFreeMap 2026-09-25.
@@ -220,16 +218,17 @@ fun RouteMapView(
     val endpointStrokeColor = MaterialTheme.colorScheme.background.toArgb()
     val density = LocalDensity.current
     val layoutDirection = LocalLayoutDirection.current
-    val fitPaddingPx = fitPadding?.let { padding ->
-        with(density) {
-            intArrayOf(
-                padding.calculateLeftPadding(layoutDirection).roundToPx(),
-                padding.calculateTopPadding().roundToPx(),
-                padding.calculateRightPadding(layoutDirection).roundToPx(),
-                padding.calculateBottomPadding().roundToPx(),
-            )
+    val fitPaddingPx =
+        fitPadding?.let { padding ->
+            with(density) {
+                intArrayOf(
+                    padding.calculateLeftPadding(layoutDirection).roundToPx(),
+                    padding.calculateTopPadding().roundToPx(),
+                    padding.calculateRightPadding(layoutDirection).roundToPx(),
+                    padding.calculateBottomPadding().roundToPx(),
+                )
+            }
         }
-    }
 
     // Extracted so both the initial load and the Retry button below can (re)run it. Recap screens
     // (WorkoutDetailScreen/WorkoutSummaryScreen) already know their full route at this point, so the
@@ -259,15 +258,19 @@ fun RouteMapView(
 
             // See the class doc comment for why this exact two-step zoom sequence, with a real
             // delay between steps, is required for line/symbol layers to render at all.
-            map.cameraPosition = CameraPosition.Builder()
-                .target(initialTarget)
-                .zoom(FINAL_ZOOM - 1.0)
-                .build()
-            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                map.cameraPosition = CameraPosition.Builder()
+            map.cameraPosition =
+                CameraPosition
+                    .Builder()
                     .target(initialTarget)
-                    .zoom(FINAL_ZOOM)
+                    .zoom(FINAL_ZOOM - 1.0)
                     .build()
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                map.cameraPosition =
+                    CameraPosition
+                        .Builder()
+                        .target(initialTarget)
+                        .zoom(FINAL_ZOOM)
+                        .build()
                 styleReady = true
             }, 1500)
         }
@@ -292,17 +295,18 @@ fun RouteMapView(
 
         val mapView = remember { MapView(context) }
         DisposableEffect(lifecycleOwner) {
-            val observer = LifecycleEventObserver { _, event ->
-                when (event) {
-                    Lifecycle.Event.ON_CREATE -> mapView.onCreate(null)
-                    Lifecycle.Event.ON_START -> mapView.onStart()
-                    Lifecycle.Event.ON_RESUME -> mapView.onResume()
-                    Lifecycle.Event.ON_PAUSE -> mapView.onPause()
-                    Lifecycle.Event.ON_STOP -> mapView.onStop()
-                    Lifecycle.Event.ON_DESTROY -> mapView.onDestroy()
-                    else -> Unit
+            val observer =
+                LifecycleEventObserver { _, event ->
+                    when (event) {
+                        Lifecycle.Event.ON_CREATE -> mapView.onCreate(null)
+                        Lifecycle.Event.ON_START -> mapView.onStart()
+                        Lifecycle.Event.ON_RESUME -> mapView.onResume()
+                        Lifecycle.Event.ON_PAUSE -> mapView.onPause()
+                        Lifecycle.Event.ON_STOP -> mapView.onStop()
+                        Lifecycle.Event.ON_DESTROY -> mapView.onDestroy()
+                        else -> Unit
+                    }
                 }
-            }
             lifecycleOwner.lifecycle.addObserver(observer)
             onDispose {
                 lifecycleOwner.lifecycle.removeObserver(observer)
@@ -399,11 +403,12 @@ fun RouteMapView(
             },
             style = MaterialTheme.typography.labelSmall,
             color = Color.Black,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(attributionPadding)
-                .background(Color.White.copy(alpha = 0.75f), RoundedCornerShape(4.dp))
-                .padding(horizontal = 4.dp, vertical = 2.dp),
+            modifier =
+                Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(attributionPadding)
+                    .background(Color.White.copy(alpha = 0.75f), RoundedCornerShape(4.dp))
+                    .padding(horizontal = 4.dp, vertical = 2.dp),
         )
 
         // Only ever meaningful while actively following -- a static recap/history map has no
@@ -459,15 +464,21 @@ fun RouteMapView(
             map.easeCamera(CameraUpdateFactory.newLatLngZoom(routeCentroid(routePoints), FOLLOW_ZOOM))
         } else if (routePoints.size >= 2) {
             val bounds = routeBounds(routePoints)
-            val update = fitPaddingPx?.let { (left, top, right, bottom) ->
-                CameraUpdateFactory.newLatLngBounds(bounds, left, top, right, bottom)
-            } ?: CameraUpdateFactory.newLatLngBounds(bounds, ROUTE_BOUNDS_PADDING_PX)
+            val update =
+                fitPaddingPx?.let { (left, top, right, bottom) ->
+                    CameraUpdateFactory.newLatLngBounds(bounds, left, top, right, bottom)
+                } ?: CameraUpdateFactory.newLatLngBounds(bounds, ROUTE_BOUNDS_PADDING_PX)
             map.easeCamera(update)
         }
     }
 }
 
-private fun endpointLayer(id: String, kind: String, fill: Int, stroke: Int): CircleLayer =
+private fun endpointLayer(
+    id: String,
+    kind: String,
+    fill: Int,
+    stroke: Int,
+): CircleLayer =
     CircleLayer(id, ENDPOINTS_SOURCE_ID)
         .withFilter(Expression.eq(Expression.get(ENDPOINT_KIND), Expression.literal(kind)))
         .withProperties(

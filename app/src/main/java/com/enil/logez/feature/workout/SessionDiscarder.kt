@@ -17,14 +17,16 @@ import javax.inject.Singleton
  * caller needs a Context to reach the service.
  */
 @Singleton
-class SessionDiscarder @Inject constructor(
-    private val workoutStarter: WorkoutStarter,
-    private val sessionController: WorkoutSessionController,
-    private val activityTrackingController: ActivityTrackingController,
-) {
-    suspend fun discardInProgress() {
-        activityTrackingController.cancelTracking()
-        workoutStarter.discardInProgress()
-        sessionController.endSession()
+class SessionDiscarder
+    @Inject
+    constructor(
+        private val workoutStarter: WorkoutStarter,
+        private val sessionController: WorkoutSessionController,
+        private val activityTrackingController: ActivityTrackingController,
+    ) {
+        suspend fun discardInProgress() {
+            activityTrackingController.cancelTracking()
+            workoutStarter.discardInProgress()
+            sessionController.endSession()
+        }
     }
-}

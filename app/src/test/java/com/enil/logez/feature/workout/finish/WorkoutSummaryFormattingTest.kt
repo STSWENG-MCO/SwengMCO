@@ -1,7 +1,7 @@
 package com.enil.logez.feature.workout.finish
 
-import com.enil.logez.core.domain.model.PrType
 import com.enil.logez.core.domain.model.DistanceUnit
+import com.enil.logez.core.domain.model.PrType
 import com.enil.logez.core.domain.model.WeightUnit
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -49,8 +49,20 @@ class WorkoutSummaryFormattingTest {
 
     @Test
     fun `elapsed clock time switches to hours at an hour`() {
-        assertEquals("0:45", com.enil.logez.core.designsystem.formatElapsedClock(45))
-        assertEquals("59:59", com.enil.logez.core.designsystem.formatElapsedClock(3_599))
-        assertEquals("1:00:00", com.enil.logez.core.designsystem.formatElapsedClock(3_600))
+        assertEquals(
+            "0:45",
+            com.enil.logez.core.designsystem
+                .formatElapsedClock(45),
+        )
+        assertEquals(
+            "59:59",
+            com.enil.logez.core.designsystem
+                .formatElapsedClock(3_599),
+        )
+        assertEquals(
+            "1:00:00",
+            com.enil.logez.core.designsystem
+                .formatElapsedClock(3_600),
+        )
     }
 }

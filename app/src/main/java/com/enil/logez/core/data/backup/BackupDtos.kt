@@ -61,27 +61,43 @@ data class ExerciseDto(
     @SerialName("muscle_heads") val muscleHeads: List<String> = emptyList(),
 )
 
-fun ExerciseEntity.toDto() = ExerciseDto(
-    id = id, name = name, exerciseType = exerciseType.name,
-    primaryMuscleGroup = primaryMuscleGroup.name,
-    secondaryMuscleGroups = secondaryMuscleGroups.map { it.name },
-    equipment = equipment.name, instructions = instructions, mediaPath = mediaPath,
-    isCustom = isCustom, isBodyweightVolumeEligible = isBodyweightVolumeEligible,
-    isDeleted = isDeleted, createdAt = createdAt, updatedAt = updatedAt,
-    muscleHeads = muscleHeads.map { it.name },
-)
+fun ExerciseEntity.toDto() =
+    ExerciseDto(
+        id = id,
+        name = name,
+        exerciseType = exerciseType.name,
+        primaryMuscleGroup = primaryMuscleGroup.name,
+        secondaryMuscleGroups = secondaryMuscleGroups.map { it.name },
+        equipment = equipment.name,
+        instructions = instructions,
+        mediaPath = mediaPath,
+        isCustom = isCustom,
+        isBodyweightVolumeEligible = isBodyweightVolumeEligible,
+        isDeleted = isDeleted,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+        muscleHeads = muscleHeads.map { it.name },
+    )
 
-fun ExerciseDto.toEntity() = ExerciseEntity(
-    id = id, name = name, exerciseType = ExerciseType.valueOf(exerciseType),
-    primaryMuscleGroup = MuscleGroup.valueOf(primaryMuscleGroup),
-    secondaryMuscleGroups = secondaryMuscleGroups.map { MuscleGroup.valueOf(it) },
-    equipment = Equipment.valueOf(equipment), instructions = instructions, mediaPath = mediaPath,
-    isCustom = isCustom, isBodyweightVolumeEligible = isBodyweightVolumeEligible,
-    isDeleted = isDeleted, createdAt = createdAt, updatedAt = updatedAt,
-    muscleHeads = muscleHeads.map { MuscleHead.valueOf(it) },
-    // Exists only so Room's schema validation passes; always null in practice and never exported.
-    deprecatedPrimaryMuscleHead = null,
-)
+fun ExerciseDto.toEntity() =
+    ExerciseEntity(
+        id = id,
+        name = name,
+        exerciseType = ExerciseType.valueOf(exerciseType),
+        primaryMuscleGroup = MuscleGroup.valueOf(primaryMuscleGroup),
+        secondaryMuscleGroups = secondaryMuscleGroups.map { MuscleGroup.valueOf(it) },
+        equipment = Equipment.valueOf(equipment),
+        instructions = instructions,
+        mediaPath = mediaPath,
+        isCustom = isCustom,
+        isBodyweightVolumeEligible = isBodyweightVolumeEligible,
+        isDeleted = isDeleted,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+        muscleHeads = muscleHeads.map { MuscleHead.valueOf(it) },
+        // Exists only so Room's schema validation passes; always null in practice and never exported.
+        deprecatedPrimaryMuscleHead = null,
+    )
 
 @Serializable
 data class RoutineFolderDto(
@@ -93,6 +109,7 @@ data class RoutineFolderDto(
 )
 
 fun RoutineFolderEntity.toDto() = RoutineFolderDto(id, name, orderIndex, createdAt, updatedAt)
+
 fun RoutineFolderDto.toEntity() = RoutineFolderEntity(id, name, orderIndex, createdAt, updatedAt)
 
 @Serializable
@@ -107,14 +124,29 @@ data class RoutineDto(
     @SerialName("structure") val structure: String = WorkoutStructure.REGULAR.name,
 )
 
-fun RoutineEntity.toDto() = RoutineDto(
-    id, folderId, name, notes, orderIndex, createdAt, updatedAt, structure.name,
-)
+fun RoutineEntity.toDto() =
+    RoutineDto(
+        id,
+        folderId,
+        name,
+        notes,
+        orderIndex,
+        createdAt,
+        updatedAt,
+        structure.name,
+    )
 
-fun RoutineDto.toEntity() = RoutineEntity(
-    id = id, folderId = folderId, name = name, notes = notes, orderIndex = orderIndex,
-    createdAt = createdAt, updatedAt = updatedAt, structure = WorkoutStructure.valueOf(structure),
-)
+fun RoutineDto.toEntity() =
+    RoutineEntity(
+        id = id,
+        folderId = folderId,
+        name = name,
+        notes = notes,
+        orderIndex = orderIndex,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+        structure = WorkoutStructure.valueOf(structure),
+    )
 
 @Serializable
 data class RoutineExerciseDto(
@@ -127,11 +159,9 @@ data class RoutineExerciseDto(
     @SerialName("notes") val notes: String? = null,
 )
 
-fun RoutineExerciseEntity.toDto() =
-    RoutineExerciseDto(id, routineId, exerciseId, orderIndex, supersetGroup, restTimerSeconds, notes)
+fun RoutineExerciseEntity.toDto() = RoutineExerciseDto(id, routineId, exerciseId, orderIndex, supersetGroup, restTimerSeconds, notes)
 
-fun RoutineExerciseDto.toEntity() =
-    RoutineExerciseEntity(id, routineId, exerciseId, orderIndex, supersetGroup, restTimerSeconds, notes)
+fun RoutineExerciseDto.toEntity() = RoutineExerciseEntity(id, routineId, exerciseId, orderIndex, supersetGroup, restTimerSeconds, notes)
 
 @Serializable
 data class RoutineSetDto(
@@ -147,17 +177,33 @@ data class RoutineSetDto(
     @SerialName("target_distance_meters") val targetDistanceMeters: Double? = null,
 )
 
-fun RoutineSetEntity.toDto() = RoutineSetDto(
-    id, routineExerciseId, orderIndex, setType.name, targetWeightKg, targetReps,
-    targetRepRangeMin, targetRepRangeMax, targetDurationSeconds, targetDistanceMeters,
-)
+fun RoutineSetEntity.toDto() =
+    RoutineSetDto(
+        id,
+        routineExerciseId,
+        orderIndex,
+        setType.name,
+        targetWeightKg,
+        targetReps,
+        targetRepRangeMin,
+        targetRepRangeMax,
+        targetDurationSeconds,
+        targetDistanceMeters,
+    )
 
-fun RoutineSetDto.toEntity() = RoutineSetEntity(
-    id = id, routineExerciseId = routineExerciseId, orderIndex = orderIndex,
-    setType = SetType.valueOf(setType), targetWeightKg = targetWeightKg, targetReps = targetReps,
-    targetRepRangeMin = targetRepRangeMin, targetRepRangeMax = targetRepRangeMax,
-    targetDurationSeconds = targetDurationSeconds, targetDistanceMeters = targetDistanceMeters,
-)
+fun RoutineSetDto.toEntity() =
+    RoutineSetEntity(
+        id = id,
+        routineExerciseId = routineExerciseId,
+        orderIndex = orderIndex,
+        setType = SetType.valueOf(setType),
+        targetWeightKg = targetWeightKg,
+        targetReps = targetReps,
+        targetRepRangeMin = targetRepRangeMin,
+        targetRepRangeMax = targetRepRangeMax,
+        targetDurationSeconds = targetDurationSeconds,
+        targetDistanceMeters = targetDistanceMeters,
+    )
 
 @Serializable
 data class WorkoutDto(
@@ -175,17 +221,37 @@ data class WorkoutDto(
     @SerialName("kind") val kind: String = WorkoutKind.STRENGTH.name,
 )
 
-fun WorkoutEntity.toDto() = WorkoutDto(
-    id, routineId, title, notes, status.name, startedAt, endedAt, durationSeconds,
-    createdAt, updatedAt, structure.name, kind.name,
-)
+fun WorkoutEntity.toDto() =
+    WorkoutDto(
+        id,
+        routineId,
+        title,
+        notes,
+        status.name,
+        startedAt,
+        endedAt,
+        durationSeconds,
+        createdAt,
+        updatedAt,
+        structure.name,
+        kind.name,
+    )
 
-fun WorkoutDto.toEntity() = WorkoutEntity(
-    id = id, routineId = routineId, title = title, notes = notes,
-    status = WorkoutStatus.valueOf(status), startedAt = startedAt, endedAt = endedAt,
-    durationSeconds = durationSeconds, createdAt = createdAt, updatedAt = updatedAt,
-    structure = WorkoutStructure.valueOf(structure), kind = WorkoutKind.valueOf(kind),
-)
+fun WorkoutDto.toEntity() =
+    WorkoutEntity(
+        id = id,
+        routineId = routineId,
+        title = title,
+        notes = notes,
+        status = WorkoutStatus.valueOf(status),
+        startedAt = startedAt,
+        endedAt = endedAt,
+        durationSeconds = durationSeconds,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+        structure = WorkoutStructure.valueOf(structure),
+        kind = WorkoutKind.valueOf(kind),
+    )
 
 @Serializable
 data class WorkoutExerciseDto(
@@ -198,11 +264,9 @@ data class WorkoutExerciseDto(
     @SerialName("notes") val notes: String? = null,
 )
 
-fun WorkoutExerciseEntity.toDto() =
-    WorkoutExerciseDto(id, workoutId, exerciseId, orderIndex, supersetGroup, restTimerSeconds, notes)
+fun WorkoutExerciseEntity.toDto() = WorkoutExerciseDto(id, workoutId, exerciseId, orderIndex, supersetGroup, restTimerSeconds, notes)
 
-fun WorkoutExerciseDto.toEntity() =
-    WorkoutExerciseEntity(id, workoutId, exerciseId, orderIndex, supersetGroup, restTimerSeconds, notes)
+fun WorkoutExerciseDto.toEntity() = WorkoutExerciseEntity(id, workoutId, exerciseId, orderIndex, supersetGroup, restTimerSeconds, notes)
 
 @Serializable
 data class WorkoutSetDto(
@@ -220,17 +284,37 @@ data class WorkoutSetDto(
     @SerialName("completed_at") val completedAt: Long? = null,
 )
 
-fun WorkoutSetEntity.toDto() = WorkoutSetDto(
-    id, workoutExerciseId, orderIndex, setType.name, weightKg, reps, durationSeconds,
-    distanceMeters, rpe, customMetric, isCompleted, completedAt,
-)
+fun WorkoutSetEntity.toDto() =
+    WorkoutSetDto(
+        id,
+        workoutExerciseId,
+        orderIndex,
+        setType.name,
+        weightKg,
+        reps,
+        durationSeconds,
+        distanceMeters,
+        rpe,
+        customMetric,
+        isCompleted,
+        completedAt,
+    )
 
-fun WorkoutSetDto.toEntity() = WorkoutSetEntity(
-    id = id, workoutExerciseId = workoutExerciseId, orderIndex = orderIndex,
-    setType = SetType.valueOf(setType), weightKg = weightKg, reps = reps,
-    durationSeconds = durationSeconds, distanceMeters = distanceMeters, rpe = rpe,
-    customMetric = customMetric, isCompleted = isCompleted, completedAt = completedAt,
-)
+fun WorkoutSetDto.toEntity() =
+    WorkoutSetEntity(
+        id = id,
+        workoutExerciseId = workoutExerciseId,
+        orderIndex = orderIndex,
+        setType = SetType.valueOf(setType),
+        weightKg = weightKg,
+        reps = reps,
+        durationSeconds = durationSeconds,
+        distanceMeters = distanceMeters,
+        rpe = rpe,
+        customMetric = customMetric,
+        isCompleted = isCompleted,
+        completedAt = completedAt,
+    )
 
 @Serializable
 data class ActivityTrackDto(
@@ -244,6 +328,7 @@ data class ActivityTrackDto(
 )
 
 fun ActivityTrackEntity.toDto() = ActivityTrackDto(id, workoutSetId, routePolyline, pointCount, avgAccuracyM, routeTimes)
+
 fun ActivityTrackDto.toEntity() = ActivityTrackEntity(id, workoutSetId, routePolyline, pointCount, avgAccuracyM, routeTimes)
 
 @Serializable
@@ -255,6 +340,7 @@ data class WorkoutHeartRateSampleDto(
 )
 
 fun WorkoutHeartRateSampleEntity.toDto() = WorkoutHeartRateSampleDto(id, workoutId, recordedAt, bpm)
+
 fun WorkoutHeartRateSampleDto.toEntity() = WorkoutHeartRateSampleEntity(id, workoutId, recordedAt, bpm)
 
 @Serializable
@@ -280,17 +366,51 @@ data class BodyMeasurementDto(
     @SerialName("updated_at") val updatedAt: Long = 0,
 )
 
-fun BodyMeasurementEntity.toDto() = BodyMeasurementDto(
-    date, weightKg, leanMassKg, fatPercent, neckCm, shoulderCm, chestCm, leftBicepCm,
-    rightBicepCm, leftForearmCm, rightForearmCm, abdomenCm, waistCm, hipsCm, leftThighCm,
-    rightThighCm, leftCalfCm, rightCalfCm, updatedAt,
-)
+fun BodyMeasurementEntity.toDto() =
+    BodyMeasurementDto(
+        date,
+        weightKg,
+        leanMassKg,
+        fatPercent,
+        neckCm,
+        shoulderCm,
+        chestCm,
+        leftBicepCm,
+        rightBicepCm,
+        leftForearmCm,
+        rightForearmCm,
+        abdomenCm,
+        waistCm,
+        hipsCm,
+        leftThighCm,
+        rightThighCm,
+        leftCalfCm,
+        rightCalfCm,
+        updatedAt,
+    )
 
-fun BodyMeasurementDto.toEntity() = BodyMeasurementEntity(
-    date, weightKg, leanMassKg, fatPercent, neckCm, shoulderCm, chestCm, leftBicepCm,
-    rightBicepCm, leftForearmCm, rightForearmCm, abdomenCm, waistCm, hipsCm, leftThighCm,
-    rightThighCm, leftCalfCm, rightCalfCm, updatedAt,
-)
+fun BodyMeasurementDto.toEntity() =
+    BodyMeasurementEntity(
+        date,
+        weightKg,
+        leanMassKg,
+        fatPercent,
+        neckCm,
+        shoulderCm,
+        chestCm,
+        leftBicepCm,
+        rightBicepCm,
+        leftForearmCm,
+        rightForearmCm,
+        abdomenCm,
+        waistCm,
+        hipsCm,
+        leftThighCm,
+        rightThighCm,
+        leftCalfCm,
+        rightCalfCm,
+        updatedAt,
+    )
 
 @Serializable
 data class ProgressPhotoDto(
@@ -302,6 +422,7 @@ data class ProgressPhotoDto(
 )
 
 fun ProgressPhotoEntity.toDto() = ProgressPhotoDto(id, date, filePath, createdAt)
+
 fun ProgressPhotoDto.toEntity() = ProgressPhotoEntity(id, date, filePath, createdAt)
 
 @Serializable
@@ -314,13 +435,17 @@ data class GoalDefinitionDto(
     @SerialName("updated_at") val updatedAt: Long = 0,
 )
 
-fun GoalDefinitionEntity.toDto() =
-    GoalDefinitionDto(id, metric.name, period.name, targetValue, createdAt, updatedAt)
+fun GoalDefinitionEntity.toDto() = GoalDefinitionDto(id, metric.name, period.name, targetValue, createdAt, updatedAt)
 
-fun GoalDefinitionDto.toEntity() = GoalDefinitionEntity(
-    id = id, metric = GoalMetric.valueOf(metric), period = GoalPeriod.valueOf(period),
-    targetValue = targetValue, createdAt = createdAt, updatedAt = updatedAt,
-)
+fun GoalDefinitionDto.toEntity() =
+    GoalDefinitionEntity(
+        id = id,
+        metric = GoalMetric.valueOf(metric),
+        period = GoalPeriod.valueOf(period),
+        targetValue = targetValue,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+    )
 
 @Serializable
 data class DailyWellnessTotalDto(
@@ -331,4 +456,5 @@ data class DailyWellnessTotalDto(
 )
 
 fun DailyWellnessTotalEntity.toDto() = DailyWellnessTotalDto(date, steps, caloriesBurned, updatedAt)
+
 fun DailyWellnessTotalDto.toEntity() = DailyWellnessTotalEntity(date, steps, caloriesBurned, updatedAt)

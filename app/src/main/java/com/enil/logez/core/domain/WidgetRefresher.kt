@@ -15,8 +15,9 @@ interface WidgetRefresher {
          * Lets hand-constructed tests build callers without a widget, the same way
          * [com.enil.logez.core.common.AppLogger.NoOp] already serves `WorkoutFinisher`.
          */
-        val NoOp: WidgetRefresher = object : WidgetRefresher {
-            override suspend fun refresh() = Unit
-        }
+        val NoOp: WidgetRefresher =
+            object : WidgetRefresher {
+                override suspend fun refresh() = Unit
+            }
     }
 }

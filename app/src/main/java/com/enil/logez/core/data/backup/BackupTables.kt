@@ -29,41 +29,43 @@ object BackupTables {
     const val PERSONAL_RECORDS = "personal_records"
 
     /** Every table carried in an archive, in the order rows must be inserted. */
-    val EXPORT_ORDER = listOf(
-        EXERCISES,
-        ROUTINE_FOLDERS,
-        ROUTINES,
-        ROUTINE_EXERCISES,
-        ROUTINE_SETS,
-        WORKOUTS,
-        WORKOUT_EXERCISES,
-        WORKOUT_SETS,
-        ACTIVITY_TRACKS,
-        WORKOUT_HEART_RATE_SAMPLES,
-        BODY_MEASUREMENTS,
-        PROGRESS_PHOTOS,
-        GOAL_DEFINITIONS,
-        DAILY_WELLNESS_TOTALS,
-    )
+    val EXPORT_ORDER =
+        listOf(
+            EXERCISES,
+            ROUTINE_FOLDERS,
+            ROUTINES,
+            ROUTINE_EXERCISES,
+            ROUTINE_SETS,
+            WORKOUTS,
+            WORKOUT_EXERCISES,
+            WORKOUT_SETS,
+            ACTIVITY_TRACKS,
+            WORKOUT_HEART_RATE_SAMPLES,
+            BODY_MEASUREMENTS,
+            PROGRESS_PHOTOS,
+            GOAL_DEFINITIONS,
+            DAILY_WELLNESS_TOTALS,
+        )
 
     /** Children first. `exercises` is last: routine and workout rows reference it. */
-    val WIPE_ORDER = listOf(
-        PERSONAL_RECORDS,
-        ACTIVITY_TRACKS,
-        WORKOUT_HEART_RATE_SAMPLES,
-        WORKOUT_SETS,
-        WORKOUT_EXERCISES,
-        WORKOUTS,
-        ROUTINE_SETS,
-        ROUTINE_EXERCISES,
-        ROUTINES,
-        ROUTINE_FOLDERS,
-        PROGRESS_PHOTOS,
-        BODY_MEASUREMENTS,
-        GOAL_DEFINITIONS,
-        DAILY_WELLNESS_TOTALS,
-        EXERCISES,
-    )
+    val WIPE_ORDER =
+        listOf(
+            PERSONAL_RECORDS,
+            ACTIVITY_TRACKS,
+            WORKOUT_HEART_RATE_SAMPLES,
+            WORKOUT_SETS,
+            WORKOUT_EXERCISES,
+            WORKOUTS,
+            ROUTINE_SETS,
+            ROUTINE_EXERCISES,
+            ROUTINES,
+            ROUTINE_FOLDERS,
+            PROGRESS_PHOTOS,
+            BODY_MEASUREMENTS,
+            GOAL_DEFINITIONS,
+            DAILY_WELLNESS_TOTALS,
+            EXERCISES,
+        )
 
     fun tableEntry(table: String) = "${BackupFormat.TABLES_PREFIX}$table.jsonl"
 }

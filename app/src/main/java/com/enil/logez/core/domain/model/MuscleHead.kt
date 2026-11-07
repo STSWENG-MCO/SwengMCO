@@ -36,12 +36,13 @@ enum class MuscleHead {
 
 /** Which [MuscleHead] options apply to [this] group — empty for every group with no tracked sub-head split. */
 val MuscleGroup.availableHeads: List<MuscleHead>
-    get() = when (this) {
-        MuscleGroup.SHOULDERS -> listOf(MuscleHead.ANTERIOR_DELTOID, MuscleHead.LATERAL_DELTOID, MuscleHead.POSTERIOR_DELTOID)
-        MuscleGroup.CHEST -> listOf(MuscleHead.UPPER_CHEST, MuscleHead.LOWER_CHEST)
-        MuscleGroup.TRICEPS -> listOf(MuscleHead.TRICEPS_LATERAL_HEAD, MuscleHead.TRICEPS_LONG_HEAD)
-        MuscleGroup.CALVES -> listOf(MuscleHead.GASTROCNEMIUS, MuscleHead.SOLEUS)
-        MuscleGroup.LATS -> listOf(MuscleHead.UPPER_LATS, MuscleHead.MID_LATS, MuscleHead.LOWER_LATS)
-        MuscleGroup.HAMSTRINGS -> listOf(MuscleHead.LATERAL_HAMSTRING, MuscleHead.MEDIAL_HAMSTRING)
-        else -> emptyList()
-    }
+    get() =
+        when (this) {
+            MuscleGroup.SHOULDERS -> listOf(MuscleHead.ANTERIOR_DELTOID, MuscleHead.LATERAL_DELTOID, MuscleHead.POSTERIOR_DELTOID)
+            MuscleGroup.CHEST -> listOf(MuscleHead.UPPER_CHEST, MuscleHead.LOWER_CHEST)
+            MuscleGroup.TRICEPS -> listOf(MuscleHead.TRICEPS_LATERAL_HEAD, MuscleHead.TRICEPS_LONG_HEAD)
+            MuscleGroup.CALVES -> listOf(MuscleHead.GASTROCNEMIUS, MuscleHead.SOLEUS)
+            MuscleGroup.LATS -> listOf(MuscleHead.UPPER_LATS, MuscleHead.MID_LATS, MuscleHead.LOWER_LATS)
+            MuscleGroup.HAMSTRINGS -> listOf(MuscleHead.LATERAL_HAMSTRING, MuscleHead.MEDIAL_HAMSTRING)
+            else -> emptyList()
+        }

@@ -82,7 +82,10 @@ interface ExerciseDao {
     // forever, because the row still referenced it, so neither the orphan sweep nor the backup
     // ever let it go. Once unreferenced, MediaFileJanitor's next launch sweep deletes the file.
     @Query("UPDATE exercises SET is_deleted = 1, media_path = NULL, updated_at = :updatedAt WHERE id = :id")
-    suspend fun softDelete(id: String, updatedAt: Long)
+    suspend fun softDelete(
+        id: String,
+        updatedAt: Long,
+    )
 
     /**
      * §7.9's library-swap step: any seed row (`is_custom = 0`) whose id is no longer in the
@@ -91,5 +94,8 @@ interface ExerciseDao {
      * its History/Detail screens even though the exercise no longer appears in Browse/Create.
      */
     @Query("UPDATE exercises SET is_deleted = 1, updated_at = :updatedAt WHERE is_custom = 0 AND id NOT IN (:currentSeedIds)")
-    suspend fun pruneRetiredSeeds(currentSeedIds: List<String>, updatedAt: Long)
+    suspend fun pruneRetiredSeeds(
+        currentSeedIds: List<String>,
+        updatedAt: Long,
+    )
 }

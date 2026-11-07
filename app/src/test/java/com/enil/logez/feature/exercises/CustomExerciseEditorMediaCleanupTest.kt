@@ -41,50 +41,59 @@ class CustomExerciseEditorMediaCleanupTest {
     @After
     fun tearDown() = Dispatchers.resetMain()
 
-    private val existing = Exercise(
-        id = "existing-1",
-        name = "Bench Press (Barbell)",
-        exerciseType = ExerciseType.WEIGHT_REPS,
-        primaryMuscleGroup = MuscleGroup.CHEST,
-        secondaryMuscleGroups = listOf(MuscleGroup.TRICEPS),
-        equipment = Equipment.BARBELL,
-        instructions = "",
-        mediaPath = "exercise_media/old.jpg",
-        isCustom = true,
-        isBodyweightVolumeEligible = false,
-        isDeleted = false,
-        createdAt = 500L,
-        updatedAt = 500L,
-    )
-
-    private fun editor(repo: FakeExerciseRepository, cleaner: FakeMediaFileCleaner, picked: String = "exercise_media/new.jpg") =
-        CustomExerciseEditorViewModel(
-            SavedStateHandle(mapOf(CustomExerciseEditorViewModel.EXERCISE_ID_ARG to existing.id)),
-            repo, FakeExerciseMediaStore(result = picked), FakeClock(currentMillis = 9_000L), cleaner,
+    private val existing =
+        Exercise(
+            id = "existing-1",
+            name = "Bench Press (Barbell)",
+            exerciseType = ExerciseType.WEIGHT_REPS,
+            primaryMuscleGroup = MuscleGroup.CHEST,
+            secondaryMuscleGroups = listOf(MuscleGroup.TRICEPS),
+            equipment = Equipment.BARBELL,
+            instructions = "",
+            mediaPath = "exercise_media/old.jpg",
+            isCustom = true,
+            isBodyweightVolumeEligible = false,
+            isDeleted = false,
+            createdAt = 500L,
+            updatedAt = 500L,
         )
 
+    private fun editor(
+        repo: FakeExerciseRepository,
+        cleaner: FakeMediaFileCleaner,
+        picked: String = "exercise_media/new.jpg",
+    ) = CustomExerciseEditorViewModel(
+        SavedStateHandle(mapOf(CustomExerciseEditorViewModel.EXERCISE_ID_ARG to existing.id)),
+        repo,
+        FakeExerciseMediaStore(result = picked),
+        FakeClock(currentMillis = 9_000L),
+        cleaner,
+    )
+
     @Test
-    fun `replacing an exercise's image deletes the old file once the new one is saved`() = runTest {
-        val repo = FakeExerciseRepository(listOf(existing))
-        val cleaner = FakeMediaFileCleaner()
-        val vm = editor(repo, cleaner)
+    fun `replacing an exercise's image deletes the old file once the new one is saved`() =
+        runTest {
+            val repo = FakeExerciseRepository(listOf(existing))
+            val cleaner = FakeMediaFileCleaner()
+            val vm = editor(repo, cleaner)
 
-        vm.onImagePicked(Uri.parse("content://test/picked.jpg"))
-        vm.save {}
+            vm.onImagePicked(Uri.parse("content://test/picked.jpg"))
+            vm.save {}
 
-        assertEquals("exercise_media/new.jpg", repo.getById(existing.id)?.mediaPath)
-        assertEquals(listOf("exercise_media/old.jpg"), cleaner.requested)
-    }
+            assertEquals("exercise_media/new.jpg", repo.getById(existing.id)?.mediaPath)
+            assertEquals(listOf("exercise_media/old.jpg"), cleaner.requested)
+        }
 
     @Test
-    fun `saving without changing the image deletes nothing`() = runTest {
-        val repo = FakeExerciseRepository(listOf(existing))
-        val cleaner = FakeMediaFileCleaner()
-        val vm = editor(repo, cleaner)
+    fun `saving without changing the image deletes nothing`() =
+        runTest {
+            val repo = FakeExerciseRepository(listOf(existing))
+            val cleaner = FakeMediaFileCleaner()
+            val vm = editor(repo, cleaner)
 
-        vm.onNameChange("Bench Press (Paused)")
-        vm.save {}
+            vm.onNameChange("Bench Press (Paused)")
+            vm.save {}
 
-        assertTrue(cleaner.requested.isEmpty())
-    }
+            assertTrue(cleaner.requested.isEmpty())
+        }
 }

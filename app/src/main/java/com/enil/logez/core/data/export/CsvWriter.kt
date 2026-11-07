@@ -14,8 +14,7 @@ object CsvWriter {
     /** RFC 4180 specifies CRLF, and Excel is stricter about it than most. */
     const val LINE_SEPARATOR = "\r\n"
 
-    fun row(fields: List<String?>): String =
-        fields.joinToString(",") { field -> quote(field.orEmpty()) } + LINE_SEPARATOR
+    fun row(fields: List<String?>): String = fields.joinToString(",") { field -> quote(field.orEmpty()) } + LINE_SEPARATOR
 
     private fun quote(value: String): String = "\"" + value.replace("\"", "\"\"") + "\""
 }

@@ -16,8 +16,10 @@ import java.util.Locale
 fun clockTimePattern(is24Hour: Boolean): String = if (is24Hour) "HH:mm" else "h:mm a"
 
 /** For code outside composition, such as the widget. */
-fun clockTimeFormatter(context: Context, locale: Locale = Locale.getDefault()): DateTimeFormatter =
-    DateTimeFormatter.ofPattern(clockTimePattern(DateFormat.is24HourFormat(context)), locale)
+fun clockTimeFormatter(
+    context: Context,
+    locale: Locale = Locale.getDefault(),
+): DateTimeFormatter = DateTimeFormatter.ofPattern(clockTimePattern(DateFormat.is24HourFormat(context)), locale)
 
 /** Re-read on every composition, so returning from a 12/24-hour change in Settings takes effect. */
 @Composable

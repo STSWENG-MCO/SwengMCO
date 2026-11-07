@@ -13,44 +13,51 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class HealthConnectDisconnectorTest {
-    private val wellnessRepo = FakeWellnessRepository(
-        listOf(DailyWellnessTotal(date = "2026-09-25", steps = 4_000L, caloriesBurned = 1_800.0, updatedAt = 1L)),
-    )
-    private val heartRateRepo = FakeWorkoutHeartRateSampleRepository(
-        listOf(WorkoutHeartRateSampleEntity(id = "s1", workoutId = "w1", recordedAt = 1L, bpm = 120L)),
-    )
+    private val wellnessRepo =
+        FakeWellnessRepository(
+            listOf(DailyWellnessTotal(date = "2026-09-25", steps = 4_000L, caloriesBurned = 1_800.0, updatedAt = 1L)),
+        )
+    private val heartRateRepo =
+        FakeWorkoutHeartRateSampleRepository(
+            listOf(WorkoutHeartRateSampleEntity(id = "s1", workoutId = "w1", recordedAt = 1L, bpm = 120L)),
+        )
     private var widgetRefreshes = 0
-    private val widgetRefresher = object : WidgetRefresher {
-        override suspend fun refresh() { widgetRefreshes++ }
-    }
+    private val widgetRefresher =
+        object : WidgetRefresher {
+            override suspend fun refresh() {
+                widgetRefreshes++
+            }
+        }
 
-    private fun disconnector(source: FakeHealthMetricsSource) =
-        HealthConnectDisconnector(source, wellnessRepo, heartRateRepo, widgetRefresher, AppLogger.NoOp)
+    private fun disconnector(source: FakeHealthMetricsSource) = HealthConnectDisconnector(source, wellnessRepo, heartRateRepo, widgetRefresher, AppLogger.NoOp)
 
     @Test
-    fun `revokes access, deletes both local copies and repaints the widget`() = runTest {
-        val source = FakeHealthMetricsSource(availabilityValue = HealthConnectAvailability.Available, permissionsGranted = true)
+    fun `revokes access, deletes both local copies and repaints the widget`() =
+        runTest {
+            val source = FakeHealthMetricsSource(availabilityValue = HealthConnectAvailability.Available, permissionsGranted = true)
 
-        disconnector(source).disconnectAndDelete()
+            disconnector(source).disconnectAndDelete()
 
-        assertEquals(1, source.revokeCallCount)
-        assertTrue(wellnessRepo.all.isEmpty())
-        assertTrue(heartRateRepo.all.isEmpty())
-        assertEquals(1, widgetRefreshes)
-    }
+            assertEquals(1, source.revokeCallCount)
+            assertTrue(wellnessRepo.all.isEmpty())
+            assertTrue(heartRateRepo.all.isEmpty())
+            assertEquals(1, widgetRefreshes)
+        }
 
     /** Health Connect may be uninstalled or refuse; the user's delete request must still happen. */
     @Test
-    fun `a failed revoke still deletes the local copies`() = runTest {
-        val source = FakeHealthMetricsSource(
-            availabilityValue = HealthConnectAvailability.Available,
-            permissionsGranted = true,
-            throwOnRevoke = IllegalStateException("Health Connect unavailable"),
-        )
+    fun `a failed revoke still deletes the local copies`() =
+        runTest {
+            val source =
+                FakeHealthMetricsSource(
+                    availabilityValue = HealthConnectAvailability.Available,
+                    permissionsGranted = true,
+                    throwOnRevoke = IllegalStateException("Health Connect unavailable"),
+                )
 
-        disconnector(source).disconnectAndDelete()
+            disconnector(source).disconnectAndDelete()
 
-        assertTrue(wellnessRepo.all.isEmpty())
-        assertTrue(heartRateRepo.all.isEmpty())
-    }
+            assertTrue(wellnessRepo.all.isEmpty())
+            assertTrue(heartRateRepo.all.isEmpty())
+        }
 }

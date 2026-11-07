@@ -27,8 +27,14 @@ import androidx.compose.ui.text.input.VisualTransformation
  * asterisk literal instead of italicising the rest of the step.
  */
 object InlineMarkdown {
-    private enum class Marker(val token: String, val bold: Boolean) {
-        BOLD_STARS("**", true), BOLD_UNDERSCORES("__", true), ITALIC_STAR("*", false), ITALIC_UNDERSCORE("_", false)
+    private enum class Marker(
+        val token: String,
+        val bold: Boolean,
+    ) {
+        BOLD_STARS("**", true),
+        BOLD_UNDERSCORES("__", true),
+        ITALIC_STAR("*", false),
+        ITALIC_UNDERSCORE("_", false),
     }
 
     /** Bold and italic tokens the editor's toolbar writes. Italic uses `_` so it never merges with a `**`. */
@@ -80,8 +86,10 @@ object InlineMarkdown {
             val marker = Marker.entries.firstOrNull { source.startsWith(it.token, i) }
             if (marker != null) {
                 val closes = if (marker.bold) openBold == marker else openItalic == marker
-                val opens = !closes && (if (marker.bold) openBold == null else openItalic == null) &&
-                    hasCloser(source, marker, i + marker.token.length)
+                val opens =
+                    !closes &&
+                        (if (marker.bold) openBold == null else openItalic == null) &&
+                        hasCloser(source, marker, i + marker.token.length)
                 if (closes || opens) {
                     flush(i)
                     val before = bold to italic
@@ -112,12 +120,22 @@ object InlineMarkdown {
      * bold (three being `***`, both at once). The closer must not sit immediately at [from]: an
      * empty "****" is literal.
      */
-    private fun hasCloser(source: String, marker: Marker, from: Int): Boolean {
+    private fun hasCloser(
+        source: String,
+        marker: Marker,
+        from: Int,
+    ): Boolean {
         val c = marker.token[0]
         var j = from
         while (j < source.length) {
-            if (source[j] == '\\') { j += 2; continue }
-            if (source[j] != c) { j++; continue }
+            if (source[j] == '\\') {
+                j += 2
+                continue
+            }
+            if (source[j] != c) {
+                j++
+                continue
+            }
             var run = 0
             while (j + run < source.length && source[j + run] == c) run++
             val fits = if (marker.bold) run == 2 || run == 3 else run == 1 || run == 3
@@ -127,30 +145,37 @@ object InlineMarkdown {
         return false
     }
 
-    private fun style(bold: Boolean, italic: Boolean) = SpanStyle(
+    private fun style(
+        bold: Boolean,
+        italic: Boolean,
+    ) = SpanStyle(
         fontWeight = if (bold) FontWeight.Bold else null,
         fontStyle = if (italic) FontStyle.Italic else null,
     )
 
     /** For display (the How-to tab): markers removed, styles applied. */
-    fun toAnnotatedString(source: String): AnnotatedString = buildAnnotatedString {
-        scan(source).filterNot { it.isMarker }.forEach { piece ->
-            if (piece.bold || piece.italic) {
-                pushStyle(style(piece.bold, piece.italic))
-                append(piece.text)
-                pop()
-            } else {
-                append(piece.text)
+    fun toAnnotatedString(source: String): AnnotatedString =
+        buildAnnotatedString {
+            scan(source).filterNot { it.isMarker }.forEach { piece ->
+                if (piece.bold || piece.italic) {
+                    pushStyle(style(piece.bold, piece.italic))
+                    append(piece.text)
+                    pop()
+                } else {
+                    append(piece.text)
+                }
             }
         }
-    }
 
     /**
      * Whether text typed at [offset] would be bold / italic, for the editor's toggle buttons: the
      * style of the character before the caret, or, when that character belongs to a marker, the
      * style the marker switches to (so the caret just past a closing `**` reads as not bold).
      */
-    fun stylesAt(source: String, offset: Int): Pair<Boolean, Boolean> {
+    fun stylesAt(
+        source: String,
+        offset: Int,
+    ): Pair<Boolean, Boolean> {
         if (offset <= 0) return false to false
         val index = (offset - 1).coerceAtMost(source.length - 1)
         val piece = scan(source).firstOrNull { index >= it.start && index < it.end } ?: return false to false
@@ -161,20 +186,22 @@ object InlineMarkdown {
      * For the editor: the raw text, markers left in place (so the cursor maps one to one and the
      * stored text is exactly what is typed), styled content, and markers dimmed to [markerColor].
      */
-    fun editorTransformation(markerColor: Color): VisualTransformation = VisualTransformation { text ->
-        val raw = text.text
-        val styled = buildAnnotatedString {
-            append(raw)
-            scan(raw).forEach { piece ->
-                if (piece.isMarker) {
-                    addStyle(SpanStyle(color = markerColor), piece.start, piece.end)
-                } else if (piece.bold || piece.italic) {
-                    addStyle(style(piece.bold, piece.italic), piece.start, piece.end)
+    fun editorTransformation(markerColor: Color): VisualTransformation =
+        VisualTransformation { text ->
+            val raw = text.text
+            val styled =
+                buildAnnotatedString {
+                    append(raw)
+                    scan(raw).forEach { piece ->
+                        if (piece.isMarker) {
+                            addStyle(SpanStyle(color = markerColor), piece.start, piece.end)
+                        } else if (piece.bold || piece.italic) {
+                            addStyle(style(piece.bold, piece.italic), piece.start, piece.end)
+                        }
+                    }
                 }
-            }
+            TransformedText(styled, OffsetMapping.Identity)
         }
-        TransformedText(styled, OffsetMapping.Identity)
-    }
 
     /** The Bold button. Unwraps `**x**` or `__x__`; wraps with `**`. */
     fun toggleBold(value: TextFieldValue): TextFieldValue = toggle(value, BOLD_TOKEN, listOf("**", "__"))
@@ -188,28 +215,40 @@ object InlineMarkdown {
      * only counts when the characters just outside it are not more of the same marker, so the
      * single `*` of a `**` is never mistaken for an italic marker.
      */
-    fun toggle(value: TextFieldValue, token: String, unwrapTokens: List<String> = listOf(token)): TextFieldValue {
+    fun toggle(
+        value: TextFieldValue,
+        token: String,
+        unwrapTokens: List<String> = listOf(token),
+    ): TextFieldValue {
         val text = value.text
         val start = value.selection.min
         val end = value.selection.max
         val wrapping = unwrapTokens.firstOrNull { isCleanWrap(text, start, end, it) }
         return when {
-            wrapping != null -> TextFieldValue(
-                text = text.removeRange(end, end + wrapping.length).removeRange(start - wrapping.length, start),
-                selection = TextRange(start - wrapping.length, end - wrapping.length),
-            )
-            start == end -> TextFieldValue(
-                text = text.substring(0, start) + token + token + text.substring(start),
-                selection = TextRange(start + token.length),
-            )
-            else -> TextFieldValue(
-                text = text.substring(0, start) + token + text.substring(start, end) + token + text.substring(end),
-                selection = TextRange(start + token.length, end + token.length),
-            )
+            wrapping != null ->
+                TextFieldValue(
+                    text = text.removeRange(end, end + wrapping.length).removeRange(start - wrapping.length, start),
+                    selection = TextRange(start - wrapping.length, end - wrapping.length),
+                )
+            start == end ->
+                TextFieldValue(
+                    text = text.substring(0, start) + token + token + text.substring(start),
+                    selection = TextRange(start + token.length),
+                )
+            else ->
+                TextFieldValue(
+                    text = text.substring(0, start) + token + text.substring(start, end) + token + text.substring(end),
+                    selection = TextRange(start + token.length, end + token.length),
+                )
         }
     }
 
-    private fun isCleanWrap(text: String, start: Int, end: Int, token: String): Boolean {
+    private fun isCleanWrap(
+        text: String,
+        start: Int,
+        end: Int,
+        token: String,
+    ): Boolean {
         if (start == end || start < token.length || end + token.length > text.length) return false
         if (!text.startsWith(token, start - token.length) || !text.startsWith(token, end)) return false
         val c = token[0]

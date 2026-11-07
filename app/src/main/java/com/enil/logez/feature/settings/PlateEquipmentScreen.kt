@@ -35,8 +35,8 @@ import com.enil.logez.R
 import com.enil.logez.core.designsystem.ScreenTitle
 import com.enil.logez.core.designsystem.Spacing
 import com.enil.logez.core.designsystem.logEzTopAppBarColors
-import com.enil.logez.core.domain.calc.PlateCalculator
 import com.enil.logez.core.designsystem.parseDecimalInput
+import com.enil.logez.core.domain.calc.PlateCalculator
 
 /** Which add dialog is open, if any. */
 private enum class PlateEquipmentDialog { ADD_BAR, ADD_PLATE }
@@ -122,25 +122,37 @@ fun PlateEquipmentScreen(
     }
 
     when (openDialog) {
-        PlateEquipmentDialog.ADD_BAR -> AddWeightDialog(
-            title = stringResource(R.string.settings_plate_add_bar),
-            existing = equipment.barsKg,
-            onConfirm = { viewModel.addBar(it); openDialog = null },
-            onDismiss = { openDialog = null },
-        )
-        PlateEquipmentDialog.ADD_PLATE -> AddWeightDialog(
-            title = stringResource(R.string.settings_plate_add_plate),
-            existing = equipment.platesKg,
-            onConfirm = { viewModel.addPlate(it); openDialog = null },
-            onDismiss = { openDialog = null },
-        )
+        PlateEquipmentDialog.ADD_BAR ->
+            AddWeightDialog(
+                title = stringResource(R.string.settings_plate_add_bar),
+                existing = equipment.barsKg,
+                onConfirm = {
+                    viewModel.addBar(it)
+                    openDialog = null
+                },
+                onDismiss = { openDialog = null },
+            )
+        PlateEquipmentDialog.ADD_PLATE ->
+            AddWeightDialog(
+                title = stringResource(R.string.settings_plate_add_plate),
+                existing = equipment.platesKg,
+                onConfirm = {
+                    viewModel.addPlate(it)
+                    openDialog = null
+                },
+                onDismiss = { openDialog = null },
+            )
         null -> Unit
     }
 }
 
 /** One bar/plate row: the weight, plus a remove control unless the invariant forbids it. */
 @Composable
-private fun EquipmentWeightRow(label: String, removable: Boolean, onRemove: () -> Unit) {
+private fun EquipmentWeightRow(
+    label: String,
+    removable: Boolean,
+    onRemove: () -> Unit,
+) {
     ListItem(
         modifier = Modifier.fillMaxWidth(),
         headlineContent = { Text(label) },
@@ -173,12 +185,13 @@ private fun AddWeightDialog(
 ) {
     var text by remember { mutableStateOf("") }
     val rounded = parseDecimalInput(text)?.let { PlateCalculator.roundToQuarterKg(it) }
-    val error = when {
-        text.isEmpty() -> null
-        rounded == null || rounded <= 0.0 -> stringResource(R.string.settings_plate_invalid_weight)
-        rounded in existing -> stringResource(R.string.settings_plate_duplicate_weight)
-        else -> null
-    }
+    val error =
+        when {
+            text.isEmpty() -> null
+            rounded == null || rounded <= 0.0 -> stringResource(R.string.settings_plate_invalid_weight)
+            rounded in existing -> stringResource(R.string.settings_plate_duplicate_weight)
+            else -> null
+        }
     val valid = rounded != null && rounded > 0.0 && rounded !in existing
 
     AlertDialog(
