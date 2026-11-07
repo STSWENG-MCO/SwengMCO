@@ -125,6 +125,14 @@ fun FinishWorkoutScreen(
             )
             return@Scaffold
         }
+        if (uiState.isAlreadySaved) {
+            Text(
+                stringResource(R.string.finish_workout_already_saved),
+                modifier = Modifier.padding(padding).padding(Spacing.md),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            return@Scaffold
+        }
 
         Column(
             modifier =

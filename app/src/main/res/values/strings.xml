@@ -503,6 +503,7 @@
     </plurals>
     <string name="finish_save_failed">Couldn\'t save this workout. Nothing was changed — try again.</string>
     <string name="finish_workout_missing">This workout is no longer available.</string>
+    <string name="finish_workout_already_saved">This workout is already saved. You can find it in History.</string>
     <string name="finish_incomplete_body">They will be discarded when you save.</string>
     <string name="finish_incomplete_confirm">Save anyway</string>
     <string name="finish_no_sets_title">No completed sets</string>
