@@ -16,71 +16,85 @@ class WorkoutTotalsCalculatorTest {
         setType: SetType = SetType.NORMAL,
         isCompleted: Boolean = true,
     ) = StatSet(
-        setId = id, workoutId = "w1", workoutStartedAt = 1_000L, orderIndex = 0, setType = setType,
-        weightKg = weightKg, reps = reps, durationSeconds = null, distanceMeters = distanceMeters,
-        customMetric = null, isCompleted = isCompleted,
+        setId = id,
+        workoutId = "w1",
+        workoutStartedAt = 1_000L,
+        orderIndex = 0,
+        setType = setType,
+        weightKg = weightKg,
+        reps = reps,
+        durationSeconds = null,
+        distanceMeters = distanceMeters,
+        customMetric = null,
+        isCompleted = isCompleted,
     )
 
     @Test
     fun `counts completed sets and sums their reps`() {
-        val totals = WorkoutTotalsCalculator.totals(
-            listOf(set("s1", reps = 8), set("s2", reps = 10), set("s3", reps = 12)),
-            includeWarmupsInStats = false,
-        )
+        val totals =
+            WorkoutTotalsCalculator.totals(
+                listOf(set("s1", reps = 8), set("s2", reps = 10), set("s3", reps = 12)),
+                includeWarmupsInStats = false,
+            )
         assertEquals(3, totals.setCount)
         assertEquals(30, totals.totalReps)
     }
 
     @Test
     fun `drop sets and failure sets count like normal sets`() {
-        val totals = WorkoutTotalsCalculator.totals(
-            listOf(
-                set("s1", reps = 8),
-                set("s2", reps = 6, setType = SetType.DROPSET),
-                set("s3", reps = 4, setType = SetType.FAILURE),
-            ),
-            includeWarmupsInStats = false,
-        )
+        val totals =
+            WorkoutTotalsCalculator.totals(
+                listOf(
+                    set("s1", reps = 8),
+                    set("s2", reps = 6, setType = SetType.DROPSET),
+                    set("s3", reps = 4, setType = SetType.FAILURE),
+                ),
+                includeWarmupsInStats = false,
+            )
         assertEquals(3, totals.setCount)
         assertEquals(18, totals.totalReps)
     }
 
     @Test
     fun `warm-ups are left out when the setting is off`() {
-        val totals = WorkoutTotalsCalculator.totals(
-            listOf(set("s1", reps = 8), set("s2", reps = 15, setType = SetType.WARMUP)),
-            includeWarmupsInStats = false,
-        )
+        val totals =
+            WorkoutTotalsCalculator.totals(
+                listOf(set("s1", reps = 8), set("s2", reps = 15, setType = SetType.WARMUP)),
+                includeWarmupsInStats = false,
+            )
         assertEquals(1, totals.setCount)
         assertEquals(8, totals.totalReps)
     }
 
     @Test
     fun `warm-ups count when the setting is on`() {
-        val totals = WorkoutTotalsCalculator.totals(
-            listOf(set("s1", reps = 8), set("s2", reps = 15, setType = SetType.WARMUP)),
-            includeWarmupsInStats = true,
-        )
+        val totals =
+            WorkoutTotalsCalculator.totals(
+                listOf(set("s1", reps = 8), set("s2", reps = 15, setType = SetType.WARMUP)),
+                includeWarmupsInStats = true,
+            )
         assertEquals(2, totals.setCount)
         assertEquals(23, totals.totalReps)
     }
 
     @Test
     fun `unfinished sets never count, however heavy`() {
-        val totals = WorkoutTotalsCalculator.totals(
-            listOf(set("s1", reps = 8), set("s2", reps = 20, weightKg = 200.0, isCompleted = false)),
-            includeWarmupsInStats = true,
-        )
+        val totals =
+            WorkoutTotalsCalculator.totals(
+                listOf(set("s1", reps = 8), set("s2", reps = 20, weightKg = 200.0, isCompleted = false)),
+                includeWarmupsInStats = true,
+            )
         assertEquals(1, totals.setCount)
         assertEquals(8, totals.totalReps)
     }
 
     @Test
     fun `a set with no reps adds zero reps but still counts as a set`() {
-        val totals = WorkoutTotalsCalculator.totals(
-            listOf(set("s1", reps = null), set("s2", reps = 5)),
-            includeWarmupsInStats = false,
-        )
+        val totals =
+            WorkoutTotalsCalculator.totals(
+                listOf(set("s1", reps = null), set("s2", reps = 5)),
+                includeWarmupsInStats = false,
+            )
         assertEquals(2, totals.setCount)
         assertEquals(5, totals.totalReps)
         assertTrue(totals.hasReps)
@@ -88,10 +102,11 @@ class WorkoutTotalsCalculatorTest {
 
     @Test
     fun `a walk or run logs only distance, so reps and weight are flagged as not applicable`() {
-        val totals = WorkoutTotalsCalculator.totals(
-            listOf(set("s1", reps = null, weightKg = null, distanceMeters = 2_000.0)),
-            includeWarmupsInStats = false,
-        )
+        val totals =
+            WorkoutTotalsCalculator.totals(
+                listOf(set("s1", reps = null, weightKg = null, distanceMeters = 2_000.0)),
+                includeWarmupsInStats = false,
+            )
         assertFalse(totals.hasReps)
         assertFalse(totals.hasWeight)
         assertTrue(totals.hasDistance)
@@ -109,13 +124,14 @@ class WorkoutTotalsCalculatorTest {
 
     @Test
     fun `distance from several sets adds up`() {
-        val totals = WorkoutTotalsCalculator.totals(
-            listOf(
-                set("s1", reps = null, weightKg = null, distanceMeters = 1_000.0),
-                set("s2", reps = null, weightKg = null, distanceMeters = 500.0),
-            ),
-            includeWarmupsInStats = false,
-        )
+        val totals =
+            WorkoutTotalsCalculator.totals(
+                listOf(
+                    set("s1", reps = null, weightKg = null, distanceMeters = 1_000.0),
+                    set("s2", reps = null, weightKg = null, distanceMeters = 500.0),
+                ),
+                includeWarmupsInStats = false,
+            )
         assertEquals(1_500.0, totals.totalDistanceMeters, 1e-9)
     }
 

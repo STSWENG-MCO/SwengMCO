@@ -23,7 +23,10 @@ object WorkoutTotalsCalculator {
         val hasDistance: Boolean,
     )
 
-    fun totals(sets: List<StatSet>, includeWarmupsInStats: Boolean): Totals {
+    fun totals(
+        sets: List<StatSet>,
+        includeWarmupsInStats: Boolean,
+    ): Totals {
         val counted = sets.filter { isIncluded(it, includeWarmupsInStats) }
         return Totals(
             setCount = counted.size,
