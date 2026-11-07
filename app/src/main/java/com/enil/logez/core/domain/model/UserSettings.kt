@@ -14,6 +14,7 @@ data class UserSettings(
     val muscleDiagramVariant: MuscleDiagramVariant = MuscleDiagramVariant.MALE,
     val firstDayOfWeek: DayOfWeek = DayOfWeek.MONDAY,
     val perExerciseUnitOverrides: Map<String, WeightUnit> = emptyMap(),
+
     // Workouts
     val defaultRestTimerSeconds: Int = 90,
     val timerSound: Int = 1,

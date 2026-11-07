@@ -25,11 +25,11 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -141,23 +141,9 @@ internal fun SettingsSliderRow(
             valueRange = 0f..1f,
             modifier = Modifier.minimumInteractiveComponentSize().fillMaxWidth().padding(top = Spacing.xs),
             track = { state ->
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .height(4.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(MaterialTheme.colorScheme.outlineVariant),
-                ) {
+                Box(modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)).background(MaterialTheme.colorScheme.outlineVariant)) {
                     val fraction = (state.value - state.valueRange.start) / (state.valueRange.endInclusive - state.valueRange.start)
-                    Box(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth(fraction.coerceIn(0f, 1f))
-                                .fillMaxHeight()
-                                .clip(RoundedCornerShape(2.dp))
-                                .background(MaterialTheme.colorScheme.primary),
-                    )
+                    Box(modifier = Modifier.fillMaxWidth(fraction.coerceIn(0f, 1f)).fillMaxHeight().clip(RoundedCornerShape(2.dp)).background(MaterialTheme.colorScheme.primary))
                 }
             },
             thumb = {
@@ -232,43 +218,36 @@ internal fun <T> SettingsRadioDialog(
         overlay = { Scrim(scrimColor = MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f)) },
     ) {
         Box(modifier = Modifier.fillMaxSize().padding(Spacing.lg), contentAlignment = Alignment.Center) {
-            DialogPanel(
-                modifier =
-                    Modifier
-                        .clip(RoundedCornerShape(Radius.card))
-                        .background(MaterialTheme.colorScheme.surface)
-                        .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), RoundedCornerShape(Radius.card))
-                        .padding(Spacing.md),
-            ) {
-                Column {
-                    Text(title, style = MaterialTheme.typography.titleMedium)
-                    // The rest-timer picker has ten options — scroll rather than overflow on short screens.
-                    Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(top = Spacing.sm)) {
-                        options.forEach { option ->
-                            Row(
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .clickable {
-                                            onSelect(option)
-                                            onDismiss()
-                                        }.padding(vertical = Spacing.xs),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
-                            ) {
-                                RadioButton(selected = option == selected, onClick = {
-                                    onSelect(option)
-                                    onDismiss()
-                                })
-                                Text(optionLabel(option), style = MaterialTheme.typography.bodyLarge)
-                            }
+        DialogPanel(
+            modifier = Modifier
+                .clip(RoundedCornerShape(Radius.card))
+                .background(MaterialTheme.colorScheme.surface)
+                .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), RoundedCornerShape(Radius.card))
+                .padding(Spacing.md),
+        ) {
+            Column {
+                Text(title, style = MaterialTheme.typography.titleMedium)
+                // The rest-timer picker has ten options — scroll rather than overflow on short screens.
+                Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(top = Spacing.sm)) {
+                    options.forEach { option ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onSelect(option); onDismiss() }
+                                .padding(vertical = Spacing.xs),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
+                        ) {
+                            RadioButton(selected = option == selected, onClick = { onSelect(option); onDismiss() })
+                            Text(optionLabel(option), style = MaterialTheme.typography.bodyLarge)
                         }
                     }
-                    Row(modifier = Modifier.fillMaxWidth().padding(top = Spacing.sm), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
-                    }
+                }
+                Row(modifier = Modifier.fillMaxWidth().padding(top = Spacing.sm), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
                 }
             }
+        }
         }
     }
 }

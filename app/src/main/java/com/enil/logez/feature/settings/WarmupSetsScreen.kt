@@ -32,7 +32,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -43,12 +42,10 @@ import com.enil.logez.core.designsystem.Spacing
 import com.enil.logez.core.designsystem.logEzTopAppBarColors
 import com.enil.logez.core.domain.model.WarmupStep
 import kotlin.math.roundToInt
+import androidx.compose.ui.res.pluralStringResource
 
 /** Which step is being edited (null target = adding a new one). */
-private data class WarmupStepDialogState(
-    val index: Int?,
-    val initial: WarmupStep?,
-)
+private data class WarmupStepDialogState(val index: Int?, val initial: WarmupStep?)
 
 /**
  * M18 Warm-up Sets sub-page (§5.1.6's "Warmup Method", relocated into the Settings tree like
@@ -205,12 +202,11 @@ private fun WarmupStepDialog(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
                     isError = percentError,
-                    supportingText =
-                        if (percentError) {
-                            { Text(stringResource(R.string.settings_warmup_invalid_percent)) }
-                        } else {
-                            null
-                        },
+                    supportingText = if (percentError) {
+                        { Text(stringResource(R.string.settings_warmup_invalid_percent)) }
+                    } else {
+                        null
+                    },
                     modifier = Modifier.fillMaxWidth(),
                 )
                 OutlinedTextField(
@@ -220,12 +216,11 @@ private fun WarmupStepDialog(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
                     isError = repsError,
-                    supportingText =
-                        if (repsError) {
-                            { Text(stringResource(R.string.settings_warmup_invalid_reps)) }
-                        } else {
-                            null
-                        },
+                    supportingText = if (repsError) {
+                        { Text(stringResource(R.string.settings_warmup_invalid_reps)) }
+                    } else {
+                        null
+                    },
                     modifier = Modifier.fillMaxWidth().padding(top = Spacing.xs),
                 )
             }

@@ -8,10 +8,10 @@ import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.metadata.Device
 import androidx.health.connect.client.records.metadata.Metadata
+import java.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.time.Instant
 
 /**
  * Debug-only test aid: writes one watch-style heart-rate record into Health Connect, so the
@@ -29,10 +29,7 @@ import java.time.Instant
  * wobbling around bpm. Output goes to logcat under DebugHeartRateWriter.
  */
 class DebugHeartRateWriter : BroadcastReceiver() {
-    override fun onReceive(
-        context: Context,
-        intent: Intent,
-    ) {
+    override fun onReceive(context: Context, intent: Intent) {
         val pending = goAsync()
         val to = intent.getLongExtra("to", System.currentTimeMillis())
         val from = intent.getLongExtra("from", to - 60_000L)
@@ -41,20 +38,18 @@ class DebugHeartRateWriter : BroadcastReceiver() {
         val bpm = intent.getIntExtra("bpm", 140)
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val samples =
-                    generateSequence(from) { it + stepSeconds * 1000L }
-                        .takeWhile { it <= to }
-                        .mapIndexed { i, at -> HeartRateRecord.Sample(Instant.ofEpochMilli(at), (bpm + (i % 9) - 4).toLong()) }
-                        .toList()
-                val record =
-                    HeartRateRecord(
-                        startTime = Instant.ofEpochMilli(minOf(recordStart, from)),
-                        startZoneOffset = null,
-                        endTime = Instant.ofEpochMilli(to),
-                        endZoneOffset = null,
-                        samples = samples,
-                        metadata = Metadata.autoRecorded(Device(type = Device.TYPE_WATCH)),
-                    )
+                val samples = generateSequence(from) { it + stepSeconds * 1000L }
+                    .takeWhile { it <= to }
+                    .mapIndexed { i, at -> HeartRateRecord.Sample(Instant.ofEpochMilli(at), (bpm + (i % 9) - 4).toLong()) }
+                    .toList()
+                val record = HeartRateRecord(
+                    startTime = Instant.ofEpochMilli(minOf(recordStart, from)),
+                    startZoneOffset = null,
+                    endTime = Instant.ofEpochMilli(to),
+                    endZoneOffset = null,
+                    samples = samples,
+                    metadata = Metadata.autoRecorded(Device(type = Device.TYPE_WATCH)),
+                )
                 HealthConnectClient.getOrCreate(context).insertRecords(listOf(record))
                 Log.i(TAG, "Wrote a heart-rate record from $recordStart to $to with ${samples.size} samples")
             } catch (e: Exception) {

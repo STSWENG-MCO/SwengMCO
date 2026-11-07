@@ -22,16 +22,12 @@ enum class GpsActivity {
         const val RUNNING_OUTDOOR_EXERCISE_ID = "9d6b8b71-631e-5250-becb-099917d7805d"
         const val WALKING_OUTDOOR_EXERCISE_ID = "32912a68-64de-590c-a562-9361b1856839"
 
-        fun resolve(
-            exerciseId: String?,
-            exerciseName: String?,
-        ): GpsActivity =
-            when {
-                exerciseId == RUNNING_OUTDOOR_EXERCISE_ID -> RUN
-                exerciseId == WALKING_OUTDOOR_EXERCISE_ID -> WALK
-                exerciseName?.contains("walk", ignoreCase = true) == true -> WALK
-                exerciseName?.contains("run", ignoreCase = true) == true -> RUN
-                else -> OTHER
-            }
+        fun resolve(exerciseId: String?, exerciseName: String?): GpsActivity = when {
+            exerciseId == RUNNING_OUTDOOR_EXERCISE_ID -> RUN
+            exerciseId == WALKING_OUTDOOR_EXERCISE_ID -> WALK
+            exerciseName?.contains("walk", ignoreCase = true) == true -> WALK
+            exerciseName?.contains("run", ignoreCase = true) == true -> RUN
+            else -> OTHER
+        }
     }
 }

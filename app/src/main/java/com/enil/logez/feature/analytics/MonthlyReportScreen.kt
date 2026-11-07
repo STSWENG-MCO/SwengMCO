@@ -42,17 +42,17 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.enil.logez.R
 import com.enil.logez.core.common.muscleGroupLabel
 import com.enil.logez.core.designsystem.BarChart
+import com.enil.logez.core.designsystem.RefreshOnResume
 import com.enil.logez.core.designsystem.BarChartEntry
 import com.enil.logez.core.designsystem.LogEzCard
 import com.enil.logez.core.designsystem.LogEzMono
-import com.enil.logez.core.designsystem.RefreshOnResume
 import com.enil.logez.core.designsystem.ScreenTitle
 import com.enil.logez.core.designsystem.Spacing
-import com.enil.logez.core.designsystem.currentLocale
 import com.enil.logez.core.designsystem.logEzTopAppBarColors
-import com.enil.logez.core.domain.model.DistanceUnit
+import com.enil.logez.core.designsystem.currentLocale
 import com.enil.logez.feature.analytics.MonthlyReportViewModel.ComparisonMetric
 import com.enil.logez.feature.exercises.SummaryFormatters
+import com.enil.logez.core.domain.model.DistanceUnit
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -92,9 +92,7 @@ fun MonthlyReportScreen(
         if (uiState.isLoading) return@Scaffold
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding =
-                androidx.compose.foundation.layout
-                    .PaddingValues(Spacing.md),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(Spacing.md),
             verticalArrangement = Arrangement.spacedBy(Spacing.md),
         ) {
             item(key = "picker") {
@@ -160,10 +158,7 @@ private fun MonthTotalsCard(uiState: MonthlyReportUiState) {
 }
 
 @Composable
-private fun ComparisonCard(
-    uiState: MonthlyReportUiState,
-    viewModel: MonthlyReportViewModel,
-) {
+private fun ComparisonCard(uiState: MonthlyReportUiState, viewModel: MonthlyReportViewModel) {
     LogEzCard {
         Column(modifier = Modifier.padding(Spacing.md), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
             Text(
@@ -186,41 +181,35 @@ private fun ComparisonCard(
             var selectedBar by remember(uiState.comparison, uiState.comparisonMetric) { mutableStateOf<Int?>(null) }
             selectedBar?.let { i ->
                 val row = uiState.comparison[i]
-                val value =
-                    when (uiState.comparisonMetric) {
-                        ComparisonMetric.WORKOUTS -> row.totals.workouts.toString()
-                        ComparisonMetric.DURATION -> AnalyticsFormatters.durationHoursMinutes(row.totals.durationSeconds)
-                        ComparisonMetric.VOLUME -> AnalyticsFormatters.volume(row.totals.volumeKg, uiState.weightUnit)
-                        ComparisonMetric.SETS -> row.totals.sets.toString()
-                    }
+                val value = when (uiState.comparisonMetric) {
+                    ComparisonMetric.WORKOUTS -> row.totals.workouts.toString()
+                    ComparisonMetric.DURATION -> AnalyticsFormatters.durationHoursMinutes(row.totals.durationSeconds)
+                    ComparisonMetric.VOLUME -> AnalyticsFormatters.volume(row.totals.volumeKg, uiState.weightUnit)
+                    ComparisonMetric.SETS -> row.totals.sets.toString()
+                }
                 Text(
                     monthReadoutFormatter.format(row.month) + " — " + value,
                     style = LogEzMono.dataMedium.copy(color = MaterialTheme.colorScheme.tertiary),
                 )
             }
             BarChart(
-                entries =
-                    uiState.comparison.map { row ->
-                        BarChartEntry(
-                            label = monthFormatter.format(row.month),
-                            value =
-                                when (uiState.comparisonMetric) {
-                                    ComparisonMetric.WORKOUTS -> row.totals.workouts.toDouble()
-                                    ComparisonMetric.DURATION -> row.totals.durationSeconds.toDouble()
-                                    ComparisonMetric.VOLUME -> row.totals.volumeKg
-                                    ComparisonMetric.SETS -> row.totals.sets.toDouble()
-                                },
-                        )
-                    },
+                entries = uiState.comparison.map { row ->
+                    BarChartEntry(
+                        label = monthFormatter.format(row.month),
+                        value = when (uiState.comparisonMetric) {
+                            ComparisonMetric.WORKOUTS -> row.totals.workouts.toDouble()
+                            ComparisonMetric.DURATION -> row.totals.durationSeconds.toDouble()
+                            ComparisonMetric.VOLUME -> row.totals.volumeKg
+                            ComparisonMetric.SETS -> row.totals.sets.toDouble()
+                        },
+                    )
+                },
                 yLabel = { raw ->
                     when (uiState.comparisonMetric) {
                         ComparisonMetric.DURATION -> (raw.toLong() / 3600).toString()
-                        ComparisonMetric.VOLUME ->
-                            AnalyticsFormatters.axisLabel(
-                                com.enil.logez.core.domain.calc.DashboardAggregator.TrainingMetric.VOLUME,
-                                raw,
-                                uiState.weightUnit,
-                            )
+                        ComparisonMetric.VOLUME -> AnalyticsFormatters.axisLabel(
+                            com.enil.logez.core.domain.calc.DashboardAggregator.TrainingMetric.VOLUME, raw, uiState.weightUnit,
+                        )
                         else -> Math.round(raw).toString()
                     }
                 },
@@ -233,13 +222,12 @@ private fun ComparisonCard(
 }
 
 @Composable
-private fun comparisonMetricLabel(metric: ComparisonMetric): String =
-    when (metric) {
-        ComparisonMetric.WORKOUTS -> stringResource(R.string.analytics_tile_workouts)
-        ComparisonMetric.DURATION -> stringResource(R.string.analytics_tile_duration)
-        ComparisonMetric.VOLUME -> stringResource(R.string.analytics_tile_volume)
-        ComparisonMetric.SETS -> stringResource(R.string.analytics_tile_sets)
-    }
+private fun comparisonMetricLabel(metric: ComparisonMetric): String = when (metric) {
+    ComparisonMetric.WORKOUTS -> stringResource(R.string.analytics_tile_workouts)
+    ComparisonMetric.DURATION -> stringResource(R.string.analytics_tile_duration)
+    ComparisonMetric.VOLUME -> stringResource(R.string.analytics_tile_volume)
+    ComparisonMetric.SETS -> stringResource(R.string.analytics_tile_sets)
+}
 
 /** Mini month grid — dots only, no interaction; the full Calendar screen owns the tap-a-day flow. */
 @Composable
@@ -257,10 +245,7 @@ private fun MiniCalendarCard(uiState: MonthlyReportUiState) {
 }
 
 @Composable
-private fun MiniMonthGrid(
-    month: YearMonth,
-    workoutDates: Set<LocalDate>,
-) {
+private fun MiniMonthGrid(month: YearMonth, workoutDates: Set<LocalDate>) {
     val firstDay = month.atDay(1)
     // Monday-first regardless of the calendar setting: this grid is a report thumbnail, not the
     // interactive calendar — the full screen honors firstDayOfWeek.
@@ -286,11 +271,10 @@ private fun MiniMonthGrid(
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(day.dayOfMonth.toString(), style = MaterialTheme.typography.labelSmall)
                                 Box(
-                                    modifier =
-                                        Modifier.size(4.dp).background(
-                                            if (day in workoutDates) MaterialTheme.colorScheme.primary else androidx.compose.ui.graphics.Color.Transparent,
-                                            CircleShape,
-                                        ),
+                                    modifier = Modifier.size(4.dp).background(
+                                        if (day in workoutDates) MaterialTheme.colorScheme.primary else androidx.compose.ui.graphics.Color.Transparent,
+                                        CircleShape,
+                                    ),
                                 )
                             }
                         }
@@ -332,18 +316,17 @@ private fun MonthPrCard(uiState: MonthlyReportUiState) {
 }
 
 @Composable
-private fun prTypeLabel(prType: com.enil.logez.core.domain.model.PrType): String =
-    when (prType) {
-        com.enil.logez.core.domain.model.PrType.HEAVIEST_WEIGHT -> stringResource(R.string.pr_type_heaviest_weight)
-        com.enil.logez.core.domain.model.PrType.BEST_1RM -> stringResource(R.string.pr_type_best_1rm)
-        com.enil.logez.core.domain.model.PrType.BEST_SET_VOLUME -> stringResource(R.string.pr_type_best_set_volume)
-        com.enil.logez.core.domain.model.PrType.BEST_SESSION_VOLUME -> stringResource(R.string.pr_type_best_session_volume)
-        com.enil.logez.core.domain.model.PrType.MOST_REPS_SET -> stringResource(R.string.pr_type_most_reps_set)
-        com.enil.logez.core.domain.model.PrType.MOST_SESSION_REPS -> stringResource(R.string.pr_type_most_session_reps)
-        com.enil.logez.core.domain.model.PrType.LONGEST_DISTANCE -> stringResource(R.string.pr_type_longest_distance)
-        com.enil.logez.core.domain.model.PrType.LONGEST_TIME -> stringResource(R.string.pr_type_longest_time)
-        com.enil.logez.core.domain.model.PrType.BEST_TIME -> stringResource(R.string.pr_type_best_time)
-    }
+private fun prTypeLabel(prType: com.enil.logez.core.domain.model.PrType): String = when (prType) {
+    com.enil.logez.core.domain.model.PrType.HEAVIEST_WEIGHT -> stringResource(R.string.pr_type_heaviest_weight)
+    com.enil.logez.core.domain.model.PrType.BEST_1RM -> stringResource(R.string.pr_type_best_1rm)
+    com.enil.logez.core.domain.model.PrType.BEST_SET_VOLUME -> stringResource(R.string.pr_type_best_set_volume)
+    com.enil.logez.core.domain.model.PrType.BEST_SESSION_VOLUME -> stringResource(R.string.pr_type_best_session_volume)
+    com.enil.logez.core.domain.model.PrType.MOST_REPS_SET -> stringResource(R.string.pr_type_most_reps_set)
+    com.enil.logez.core.domain.model.PrType.MOST_SESSION_REPS -> stringResource(R.string.pr_type_most_session_reps)
+    com.enil.logez.core.domain.model.PrType.LONGEST_DISTANCE -> stringResource(R.string.pr_type_longest_distance)
+    com.enil.logez.core.domain.model.PrType.LONGEST_TIME -> stringResource(R.string.pr_type_longest_time)
+    com.enil.logez.core.domain.model.PrType.BEST_TIME -> stringResource(R.string.pr_type_best_time)
+}
 
 @Composable
 private fun MonthDistributionCard(uiState: MonthlyReportUiState) {

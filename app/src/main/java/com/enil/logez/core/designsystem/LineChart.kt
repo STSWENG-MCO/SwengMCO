@@ -11,21 +11,18 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.unit.dp
 import com.enil.logez.R
+import androidx.compose.ui.res.pluralStringResource
 
 /** One chart point: [x] is an epoch-millis timestamp, [y] the raw metric value. */
-data class LineChartPoint(
-    val x: Long,
-    val y: Double,
-)
+data class LineChartPoint(val x: Long, val y: Double)
 
 /**
  * Dependency-free Compose Canvas line chart (M6a decision: no third-party chart library — the
@@ -54,20 +51,15 @@ fun LineChart(
     val labelStyle: TextStyle = LogEzMono.dataSmall.copy(color = labelColor)
     val textMeasurer = rememberTextMeasurer()
     // See BarChart: a spoken summary, because a Canvas is invisible to TalkBack.
-    val summary =
-        if (points.isEmpty()) {
-            stringResource(R.string.chart_empty_summary)
-        } else {
-            stringResource(
-                R.string.chart_line_summary,
-                pluralStringResource(R.plurals.chart_point_count, points.size, points.size),
-                xLabel(points.first().x),
-                xLabel(points.last().x),
-                yLabel(points.maxOf { it.y }),
-                yLabel(points.minOf { it.y }),
-                yLabel(points.last().y),
-            )
-        }
+    val summary = if (points.isEmpty()) {
+        stringResource(R.string.chart_empty_summary)
+    } else {
+        stringResource(
+            R.string.chart_line_summary,
+            pluralStringResource(R.plurals.chart_point_count, points.size, points.size), xLabel(points.first().x), xLabel(points.last().x),
+            yLabel(points.maxOf { it.y }), yLabel(points.minOf { it.y }), yLabel(points.last().y),
+        )
+    }
 
     // Geometry is recomputed identically in draw and tap scopes from the same inputs, so the two
     // lambdas can't disagree about where a point sits.
@@ -84,11 +76,7 @@ fun LineChart(
     val leftPadding = yLabels.maxOf { textMeasurer.measure(it, labelStyle).size.width } + 12
     val bottomPadding = textMeasurer.measure("0", labelStyle).size.height + 8
 
-    fun plotOffset(
-        point: LineChartPoint,
-        width: Float,
-        height: Float,
-    ): Offset {
+    fun plotOffset(point: LineChartPoint, width: Float, height: Float): Offset {
         val plotWidth = width - leftPadding
         val plotHeight = height - bottomPadding
         val fx = if (points.size == 1) 0.5f else (point.x - minX).toFloat() / xSpan.toFloat()
@@ -97,21 +85,19 @@ fun LineChart(
     }
 
     Canvas(
-        modifier =
-            modifier
-                .semantics { contentDescription = summary }
-                .fillMaxWidth()
-                .height(200.dp)
-                .pointerInput(points) {
-                    detectTapGestures { tap ->
-                        val nearest =
-                            points.indices.minByOrNull { i ->
-                                val p = plotOffset(points[i], size.width.toFloat(), size.height.toFloat())
-                                kotlin.math.abs(p.x - tap.x)
-                            }
-                        nearest?.let(onPointTap)
+        modifier = modifier
+            .semantics { contentDescription = summary }
+            .fillMaxWidth()
+            .height(200.dp)
+            .pointerInput(points) {
+                detectTapGestures { tap ->
+                    val nearest = points.indices.minByOrNull { i ->
+                        val p = plotOffset(points[i], size.width.toFloat(), size.height.toFloat())
+                        kotlin.math.abs(p.x - tap.x)
                     }
-                },
+                    nearest?.let(onPointTap)
+                }
+            },
     ) {
         val plotHeight = size.height - bottomPadding
 

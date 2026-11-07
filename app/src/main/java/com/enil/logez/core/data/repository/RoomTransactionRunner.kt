@@ -15,10 +15,8 @@ import javax.inject.Singleton
  * would hold the transaction open across unrelated I/O, so callers resolve those first.
  */
 @Singleton
-class RoomTransactionRunner
-    @Inject
-    constructor(
-        private val db: LogEzDatabase,
-    ) : TransactionRunner {
-        override suspend fun <T> runInTransaction(block: suspend () -> T): T = db.withTransaction(block)
-    }
+class RoomTransactionRunner @Inject constructor(
+    private val db: LogEzDatabase,
+) : TransactionRunner {
+    override suspend fun <T> runInTransaction(block: suspend () -> T): T = db.withTransaction(block)
+}

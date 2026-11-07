@@ -3,9 +3,7 @@ package com.enil.logez.fakes
 import android.net.Uri
 import com.enil.logez.core.data.media.ProgressPhotoStore
 
-class FakeProgressPhotoStore(
-    private val result: String? = "progress_photos/fake.jpg",
-) : ProgressPhotoStore {
+class FakeProgressPhotoStore(private val result: String? = "progress_photos/fake.jpg") : ProgressPhotoStore {
     var lastCopiedUri: Uri? = null
         private set
 

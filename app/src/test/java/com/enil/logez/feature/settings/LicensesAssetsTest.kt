@@ -1,9 +1,9 @@
 package com.enil.logez.feature.settings
 
+import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
 
 /**
  * The licences screen reads assets/licenses/notices.json at runtime, so a typo there fails

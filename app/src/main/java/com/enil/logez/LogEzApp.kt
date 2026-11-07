@@ -1,15 +1,10 @@
 package com.enil.logez
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -25,11 +20,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -44,6 +37,13 @@ import com.enil.logez.feature.activity.InterruptedTrackingDialog
 import com.enil.logez.feature.workout.WorkoutMiniBar
 import com.enil.logez.feature.workout.WorkoutRoutes
 import com.enil.logez.feature.workout.rememberStartWorkoutSession
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
 
 /** App root: theme + the 3-tab Scaffold. Theme is dark-only (Owner directive) — no mode switching. */
 @Composable
@@ -60,10 +60,9 @@ fun LogEzApp() {
         val recovery by startupViewModel.recovery.collectAsStateWithLifecycle()
         val trackingResumedMessage = stringResource(R.string.activity_tracking_resumed_snackbar)
         var interruptedRun by remember { mutableStateOf<StartupRecovery.InterruptedRun?>(null) }
-        val resumeRecoveredSession =
-            rememberStartWorkoutSession(onNavigateToLogger = { workoutId ->
-                navController.navigate(WorkoutRoutes.logger(workoutId))
-            })
+        val resumeRecoveredSession = rememberStartWorkoutSession(onNavigateToLogger = { workoutId ->
+            navController.navigate(WorkoutRoutes.logger(workoutId))
+        })
         LaunchedEffect(recovery) {
             // Only the strength branch may go through rememberStartWorkoutSession -- that is what
             // starts WorkoutSessionService, and doing it for a GPS run puts a second foreground
@@ -109,10 +108,9 @@ fun LogEzApp() {
                 // Spine navigation rule: only the three tab roots ever show the bottom bar —
                 // every sub-screen (exercise library/detail/editor, and more as later
                 // milestones land) hides it.
-                val onTabRoot =
-                    LogEzDestination.entries.any { destination ->
-                        currentDestination?.hierarchy?.any { it.route == destination.route } == true
-                    }
+                val onTabRoot = LogEzDestination.entries.any { destination ->
+                    currentDestination?.hierarchy?.any { it.route == destination.route } == true
+                }
 
                 if (onTabRoot) {
                     Column {
@@ -134,10 +132,9 @@ fun LogEzApp() {
                             tonalElevation = 0.dp,
                         ) {
                             LogEzDestination.entries.forEach { destination ->
-                                val selected =
-                                    currentDestination?.hierarchy?.any {
-                                        it.route == destination.route
-                                    } == true
+                                val selected = currentDestination?.hierarchy?.any {
+                                    it.route == destination.route
+                                } == true
 
                                 NavigationBarItem(
                                     selected = selected,
@@ -145,14 +142,13 @@ fun LogEzApp() {
                                     // -- deliberately muted, see ADR-0003), which read as dull next
                                     // to the vibrant primary used everywhere else. The active tab
                                     // should be the SAME vibrant green as the CTAs and chart fills.
-                                    colors =
-                                        NavigationBarItemDefaults.colors(
-                                            selectedIconColor = MaterialTheme.colorScheme.primary,
-                                            selectedTextColor = MaterialTheme.colorScheme.primary,
-                                            indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
-                                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        ),
+                                    colors = NavigationBarItemDefaults.colors(
+                                        selectedIconColor = MaterialTheme.colorScheme.primary,
+                                        selectedTextColor = MaterialTheme.colorScheme.primary,
+                                        indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
+                                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    ),
                                     onClick = {
                                         navController.navigate(destination.route) {
                                             popUpTo(navController.graph.findStartDestination().id) {
@@ -181,16 +177,15 @@ fun LogEzApp() {
             val backStackEntry by navController.currentBackStackEntryAsState()
             val drawsBehindStatusBar = backStackEntry?.destination?.route == WorkoutRoutes.SUMMARY
             val layoutDirection = LocalLayoutDirection.current
-            val contentPadding =
-                if (drawsBehindStatusBar) {
-                    PaddingValues(
-                        start = innerPadding.calculateStartPadding(layoutDirection),
-                        end = innerPadding.calculateEndPadding(layoutDirection),
-                        bottom = innerPadding.calculateBottomPadding(),
-                    )
-                } else {
-                    innerPadding
-                }
+            val contentPadding = if (drawsBehindStatusBar) {
+                PaddingValues(
+                    start = innerPadding.calculateStartPadding(layoutDirection),
+                    end = innerPadding.calculateEndPadding(layoutDirection),
+                    bottom = innerPadding.calculateBottomPadding(),
+                )
+            } else {
+                innerPadding
+            }
             // Tablets, foldables and landscape (2026-09-25, Play-readiness audit): the phone layout
             // used to stretch edge to edge, so cards and set tables spread across a whole tablet.
             // Content is capped at a readable width and centred; the bottom bar stays full width.

@@ -15,22 +15,19 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.inset
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import com.enil.logez.R
+import androidx.compose.ui.res.pluralStringResource
 
 /** One bar: [label] names the bucket (shown for the first/last bar), [value] is the raw height. */
-data class BarChartEntry(
-    val label: String,
-    val value: Double,
-)
+data class BarChartEntry(val label: String, val value: Double)
 
 /**
  * Dependency-free Compose Canvas bar chart — LineChart's sibling for the §5.2 dashboard's
@@ -58,20 +55,15 @@ fun BarChart(
     // A Canvas is invisible to TalkBack, so the chart speaks a one-line summary of its data
     // (2026-09-25 accessibility pass); the per-bar tap readout stays a sighted-touch extra.
     val peak = entries.maxByOrNull { it.value }
-    val summary =
-        if (entries.isEmpty() || peak == null) {
-            stringResource(R.string.chart_empty_summary)
-        } else {
-            stringResource(
-                R.string.chart_bar_summary,
-                pluralStringResource(R.plurals.chart_bar_count, entries.size, entries.size),
-                entries.first().label,
-                entries.last().label,
-                yLabel(peak.value),
-                peak.label,
-                yLabel(entries.last().value),
-            )
-        }
+    val summary = if (entries.isEmpty() || peak == null) {
+        stringResource(R.string.chart_empty_summary)
+    } else {
+        stringResource(
+            R.string.chart_bar_summary,
+            pluralStringResource(R.plurals.chart_bar_count, entries.size, entries.size), entries.first().label, entries.last().label,
+            yLabel(peak.value), peak.label, yLabel(entries.last().value),
+        )
+    }
 
     // Bars grow from zero — a bar chart with a non-zero baseline misleads (§5.2's honest-stats
     // rule); yHigh pads 10% above the max so the tallest bar never touches the top edge.
@@ -87,38 +79,32 @@ fun BarChart(
     val maxLine = maxY to yLabel(maxY)
     val midLine = (maxY / 2.0) to yLabel(maxY / 2.0)
     val zeroLine = 0.0 to yLabel(0.0)
-    val gridLines =
-        buildList {
-            if (maxLine.second != zeroLine.second) add(maxLine)
-            if (midLine.second != maxLine.second && midLine.second != zeroLine.second) add(midLine)
-            add(zeroLine)
-        }
+    val gridLines = buildList {
+        if (maxLine.second != zeroLine.second) add(maxLine)
+        if (midLine.second != maxLine.second && midLine.second != zeroLine.second) add(midLine)
+        add(zeroLine)
+    }
     val leftPadding = gridLines.maxOf { textMeasurer.measure(it.second, labelStyle).size.width } + 12
     val bottomPadding = textMeasurer.measure("0", labelStyle).size.height + 8
 
-    fun barCenterX(
-        index: Int,
-        width: Float,
-    ): Float {
+    fun barCenterX(index: Int, width: Float): Float {
         val plotWidth = width - leftPadding
         return leftPadding + plotWidth * (index + 0.5f) / entries.size
     }
 
     Canvas(
-        modifier =
-            modifier
-                .semantics { contentDescription = summary }
-                .fillMaxWidth()
-                .height(chartHeight)
-                .pointerInput(entries) {
-                    detectTapGestures { tap ->
-                        val nearest =
-                            entries.indices.minByOrNull { i ->
-                                kotlin.math.abs(barCenterX(i, size.width.toFloat()) - tap.x)
-                            }
-                        nearest?.let(onBarTap)
+        modifier = modifier
+            .semantics { contentDescription = summary }
+            .fillMaxWidth()
+            .height(chartHeight)
+            .pointerInput(entries) {
+                detectTapGestures { tap ->
+                    val nearest = entries.indices.minByOrNull { i ->
+                        kotlin.math.abs(barCenterX(i, size.width.toFloat()) - tap.x)
                     }
-                },
+                    nearest?.let(onBarTap)
+                }
+            },
     ) {
         val plotHeight = size.height - bottomPadding
         val plotWidth = size.width - leftPadding
@@ -175,11 +161,7 @@ fun BarChart(
  * lit top cap, near-square at the baseline so the bar still sits flush on the axis — and drawRoundRect
  * rounds all four equally, so the shape goes through an explicit [RoundRect] path instead.
  */
-private fun barPath(
-    size: Size,
-    topRadius: CornerRadius,
-    bottomRadius: CornerRadius,
-): Path =
+private fun barPath(size: Size, topRadius: CornerRadius, bottomRadius: CornerRadius): Path =
     Path().apply {
         addRoundRect(
             RoundRect(

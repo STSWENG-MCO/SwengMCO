@@ -66,11 +66,10 @@ class ExerciseDetailTabsTest {
     @Test
     fun `the selected tab is always present in the tab list`() {
         // The invariant the old ordinal-indexed TabRow violated: indexOf must never return -1.
-        val tabLists =
-            listOf(
-                detailTabsFor(isLoading = false, instructions = ""),
-                detailTabsFor(isLoading = false, instructions = "steps"),
-            )
+        val tabLists = listOf(
+            detailTabsFor(isLoading = false, instructions = ""),
+            detailTabsFor(isLoading = false, instructions = "steps"),
+        )
         for (tabs in tabLists) {
             for (requested in DetailTab.entries) {
                 assertTrue(tabs.indexOf(selectedDetailTab(requested, tabs)) >= 0)

@@ -57,7 +57,8 @@ object Formatting {
      *
      * Examples: `152.0` → `"152kg"`, `152.5` → `"152.5kg"`
      */
-    fun weightKg(kg: Double): String = if (kg == kg.toLong().toDouble()) "${kg.toLong()}kg" else "%.1fkg".format(Locale.ROOT, kg)
+    fun weightKg(kg: Double): String =
+        if (kg == kg.toLong().toDouble()) "${kg.toLong()}kg" else "%.1fkg".format(Locale.ROOT, kg)
 
     /**
      * Formats a weight in kg with the "kg" suffix — identical to [weightKg].
@@ -71,16 +72,15 @@ object Formatting {
      * discrepancy that read as a wrong total — worst in the logger, where the set cells already
      * showed pounds two rows below a header still in kilograms.
      */
-    fun weight(
-        kg: Double,
-        unit: WeightUnit,
-    ): String = WeightDisplay.format(WeightDisplay.toDisplay(kg, unit)) + if (unit == WeightUnit.KG) "kg" else "lb"
+    fun weight(kg: Double, unit: WeightUnit): String =
+        WeightDisplay.format(WeightDisplay.toDisplay(kg, unit)) + if (unit == WeightUnit.KG) "kg" else "lb"
 
     /**
      * Formats total seconds as `M:SS` (e.g., `90` → `"1:30"`, `0` → `"0:00"`).
      * Used for rest timers, duration displays, and time cells.
      */
-    fun mmSs(totalSeconds: Int): String = "%d:%02d".format(Locale.ROOT, totalSeconds / 60, totalSeconds % 60)
+    fun mmSs(totalSeconds: Int): String =
+        "%d:%02d".format(Locale.ROOT, totalSeconds / 60, totalSeconds % 60)
 
     /**
      * Formats a distance in meters as kilometers with a "km" suffix, `Locale.ROOT`-safe (unlike
@@ -101,10 +101,7 @@ object Formatting {
      * used to render km for a miles user while the pace right next to it said "/mi" (adversarial
      * review, 2026-09-23) -- the same 2.2x-style discrepancy [weight] closed for kg/lb the day before.
      */
-    fun distance(
-        meters: Double,
-        unit: DistanceUnit,
-    ): String {
+    fun distance(meters: Double, unit: DistanceUnit): String {
         val display = DistanceDisplay.toDisplay(meters, unit)
         val suffix = if (unit == DistanceUnit.KM) "km" else "mi"
         return if (display == display.toLong().toDouble()) "${display.toLong()}$suffix" else "%.2f$suffix".format(Locale.ROOT, display)
@@ -129,29 +126,14 @@ object Formatting {
 
 /** Convenience top-level aliases so call sites read naturally. */
 fun formatTargetNumber(value: Double): String = Formatting.wholeOrOneDecimal(value)
-
 fun formatTwoDecimals(value: Double): String = Formatting.twoDecimals(value)
-
 fun formatWeightKg(kg: Double): String = Formatting.weightKg(kg)
-
 fun formatWeightKgShort(kg: Double): String = Formatting.weightKgShort(kg)
-
-fun formatWeight(
-    kg: Double,
-    unit: WeightUnit,
-): String = Formatting.weight(kg, unit)
-
+fun formatWeight(kg: Double, unit: WeightUnit): String = Formatting.weight(kg, unit)
 fun formatMmSs(totalSeconds: Int): String = Formatting.mmSs(totalSeconds)
-
 fun formatDistanceKm(meters: Double): String = Formatting.distanceKm(meters)
-
-fun formatDistance(
-    meters: Double,
-    unit: DistanceUnit,
-): String = Formatting.distance(meters, unit)
-
+fun formatDistance(meters: Double, unit: DistanceUnit): String = Formatting.distance(meters, unit)
 fun formatPace(secondsPerUnit: Double): String = Formatting.pace(secondsPerUnit)
-
 fun formatElapsedClock(totalSeconds: Int): String = Formatting.elapsedClock(totalSeconds)
 
 /**

@@ -26,7 +26,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import com.enil.logez.R
 import com.enil.logez.core.designsystem.Spacing
-import com.enil.logez.core.designsystem.parseDecimalInput
 import com.enil.logez.core.domain.calc.LengthDisplay
 import com.enil.logez.core.domain.calc.WeightDisplay
 import com.enil.logez.core.domain.model.LengthUnit
@@ -37,6 +36,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import com.enil.logez.core.designsystem.parseDecimalInput
 
 /**
  * Add/edit sheet for one date's body-measurement entry — every field optional (any subset
@@ -95,26 +95,15 @@ fun MeasurementEntryDialog(
     val rightCalf = parseDecimalInput(rightCalfText)
 
     // Blank is always valid (every field is optional) -- only unparseable, non-blank text errors.
-    val fieldsAndValues =
-        listOf(
-            weightText to weight,
-            leanMassText to leanMass,
-            fatPercentText to fatPercent,
-            neckText to neck,
-            shoulderText to shoulder,
-            chestText to chest,
-            leftBicepText to leftBicep,
-            rightBicepText to rightBicep,
-            leftForearmText to leftForearm,
-            rightForearmText to rightForearm,
-            abdomenText to abdomen,
-            waistText to waist,
-            hipsText to hips,
-            leftThighText to leftThigh,
-            rightThighText to rightThigh,
-            leftCalfText to leftCalf,
-            rightCalfText to rightCalf,
-        )
+    val fieldsAndValues = listOf(
+        weightText to weight, leanMassText to leanMass, fatPercentText to fatPercent,
+        neckText to neck, shoulderText to shoulder, chestText to chest,
+        leftBicepText to leftBicep, rightBicepText to rightBicep,
+        leftForearmText to leftForearm, rightForearmText to rightForearm,
+        abdomenText to abdomen, waistText to waist, hipsText to hips,
+        leftThighText to leftThigh, rightThighText to rightThigh,
+        leftCalfText to leftCalf, rightCalfText to rightCalf,
+    )
     val hasError = fieldsAndValues.any { (text, value) -> text.isNotEmpty() && value == null }
     val errorText = stringResource(R.string.measurements_invalid_number)
 
@@ -199,10 +188,9 @@ fun MeasurementEntryDialog(
     )
 
     if (showDatePicker) {
-        val pickerState =
-            rememberDatePickerState(
-                initialSelectedDateMillis = date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
-            )
+        val pickerState = rememberDatePickerState(
+            initialSelectedDateMillis = date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
+        )
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
@@ -235,21 +223,15 @@ private fun MeasurementNumberField(
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         singleLine = true,
         isError = isError,
-        supportingText =
-            if (isError) {
-                { Text(errorText) }
-            } else {
-                null
-            },
+        supportingText = if (isError) { { Text(errorText) } } else null,
         modifier = Modifier.fillMaxWidth().padding(top = Spacing.xs),
     )
 }
 
 private fun weightLabelRes(unit: WeightUnit) = if (unit == WeightUnit.KG) R.string.measurements_weight_label_kg else R.string.measurements_weight_label_lb
-
 private fun leanMassLabelRes(unit: WeightUnit) = if (unit == WeightUnit.KG) R.string.measurements_lean_mass_label_kg else R.string.measurements_lean_mass_label_lb
-
 private fun lengthLabelRes(unit: LengthUnit) = if (unit == LengthUnit.CM) R.string.measurements_unit_cm else R.string.measurements_unit_in
 
 /** Converts a canonical stored value (kg/cm) to the display unit and formats it for a text field, or "" if absent. */
-private fun Double?.toFieldText(toDisplay: (Double) -> Double = { it }): String = this?.let { toDisplay(it) }?.let { if (it == Math.floor(it)) it.toLong().toString() else "%.1f".format(java.util.Locale.ROOT, it) }.orEmpty()
+private fun Double?.toFieldText(toDisplay: (Double) -> Double = { it }): String =
+    this?.let { toDisplay(it) }?.let { if (it == Math.floor(it)) it.toLong().toString() else "%.1f".format(java.util.Locale.ROOT, it) }.orEmpty()

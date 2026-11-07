@@ -25,6 +25,9 @@ import com.enil.logez.core.domain.model.SetType
 import com.enil.logez.core.domain.model.WorkoutKind
 import com.enil.logez.core.domain.model.WorkoutStatus
 import com.enil.logez.core.domain.model.WorkoutStructure
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.File
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
@@ -33,9 +36,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.io.File
 
 /**
  * The test the whole feature exists for: write an archive from a populated database, empty it,
@@ -47,46 +47,34 @@ import java.io.File
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class BackupRoundTripTest : RoomDatabaseTestBase() {
-    private val filesDir: File get() =
-        File(
-            ApplicationProvider.getApplicationContext<android.content.Context>().filesDir,
-            "roundtrip",
-        ).apply { mkdirs() }
 
-    private fun exercise(
-        id: String,
-        deleted: Boolean = false,
-    ) = ExerciseEntity(
-        id = id,
-        name = "Exercise $id",
-        exerciseType = ExerciseType.WEIGHT_REPS,
+    private val filesDir: File get() = File(
+        ApplicationProvider.getApplicationContext<android.content.Context>().filesDir,
+        "roundtrip",
+    ).apply { mkdirs() }
+
+    private fun exercise(id: String, deleted: Boolean = false) = ExerciseEntity(
+        id = id, name = "Exercise $id", exerciseType = ExerciseType.WEIGHT_REPS,
         primaryMuscleGroup = MuscleGroup.CHEST,
         secondaryMuscleGroups = listOf(MuscleGroup.TRICEPS),
-        equipment = Equipment.BARBELL,
-        instructions = "1. Do it",
-        mediaPath = null,
-        isCustom = false,
-        isBodyweightVolumeEligible = false,
-        isDeleted = deleted,
-        createdAt = 1,
-        updatedAt = 1,
-        muscleHeads = emptyList(),
+        equipment = Equipment.BARBELL, instructions = "1. Do it", mediaPath = null,
+        isCustom = false, isBodyweightVolumeEligible = false, isDeleted = deleted,
+        createdAt = 1, updatedAt = 1, muscleHeads = emptyList(),
         deprecatedPrimaryMuscleHead = null,
     )
 
     /** The backup's media list and the orphan sweep both trust this query, so it runs against real SQL. */
     @Test
-    fun `referencedMediaPaths lists photo and exercise media paths and nothing else`() =
-        runTest {
-            val dao = database.backupDao()
-            dao.insertExercises(listOf(exercise("e1").copy(mediaPath = "exercise_media/e1.jpg"), exercise("e2")))
-            dao.insertProgressPhotos(listOf(ProgressPhotoEntity("p1", "2026-09-22", "progress_photos/a.jpg", 600)))
+    fun `referencedMediaPaths lists photo and exercise media paths and nothing else`() = runTest {
+        val dao = database.backupDao()
+        dao.insertExercises(listOf(exercise("e1").copy(mediaPath = "exercise_media/e1.jpg"), exercise("e2")))
+        dao.insertProgressPhotos(listOf(ProgressPhotoEntity("p1", "2026-09-22", "progress_photos/a.jpg", 600)))
 
-            assertEquals(
-                setOf("exercise_media/e1.jpg", "progress_photos/a.jpg"),
-                dao.referencedMediaPaths().toSet(),
-            )
-        }
+        assertEquals(
+            setOf("exercise_media/e1.jpg", "progress_photos/a.jpg"),
+            dao.referencedMediaPaths().toSet(),
+        )
+    }
 
     /** Populates one row in every backed-up table, wired together so the foreign keys are real. */
     private suspend fun seedEverything() {
@@ -103,18 +91,8 @@ class BackupRoundTripTest : RoomDatabaseTestBase() {
         dao.insertWorkoutsBulk(
             listOf(
                 WorkoutEntity(
-                    "w1",
-                    "r1",
-                    "Push Day",
-                    "felt strong",
-                    WorkoutStatus.COMPLETED,
-                    100,
-                    200,
-                    3600,
-                    100,
-                    200,
-                    WorkoutStructure.REGULAR,
-                    WorkoutKind.GPS_TRACKED,
+                    "w1", "r1", "Push Day", "felt strong", WorkoutStatus.COMPLETED,
+                    100, 200, 3600, 100, 200, WorkoutStructure.REGULAR, WorkoutKind.GPS_TRACKED,
                 ),
             ),
         )
@@ -122,18 +100,7 @@ class BackupRoundTripTest : RoomDatabaseTestBase() {
         dao.insertWorkoutSetsBulk(
             listOf(
                 WorkoutSetEntity(
-                    "ws1",
-                    "we1",
-                    0,
-                    SetType.NORMAL,
-                    100.0,
-                    5,
-                    60,
-                    5250.0,
-                    8.5,
-                    42.0,
-                    true,
-                    150,
+                    "ws1", "we1", 0, SetType.NORMAL, 100.0, 5, 60, 5250.0, 8.5, 42.0, true, 150,
                 ),
             ),
         )
@@ -142,25 +109,8 @@ class BackupRoundTripTest : RoomDatabaseTestBase() {
         dao.insertBodyMeasurements(
             listOf(
                 BodyMeasurementEntity(
-                    "2026-09-22",
-                    82.4,
-                    65.1,
-                    18.2,
-                    38.0,
-                    120.0,
-                    102.0,
-                    36.5,
-                    36.8,
-                    29.0,
-                    29.2,
-                    84.0,
-                    80.0,
-                    96.0,
-                    58.0,
-                    58.4,
-                    38.0,
-                    38.2,
-                    500,
+                    "2026-09-22", 82.4, 65.1, 18.2, 38.0, 120.0, 102.0, 36.5, 36.8, 29.0,
+                    29.2, 84.0, 80.0, 96.0, 58.0, 58.4, 38.0, 38.2, 500,
                 ),
             ),
         )
@@ -196,19 +146,16 @@ class BackupRoundTripTest : RoomDatabaseTestBase() {
     private suspend fun writeArchive(): ByteArray {
         val out = ByteArrayOutputStream()
         val dao = database.backupDao()
-        val counts =
-            BackupTables.EXPORT_ORDER.associateWith { table ->
-                snapshot().getValue(table).size
-            }
+        val counts = BackupTables.EXPORT_ORDER.associateWith { table ->
+            snapshot().getValue(table).size
+        }
         java.util.zip.ZipOutputStream(out).use { zip ->
-            val manifest =
-                BackupManifest(
-                    roomSchemaVersion = BackupWriter.ROOM_SCHEMA_VERSION,
-                    tables =
-                        BackupTables.EXPORT_ORDER.map {
-                            BackupManifest.TableEntry(it, counts.getValue(it))
-                        },
-                )
+            val manifest = BackupManifest(
+                roomSchemaVersion = BackupWriter.ROOM_SCHEMA_VERSION,
+                tables = BackupTables.EXPORT_ORDER.map {
+                    BackupManifest.TableEntry(it, counts.getValue(it))
+                },
+            )
             zip.putNextEntry(java.util.zip.ZipEntry(BackupFormat.MANIFEST_ENTRY))
             zip.write(BackupFormat.jsonWrite.encodeToString(BackupManifest.serializer(), manifest).toByteArray())
             zip.closeEntry()
@@ -226,10 +173,7 @@ class BackupRoundTripTest : RoomDatabaseTestBase() {
         return out.toByteArray()
     }
 
-    private fun encode(
-        table: String,
-        row: Any,
-    ): String {
+    private fun encode(table: String, row: Any): String {
         val j = BackupFormat.jsonWrite
         return when (table) {
             BackupTables.EXERCISES -> j.encodeToString(ExerciseDto.serializer(), (row as ExerciseEntity).toDto())
@@ -241,62 +185,53 @@ class BackupRoundTripTest : RoomDatabaseTestBase() {
             BackupTables.WORKOUT_EXERCISES -> j.encodeToString(WorkoutExerciseDto.serializer(), (row as WorkoutExerciseEntity).toDto())
             BackupTables.WORKOUT_SETS -> j.encodeToString(WorkoutSetDto.serializer(), (row as WorkoutSetEntity).toDto())
             BackupTables.ACTIVITY_TRACKS -> j.encodeToString(ActivityTrackDto.serializer(), (row as ActivityTrackEntity).toDto())
-            BackupTables.WORKOUT_HEART_RATE_SAMPLES ->
-                j.encodeToString(
-                    WorkoutHeartRateSampleDto.serializer(),
-                    (row as WorkoutHeartRateSampleEntity).toDto(),
-                )
+            BackupTables.WORKOUT_HEART_RATE_SAMPLES -> j.encodeToString(WorkoutHeartRateSampleDto.serializer(), (row as WorkoutHeartRateSampleEntity).toDto())
             BackupTables.BODY_MEASUREMENTS -> j.encodeToString(BodyMeasurementDto.serializer(), (row as BodyMeasurementEntity).toDto())
             BackupTables.PROGRESS_PHOTOS -> j.encodeToString(ProgressPhotoDto.serializer(), (row as ProgressPhotoEntity).toDto())
             BackupTables.GOAL_DEFINITIONS -> j.encodeToString(GoalDefinitionDto.serializer(), (row as GoalDefinitionEntity).toDto())
-            BackupTables.DAILY_WELLNESS_TOTALS ->
-                j.encodeToString(
-                    DailyWellnessTotalDto.serializer(),
-                    (row as DailyWellnessTotalEntity).toDto(),
-                )
+            BackupTables.DAILY_WELLNESS_TOTALS -> j.encodeToString(DailyWellnessTotalDto.serializer(), (row as DailyWellnessTotalEntity).toDto())
             else -> error(table)
         }
     }
 
     @Test
-    fun `every table survives export, wipe and restore`() =
-        runTest {
-            seedEverything()
-            val before = snapshot()
-            val archive = writeArchive()
+    fun `every table survives export, wipe and restore`() = runTest {
+        seedEverything()
+        val before = snapshot()
+        val archive = writeArchive()
 
-            val staging = File(filesDir, "staging")
-            val manifest = BackupReader().stage(ByteArrayInputStream(archive), staging)
+        val staging = File(filesDir, "staging")
+        val manifest = BackupReader().stage(ByteArrayInputStream(archive), staging)
 
-            // Wipe, then restore from the staged archive using the real ordering.
-            val dao = database.backupDao()
-            BackupTables.WIPE_ORDER.forEach { table ->
-                when (table) {
-                    BackupTables.PERSONAL_RECORDS -> dao.deleteAllPersonalRecords()
-                    BackupTables.ACTIVITY_TRACKS -> dao.deleteAllActivityTracks()
-                    BackupTables.WORKOUT_HEART_RATE_SAMPLES -> dao.deleteAllHeartRateSamples()
-                    BackupTables.WORKOUT_SETS -> dao.deleteAllWorkoutSets()
-                    BackupTables.WORKOUT_EXERCISES -> dao.deleteAllWorkoutExercises()
-                    BackupTables.WORKOUTS -> dao.deleteAllWorkouts()
-                    BackupTables.ROUTINE_SETS -> dao.deleteAllRoutineSets()
-                    BackupTables.ROUTINE_EXERCISES -> dao.deleteAllRoutineExercises()
-                    BackupTables.ROUTINES -> dao.deleteAllRoutines()
-                    BackupTables.ROUTINE_FOLDERS -> dao.deleteAllRoutineFolders()
-                    BackupTables.PROGRESS_PHOTOS -> dao.deleteAllProgressPhotos()
-                    BackupTables.BODY_MEASUREMENTS -> dao.deleteAllBodyMeasurements()
-                    BackupTables.GOAL_DEFINITIONS -> dao.deleteAllGoals()
-                    BackupTables.DAILY_WELLNESS_TOTALS -> dao.deleteAllWellnessTotals()
-                    BackupTables.EXERCISES -> dao.deleteAllExercises()
-                }
+        // Wipe, then restore from the staged archive using the real ordering.
+        val dao = database.backupDao()
+        BackupTables.WIPE_ORDER.forEach { table ->
+            when (table) {
+                BackupTables.PERSONAL_RECORDS -> dao.deleteAllPersonalRecords()
+                BackupTables.ACTIVITY_TRACKS -> dao.deleteAllActivityTracks()
+                BackupTables.WORKOUT_HEART_RATE_SAMPLES -> dao.deleteAllHeartRateSamples()
+                BackupTables.WORKOUT_SETS -> dao.deleteAllWorkoutSets()
+                BackupTables.WORKOUT_EXERCISES -> dao.deleteAllWorkoutExercises()
+                BackupTables.WORKOUTS -> dao.deleteAllWorkouts()
+                BackupTables.ROUTINE_SETS -> dao.deleteAllRoutineSets()
+                BackupTables.ROUTINE_EXERCISES -> dao.deleteAllRoutineExercises()
+                BackupTables.ROUTINES -> dao.deleteAllRoutines()
+                BackupTables.ROUTINE_FOLDERS -> dao.deleteAllRoutineFolders()
+                BackupTables.PROGRESS_PHOTOS -> dao.deleteAllProgressPhotos()
+                BackupTables.BODY_MEASUREMENTS -> dao.deleteAllBodyMeasurements()
+                BackupTables.GOAL_DEFINITIONS -> dao.deleteAllGoals()
+                BackupTables.DAILY_WELLNESS_TOTALS -> dao.deleteAllWellnessTotals()
+                BackupTables.EXERCISES -> dao.deleteAllExercises()
             }
-            assertEquals(0, dao.countWorkouts())
-
-            restoreFromStaging(staging)
-
-            assertEquals(before, snapshot())
-            assertEquals(1, manifest.workoutCount)
-            assertEquals(2, manifest.exerciseCount)
         }
+        assertEquals(0, dao.countWorkouts())
+
+        restoreFromStaging(staging)
+
+        assertEquals(before, snapshot())
+        assertEquals(1, manifest.workoutCount)
+        assertEquals(2, manifest.exerciseCount)
+    }
 
     private suspend fun restoreFromStaging(staging: File) {
         val dao = database.backupDao()
@@ -308,88 +243,38 @@ class BackupRoundTripTest : RoomDatabaseTestBase() {
             pages.forEach { lines ->
                 when (table) {
                     BackupTables.EXERCISES -> dao.insertExercises(lines.map { j.decodeFromString(ExerciseDto.serializer(), it).toEntity() })
-                    BackupTables.ROUTINE_FOLDERS ->
-                        dao.insertRoutineFolders(
-                            lines.map { j.decodeFromString(RoutineFolderDto.serializer(), it).toEntity() },
-                        )
+                    BackupTables.ROUTINE_FOLDERS -> dao.insertRoutineFolders(lines.map { j.decodeFromString(RoutineFolderDto.serializer(), it).toEntity() })
                     BackupTables.ROUTINES -> dao.insertRoutines(lines.map { j.decodeFromString(RoutineDto.serializer(), it).toEntity() })
-                    BackupTables.ROUTINE_EXERCISES ->
-                        dao.insertRoutineExercisesBulk(
-                            lines.map {
-                                j.decodeFromString(RoutineExerciseDto.serializer(), it).toEntity()
-                            },
-                        )
-                    BackupTables.ROUTINE_SETS ->
-                        dao.insertRoutineSetsBulk(
-                            lines.map { j.decodeFromString(RoutineSetDto.serializer(), it).toEntity() },
-                        )
-                    BackupTables.WORKOUTS ->
-                        dao.insertWorkoutsBulk(
-                            lines.map { j.decodeFromString(WorkoutDto.serializer(), it).toEntity() },
-                        )
-                    BackupTables.WORKOUT_EXERCISES ->
-                        dao.insertWorkoutExercisesBulk(
-                            lines.map {
-                                j.decodeFromString(WorkoutExerciseDto.serializer(), it).toEntity()
-                            },
-                        )
-                    BackupTables.WORKOUT_SETS ->
-                        dao.insertWorkoutSetsBulk(
-                            lines.map { j.decodeFromString(WorkoutSetDto.serializer(), it).toEntity() },
-                        )
-                    BackupTables.ACTIVITY_TRACKS ->
-                        dao.insertActivityTracks(
-                            lines.map { j.decodeFromString(ActivityTrackDto.serializer(), it).toEntity() },
-                        )
-                    BackupTables.WORKOUT_HEART_RATE_SAMPLES ->
-                        dao.insertHeartRateSamples(
-                            lines.map {
-                                j.decodeFromString(WorkoutHeartRateSampleDto.serializer(), it).toEntity()
-                            },
-                        )
-                    BackupTables.BODY_MEASUREMENTS ->
-                        dao.insertBodyMeasurements(
-                            lines.map {
-                                j.decodeFromString(BodyMeasurementDto.serializer(), it).toEntity()
-                            },
-                        )
-                    BackupTables.PROGRESS_PHOTOS ->
-                        dao.insertProgressPhotos(
-                            lines.map { j.decodeFromString(ProgressPhotoDto.serializer(), it).toEntity() },
-                        )
-                    BackupTables.GOAL_DEFINITIONS ->
-                        dao.insertGoals(
-                            lines.map { j.decodeFromString(GoalDefinitionDto.serializer(), it).toEntity() },
-                        )
-                    BackupTables.DAILY_WELLNESS_TOTALS ->
-                        dao.insertWellnessTotals(
-                            lines.map {
-                                j.decodeFromString(DailyWellnessTotalDto.serializer(), it).toEntity()
-                            },
-                        )
+                    BackupTables.ROUTINE_EXERCISES -> dao.insertRoutineExercisesBulk(lines.map { j.decodeFromString(RoutineExerciseDto.serializer(), it).toEntity() })
+                    BackupTables.ROUTINE_SETS -> dao.insertRoutineSetsBulk(lines.map { j.decodeFromString(RoutineSetDto.serializer(), it).toEntity() })
+                    BackupTables.WORKOUTS -> dao.insertWorkoutsBulk(lines.map { j.decodeFromString(WorkoutDto.serializer(), it).toEntity() })
+                    BackupTables.WORKOUT_EXERCISES -> dao.insertWorkoutExercisesBulk(lines.map { j.decodeFromString(WorkoutExerciseDto.serializer(), it).toEntity() })
+                    BackupTables.WORKOUT_SETS -> dao.insertWorkoutSetsBulk(lines.map { j.decodeFromString(WorkoutSetDto.serializer(), it).toEntity() })
+                    BackupTables.ACTIVITY_TRACKS -> dao.insertActivityTracks(lines.map { j.decodeFromString(ActivityTrackDto.serializer(), it).toEntity() })
+                    BackupTables.WORKOUT_HEART_RATE_SAMPLES -> dao.insertHeartRateSamples(lines.map { j.decodeFromString(WorkoutHeartRateSampleDto.serializer(), it).toEntity() })
+                    BackupTables.BODY_MEASUREMENTS -> dao.insertBodyMeasurements(lines.map { j.decodeFromString(BodyMeasurementDto.serializer(), it).toEntity() })
+                    BackupTables.PROGRESS_PHOTOS -> dao.insertProgressPhotos(lines.map { j.decodeFromString(ProgressPhotoDto.serializer(), it).toEntity() })
+                    BackupTables.GOAL_DEFINITIONS -> dao.insertGoals(lines.map { j.decodeFromString(GoalDefinitionDto.serializer(), it).toEntity() })
+                    BackupTables.DAILY_WELLNESS_TOTALS -> dao.insertWellnessTotals(lines.map { j.decodeFromString(DailyWellnessTotalDto.serializer(), it).toEntity() })
                 }
             }
         }
     }
 
     @Test
-    fun `a soft-deleted exercise round-trips, so its foreign keys still resolve`() =
-        runTest {
-            seedEverything()
-            val archive = writeArchive()
-            val staging = File(filesDir, "staging_deleted")
-            BackupReader().stage(ByteArrayInputStream(archive), staging)
+    fun `a soft-deleted exercise round-trips, so its foreign keys still resolve`() = runTest {
+        seedEverything()
+        val archive = writeArchive()
+        val staging = File(filesDir, "staging_deleted")
+        BackupReader().stage(ByteArrayInputStream(archive), staging)
 
-            val lines = mutableListOf<String>()
-            BackupReader().forEachPage<String>(
-                staging,
-                BackupTables.EXERCISES,
-                decode = { it },
-                consume = { lines.addAll(it) },
-            )
-            val restored = lines.map { BackupFormat.jsonRead.decodeFromString(ExerciseDto.serializer(), it).toEntity() }
-            assertTrue(restored.any { it.isDeleted })
-        }
+        val lines = mutableListOf<String>()
+        BackupReader().forEachPage<String>(
+            staging, BackupTables.EXERCISES, decode = { it }, consume = { lines.addAll(it) },
+        )
+        val restored = lines.map { BackupFormat.jsonRead.decodeFromString(ExerciseDto.serializer(), it).toEntity() }
+        assertTrue(restored.any { it.isDeleted })
+    }
 
     @Test
     fun `an archive whose first entry is not the manifest is rejected`() {
@@ -405,26 +290,24 @@ class BackupRoundTripTest : RoomDatabaseTestBase() {
     }
 
     @Test
-    fun `an archive whose row counts do not match its manifest is rejected before anything is wiped`() =
-        runTest {
-            seedEverything()
-            val out = ByteArrayOutputStream()
-            java.util.zip.ZipOutputStream(out).use { zip ->
-                // Claims a hundred workouts and ships none — a truncated archive looks like this.
-                val lying =
-                    BackupManifest(
-                        roomSchemaVersion = BackupWriter.ROOM_SCHEMA_VERSION,
-                        tables = listOf(BackupManifest.TableEntry(BackupTables.WORKOUTS, 100)),
-                    )
-                zip.putNextEntry(java.util.zip.ZipEntry(BackupFormat.MANIFEST_ENTRY))
-                zip.write(BackupFormat.jsonWrite.encodeToString(BackupManifest.serializer(), lying).toByteArray())
-                zip.closeEntry()
-            }
-            val staging = File(filesDir, "staging_truncated")
-            assertThrows(BackupReader.NotABackupException::class.java) {
-                BackupReader().stage(ByteArrayInputStream(out.toByteArray()), staging)
-            }
+    fun `an archive whose row counts do not match its manifest is rejected before anything is wiped`() = runTest {
+        seedEverything()
+        val out = ByteArrayOutputStream()
+        java.util.zip.ZipOutputStream(out).use { zip ->
+            // Claims a hundred workouts and ships none — a truncated archive looks like this.
+            val lying = BackupManifest(
+                roomSchemaVersion = BackupWriter.ROOM_SCHEMA_VERSION,
+                tables = listOf(BackupManifest.TableEntry(BackupTables.WORKOUTS, 100)),
+            )
+            zip.putNextEntry(java.util.zip.ZipEntry(BackupFormat.MANIFEST_ENTRY))
+            zip.write(BackupFormat.jsonWrite.encodeToString(BackupManifest.serializer(), lying).toByteArray())
+            zip.closeEntry()
         }
+        val staging = File(filesDir, "staging_truncated")
+        assertThrows(BackupReader.NotABackupException::class.java) {
+            BackupReader().stage(ByteArrayInputStream(out.toByteArray()), staging)
+        }
+    }
 
     @Test
     fun `an archive from a newer database is refused rather than half-restored`() {

@@ -1,8 +1,8 @@
 package com.enil.logez.core.common
 
+import kotlin.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.time.Instant
 
 /**
  * Owner testing rule (PHASE2_PLAN.md §10.1 rule 3): raw system time is banned from any code
@@ -17,10 +17,6 @@ interface Clock {
 }
 
 @Singleton
-class SystemClock
-    @Inject
-    constructor() : Clock {
-        override fun now(): Instant =
-            kotlin.time.Clock.System
-                .now()
-    }
+class SystemClock @Inject constructor() : Clock {
+    override fun now(): Instant = kotlin.time.Clock.System.now()
+}

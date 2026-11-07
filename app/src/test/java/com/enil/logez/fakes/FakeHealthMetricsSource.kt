@@ -39,7 +39,6 @@ class FakeHealthMetricsSource(
     override fun availability(): HealthConnectAvailability = availabilityValue
 
     override fun permissionFor(type: HealthDataType): String = "fake.permission.READ_${type.name}"
-
     /** How many times [revokeAllPermissions] was called. */
     var revokeCallCount = 0
         private set
@@ -70,19 +69,13 @@ class FakeHealthMetricsSource(
         return latestHeartRate
     }
 
-    override suspend fun readHeartRateSamples(
-        start: Instant,
-        end: Instant,
-    ): List<HeartRateSample> {
+    override suspend fun readHeartRateSamples(start: Instant, end: Instant): List<HeartRateSample> {
         queriedRanges += start to end
         throwOnReadHeartRateSamples?.let { throw it }
         return heartRateSamples.filter { it.time >= start && it.time <= end }
     }
 
-    override suspend fun readStepsHistory(
-        start: LocalDate,
-        end: LocalDate,
-    ): List<DailyStepCount> {
+    override suspend fun readStepsHistory(start: LocalDate, end: LocalDate): List<DailyStepCount> {
         queriedStepsRanges += start to end
         return stepsHistory.filter { it.date >= start && it.date <= end }
     }

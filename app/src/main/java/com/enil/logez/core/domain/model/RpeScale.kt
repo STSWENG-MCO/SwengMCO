@@ -16,18 +16,17 @@ object RpeScale {
     val VALUES: List<Double> = listOf(6.0, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0)
 
     /** A short "reps in reserve" description for the picker's selected-value label. */
-    fun reserveDescription(rpe: Double): String =
-        when (rpe) {
-            6.0 -> "4+ reps in reserve"
-            7.0 -> "3 reps in reserve"
-            7.5 -> "2–3 reps in reserve"
-            8.0 -> "2 reps in reserve"
-            8.5 -> "1–2 reps in reserve"
-            9.0 -> "1 rep in reserve"
-            9.5 -> "Maybe 1 rep in reserve"
-            10.0 -> "Max effort — nothing left"
-            else -> ""
-        }
+    fun reserveDescription(rpe: Double): String = when (rpe) {
+        6.0 -> "4+ reps in reserve"
+        7.0 -> "3 reps in reserve"
+        7.5 -> "2–3 reps in reserve"
+        8.0 -> "2 reps in reserve"
+        8.5 -> "1–2 reps in reserve"
+        9.0 -> "1 rep in reserve"
+        9.5 -> "Maybe 1 rep in reserve"
+        10.0 -> "Max effort — nothing left"
+        else -> ""
+    }
 
     /** "6" / "7.5" / "10" — no trailing ".0" on the whole-number values. */
     fun format(rpe: Double): String = if (rpe == rpe.toLong().toDouble()) rpe.toLong().toString() else rpe.toString()

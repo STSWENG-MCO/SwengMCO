@@ -1,8 +1,8 @@
 package com.enil.logez.feature.workout
 
+import com.enil.logez.core.designsystem.formatWeight
 import com.enil.logez.core.designsystem.formatMmSs
 import com.enil.logez.core.designsystem.formatTargetNumber
-import com.enil.logez.core.designsystem.formatWeight
 import com.enil.logez.core.domain.model.WeightUnit
 import com.enil.logez.feature.workout.session.WorkoutNotificationContent
 import com.enil.logez.feature.workout.session.WorkoutSessionController
@@ -15,29 +15,21 @@ import com.enil.logez.feature.workout.session.WorkoutSessionController
 class WorkoutNotificationContentBuilder(
     private val sessionController: WorkoutSessionController,
 ) {
-    fun push(
-        exercises: List<WorkoutExerciseUiModel>,
-        restingExerciseId: String?,
-        weightUnit: WeightUnit,
-    ) {
+    fun push(exercises: List<WorkoutExerciseUiModel>, restingExerciseId: String?, weightUnit: WeightUnit) {
         if (exercises.isEmpty()) {
             sessionController.updateNotificationContent(null)
             return
         }
-        val current =
-            exercises.find { it.id == restingExerciseId } ?: exercises.find { e -> e.sets.any { !it.isCompleted } } ?: exercises.last()
+        val current = exercises.find { it.id == restingExerciseId } ?: exercises.find { e -> e.sets.any { !it.isCompleted } } ?: exercises.last()
         val nextSet = current.sets.firstOrNull { !it.isCompleted }
         val completedInExercise = current.sets.count { it.isCompleted }
-        val title = "${current.exerciseName} · set ${(completedInExercise + 1).coerceAtMost(
-            current.sets.size.coerceAtLeast(1),
-        )} of ${current.sets.size}"
+        val title = "${current.exerciseName} · set ${(completedInExercise + 1).coerceAtMost(current.sets.size.coerceAtLeast(1))} of ${current.sets.size}"
         val isResting = restingExerciseId != null
-        val text =
-            when {
-                isResting -> "Resting…"
-                nextSet != null -> "Next: ${formatSetTarget(nextSet, weightUnit)}"
-                else -> "All sets complete"
-            }
+        val text = when {
+            isResting -> "Resting…"
+            nextSet != null -> "Next: ${formatSetTarget(nextSet, weightUnit)}"
+            else -> "All sets complete"
+        }
         sessionController.updateNotificationContent(
             WorkoutNotificationContent(
                 title = title,
@@ -49,10 +41,7 @@ class WorkoutNotificationContentBuilder(
         )
     }
 
-    private fun formatSetTarget(
-        set: WorkoutSetUiModel,
-        unit: WeightUnit,
-    ): String {
+    private fun formatSetTarget(set: WorkoutSetUiModel, unit: WeightUnit): String {
         val parts = mutableListOf<String>()
         set.weightKg?.let { parts.add(formatWeight(it, unit)) }
         set.reps?.let { parts.add("× $it") }

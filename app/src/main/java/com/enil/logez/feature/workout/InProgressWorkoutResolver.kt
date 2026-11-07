@@ -18,41 +18,32 @@ sealed interface InProgressWorkout {
     val id: String
 
     /** Typed session. Resumable from the ActiveSession store, so the logger is correct. */
-    data class Strength(
-        override val id: String,
-    ) : InProgressWorkout
+    data class Strength(override val id: String) : InProgressWorkout
 
     /** Tracking is still collecting — re-enter the live screen and start nothing. */
-    data class LiveGpsRun(
-        override val id: String,
-    ) : InProgressWorkout
+    data class LiveGpsRun(override val id: String) : InProgressWorkout
 
     /**
      * The process died mid-run. Route and distance lived only in memory and are gone, so this
      * cannot be resumed at all — the user has to decide what happens to the row.
      */
-    data class InterruptedGpsRun(
-        override val id: String,
-        val startedAt: Long,
-    ) : InProgressWorkout
+    data class InterruptedGpsRun(override val id: String, val startedAt: Long) : InProgressWorkout
 }
 
 @Singleton
-class InProgressWorkoutResolver
-    @Inject
-    constructor(
-        private val workoutRepository: WorkoutRepository,
-        private val activityTrackingController: ActivityTrackingController,
-    ) {
-        suspend fun resolve(): InProgressWorkout? {
-            val workout = workoutRepository.getInProgress() ?: return null
-            return when {
-                workout.kind == WorkoutKind.STRENGTH -> InProgressWorkout.Strength(workout.id)
-                // The id, not just isTracking: a controller left pointing at a different,
-                // already-finished workout must not be read as this row's live session.
-                activityTrackingController.state.value.workoutId == workout.id ->
-                    InProgressWorkout.LiveGpsRun(workout.id)
-                else -> InProgressWorkout.InterruptedGpsRun(workout.id, workout.startedAt)
-            }
+class InProgressWorkoutResolver @Inject constructor(
+    private val workoutRepository: WorkoutRepository,
+    private val activityTrackingController: ActivityTrackingController,
+) {
+    suspend fun resolve(): InProgressWorkout? {
+        val workout = workoutRepository.getInProgress() ?: return null
+        return when {
+            workout.kind == WorkoutKind.STRENGTH -> InProgressWorkout.Strength(workout.id)
+            // The id, not just isTracking: a controller left pointing at a different,
+            // already-finished workout must not be read as this row's live session.
+            activityTrackingController.state.value.workoutId == workout.id ->
+                InProgressWorkout.LiveGpsRun(workout.id)
+            else -> InProgressWorkout.InterruptedGpsRun(workout.id, workout.startedAt)
         }
     }
+}

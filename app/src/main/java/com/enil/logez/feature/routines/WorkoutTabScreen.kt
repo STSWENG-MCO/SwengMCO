@@ -1,14 +1,14 @@
 package com.enil.logez.feature.routines
 
 import android.content.Context
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -28,16 +28,15 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -67,15 +66,14 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.enil.logez.R
-import com.enil.logez.core.common.PermissionDenial
-import com.enil.logez.core.common.openAppDetailsSettings
 import com.enil.logez.core.data.entity.RoutineFolderEntity
 import com.enil.logez.core.designsystem.CircuitChip
 import com.enil.logez.core.designsystem.ConfirmDialog
-import com.enil.logez.core.designsystem.DragHandle
-import com.enil.logez.core.designsystem.Elevation
 import com.enil.logez.core.designsystem.EmptyState
 import com.enil.logez.core.designsystem.HeatmapGrid
+import com.enil.logez.core.designsystem.DragHandle
+import com.enil.logez.core.designsystem.SyncOptimisticList
+import com.enil.logez.core.designsystem.Elevation
 import com.enil.logez.core.designsystem.LogEzCard
 import com.enil.logez.core.designsystem.LogEzIcons
 import com.enil.logez.core.designsystem.LogEzMono
@@ -83,38 +81,34 @@ import com.enil.logez.core.designsystem.Radius
 import com.enil.logez.core.designsystem.RefreshOnResume
 import com.enil.logez.core.designsystem.ScreenTitle
 import com.enil.logez.core.designsystem.Spacing
-import com.enil.logez.core.designsystem.SyncOptimisticList
-import com.enil.logez.core.designsystem.currentLocale
 import com.enil.logez.core.designsystem.logEzTopAppBarColors
-import com.enil.logez.core.domain.model.WorkoutKind
+import com.enil.logez.core.designsystem.currentLocale
 import com.enil.logez.core.domain.model.WorkoutStructure
 import com.enil.logez.core.domain.repository.Exercise
-import com.enil.logez.core.wellness.DailyStepCount
 import com.enil.logez.feature.activity.ActivityTrackingStartResult
-import com.enil.logez.feature.activity.InterruptedTrackingDialog
 import com.enil.logez.feature.activity.rememberRequestLocationForTracking
+import com.enil.logez.core.domain.model.WorkoutKind
+import com.enil.logez.feature.activity.InterruptedTrackingDialog
 import com.enil.logez.feature.activity.startActivityTrackingService
+import com.enil.logez.core.wellness.DailyStepCount
 import com.enil.logez.feature.workout.StartResult
 import com.enil.logez.feature.workout.rememberStartWorkoutSession
+import java.util.Locale
+import java.time.format.TextStyle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
-import java.time.format.TextStyle
-import java.util.Locale
+import com.enil.logez.core.common.PermissionDenial
+import com.enil.logez.core.common.openAppDetailsSettings
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarResult
 
 /** What "Discard & start new" should start, once the in-progress conflict is resolved (§5.1.1 edge case). */
 private sealed class PendingStart {
     object Empty : PendingStart()
-
-    data class Routine(
-        val routineId: String,
-    ) : PendingStart()
-
-    data class ActivityTracking(
-        val exerciseId: String,
-        val title: String,
-    ) : PendingStart()
+    data class Routine(val routineId: String) : PendingStart()
+    data class ActivityTracking(val exerciseId: String, val title: String) : PendingStart()
 }
 
 /** PHASE2_PLAN.md §5.1.1 — folders + routines home. */
@@ -162,70 +156,59 @@ fun WorkoutTabScreen(
     var pendingTrackExercise by remember { mutableStateOf<Exercise?>(null) }
     val startSession = rememberStartWorkoutSession(onNavigateToLogger)
 
-    fun startEmpty() =
-        scope.launch {
-            when (val result = viewModel.startEmptyWorkout()) {
-                is StartResult.Started -> startSession(result.workoutId)
-                is StartResult.AlreadyInProgress -> {
-                    pendingStart = PendingStart.Empty
-                    inProgressWorkoutId = result.workoutId
-                }
-            }
+    fun startEmpty() = scope.launch {
+        when (val result = viewModel.startEmptyWorkout()) {
+            is StartResult.Started -> startSession(result.workoutId)
+            is StartResult.AlreadyInProgress -> { pendingStart = PendingStart.Empty; inProgressWorkoutId = result.workoutId }
         }
+    }
 
-    fun startRoutine(routineId: String) =
-        scope.launch {
-            when (val result = viewModel.startRoutine(routineId)) {
-                is StartResult.Started -> startSession(result.workoutId)
-                is StartResult.AlreadyInProgress -> {
-                    pendingStart = PendingStart.Routine(routineId)
-                    inProgressWorkoutId = result.workoutId
-                }
-            }
+    fun startRoutine(routineId: String) = scope.launch {
+        when (val result = viewModel.startRoutine(routineId)) {
+            is StartResult.Started -> startSession(result.workoutId)
+            is StartResult.AlreadyInProgress -> { pendingStart = PendingStart.Routine(routineId); inProgressWorkoutId = result.workoutId }
         }
+    }
 
-    val requestLocation =
-        rememberRequestLocationForTracking(
-            onGranted = {
-                val exercise = pendingTrackExercise
-                pendingTrackExercise = null
-                if (exercise != null) {
-                    scope.launch {
-                        when (val result = viewModel.startActivityTracking(exercise.id, exercise.name)) {
-                            is ActivityTrackingStartResult.Started -> {
-                                startActivityTrackingService(context)
-                                onNavigateToActivityTracking()
-                            }
-                            is ActivityTrackingStartResult.AlreadyInProgress -> {
-                                pendingStart = PendingStart.ActivityTracking(exercise.id, exercise.name)
-                                inProgressWorkoutId = result.workoutId
-                            }
+    val requestLocation = rememberRequestLocationForTracking(
+        onGranted = {
+            val exercise = pendingTrackExercise
+            pendingTrackExercise = null
+            if (exercise != null) {
+                scope.launch {
+                    when (val result = viewModel.startActivityTracking(exercise.id, exercise.name)) {
+                        is ActivityTrackingStartResult.Started -> {
+                            startActivityTrackingService(context)
+                            onNavigateToActivityTracking()
+                        }
+                        is ActivityTrackingStartResult.AlreadyInProgress -> {
+                            pendingStart = PendingStart.ActivityTracking(exercise.id, exercise.name)
+                            inProgressWorkoutId = result.workoutId
                         }
                     }
                 }
-            },
-            onDenied = { denial ->
-                pendingTrackExercise = null
-                scope.launch {
-                    val message =
-                        resources.getString(
-                            when (denial) {
-                                PermissionDenial.Declined -> R.string.activity_tracking_location_denied
-                                PermissionDenial.ApproximateOnly -> R.string.activity_tracking_location_approximate
-                                PermissionDenial.Blocked -> R.string.activity_tracking_location_blocked
-                            },
-                        )
-                    // Only offer Settings when it is the one place left to fix it.
-                    val result =
-                        snackbarHostState.showSnackbar(
-                            message = message,
-                            actionLabel = if (denial == PermissionDenial.Declined) null else resources.getString(R.string.permission_open_settings),
-                            duration = SnackbarDuration.Long,
-                        )
-                    if (result == SnackbarResult.ActionPerformed) openAppDetailsSettings(context)
-                }
-            },
-        )
+            }
+        },
+        onDenied = { denial ->
+            pendingTrackExercise = null
+            scope.launch {
+                val message = resources.getString(
+                    when (denial) {
+                        PermissionDenial.Declined -> R.string.activity_tracking_location_denied
+                        PermissionDenial.ApproximateOnly -> R.string.activity_tracking_location_approximate
+                        PermissionDenial.Blocked -> R.string.activity_tracking_location_blocked
+                    },
+                )
+                // Only offer Settings when it is the one place left to fix it.
+                val result = snackbarHostState.showSnackbar(
+                    message = message,
+                    actionLabel = if (denial == PermissionDenial.Declined) null else resources.getString(R.string.permission_open_settings),
+                    duration = SnackbarDuration.Long,
+                )
+                if (result == SnackbarResult.ActionPerformed) openAppDetailsSettings(context)
+            }
+        },
+    )
 
     fun startActivityTracking(exercise: Exercise) {
         pendingTrackExercise = exercise
@@ -268,10 +251,9 @@ fun WorkoutTabScreen(
                 Button(
                     onClick = { startEmpty() },
                     shape = ctaShape,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(Spacing.md),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(Spacing.md),
                 ) {
                     Text(stringResource(R.string.workout_start_empty))
                 }
@@ -292,12 +274,11 @@ fun WorkoutTabScreen(
         val lazyListState = rememberLazyListState()
         val localFolders = remember { mutableStateListOf<FolderSection>().apply { addAll(uiState.folders) } }
         val localRootRoutines = remember { mutableStateListOf<RoutineCardModel>().apply { addAll(uiState.rootRoutines) } }
-        val reorderState =
-            rememberReorderableLazyListState(lazyListState) { from, to ->
-                val fromKey = from.key as? String ?: return@rememberReorderableLazyListState
-                val toKey = to.key as? String ?: return@rememberReorderableLazyListState
-                reorderTabRows(localFolders, localRootRoutines, fromKey, toKey)
-            }
+        val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
+            val fromKey = from.key as? String ?: return@rememberReorderableLazyListState
+            val toKey = to.key as? String ?: return@rememberReorderableLazyListState
+            reorderTabRows(localFolders, localRootRoutines, fromKey, toKey)
+        }
         SyncOptimisticList(localFolders, uiState.folders, reorderState.isAnyItemDragging)
         SyncOptimisticList(localRootRoutines, uiState.rootRoutines, reorderState.isAnyItemDragging)
         // While a folder header is being dragged every folder's routines are hidden, so the only
@@ -325,14 +306,9 @@ fun WorkoutTabScreen(
             if (owner != null) viewModel.reorderRoutines(owner.routines.map { it.routine.id })
         }
         val commitRoot = { viewModel.reorderRoutines(localRootRoutines.map { it.routine.id }) }
-
         // Accessibility "Move up/down" (DragHandle custom actions): one slot within the row's own
         // bucket via the same swap step the drag uses, then the matching commit.
-        fun nudge(
-            key: String,
-            neighbourKey: String?,
-            commit: () -> Unit,
-        ) {
+        fun nudge(key: String, neighbourKey: String?, commit: () -> Unit) {
             if (neighbourKey == null) return
             reorderTabRows(localFolders, localRootRoutines, key, neighbourKey)
             commit()
@@ -453,14 +429,10 @@ fun WorkoutTabScreen(
                                 val index = localFolders.indexOfFirst { it.folder.id == section.folder.id }
                                 val key = "folder:${section.folder.id}"
                                 DragHandle(
-                                    modifier =
-                                        Modifier.longPressDraggableHandle(
-                                            onDragStarted = { draggingBucket = "folder" },
-                                            onDragStopped = {
-                                                commitFolders()
-                                                draggingBucket = null
-                                            },
-                                        ),
+                                    modifier = Modifier.longPressDraggableHandle(
+                                        onDragStarted = { draggingBucket = "folder" },
+                                        onDragStopped = { commitFolders(); draggingBucket = null },
+                                    ),
                                     onMoveUp = if (index > 0) ({ nudge(key, "folder:${localFolders[index - 1].folder.id}", commitFolders) }) else null,
                                     onMoveDown = if (index in 0 until localFolders.lastIndex) ({ nudge(key, "folder:${localFolders[index + 1].folder.id}", commitFolders) }) else null,
                                 )
@@ -501,14 +473,10 @@ fun WorkoutTabScreen(
                                     val key = "routine:${card.routine.id}"
                                     val commit = { commitFolderRoutines(card.routine.id) }
                                     DragHandle(
-                                        modifier =
-                                            Modifier.longPressDraggableHandle(
-                                                onDragStarted = { draggingBucket = "routine:${owner?.folder?.id}" },
-                                                onDragStopped = {
-                                                    commit()
-                                                    draggingBucket = null
-                                                },
-                                            ),
+                                        modifier = Modifier.longPressDraggableHandle(
+                                            onDragStarted = { draggingBucket = "routine:${owner?.folder?.id}" },
+                                            onDragStopped = { commit(); draggingBucket = null },
+                                        ),
                                         onMoveUp = if (index > 0) ({ nudge(key, "routine:${siblings[index - 1].routine.id}", commit) }) else null,
                                         onMoveDown = if (index in 0 until siblings.lastIndex) ({ nudge(key, "routine:${siblings[index + 1].routine.id}", commit) }) else null,
                                     )
@@ -548,14 +516,10 @@ fun WorkoutTabScreen(
                                 val index = localRootRoutines.indexOfFirst { it.routine.id == card.routine.id }
                                 val key = "root:${card.routine.id}"
                                 DragHandle(
-                                    modifier =
-                                        Modifier.longPressDraggableHandle(
-                                            onDragStarted = { draggingBucket = "root" },
-                                            onDragStopped = {
-                                                commitRoot()
-                                                draggingBucket = null
-                                            },
-                                        ),
+                                    modifier = Modifier.longPressDraggableHandle(
+                                        onDragStarted = { draggingBucket = "root" },
+                                        onDragStopped = { commitRoot(); draggingBucket = null },
+                                    ),
                                     onMoveUp = if (index > 0) ({ nudge(key, "root:${localRootRoutines[index - 1].routine.id}", commitRoot) }) else null,
                                     onMoveDown = if (index in 0 until localRootRoutines.lastIndex) ({ nudge(key, "root:${localRootRoutines[index + 1].routine.id}", commitRoot) }) else null,
                                 )
@@ -629,10 +593,7 @@ private fun WorkoutTabDialogs(
         InterruptedTrackingDialog(
             workoutId = workoutId,
             startedAt = startedAt,
-            onKeptTime = { id ->
-                interruptedRun = null
-                onNavigateToFinish(id)
-            },
+            onKeptTime = { id -> interruptedRun = null; onNavigateToFinish(id) },
             onDiscarded = { interruptedRun = null },
         )
     }
@@ -641,10 +602,7 @@ private fun WorkoutTabDialogs(
         TextInputDialog(
             title = stringResource(R.string.workout_new_folder),
             initialValue = "",
-            onConfirm = {
-                viewModel.createFolder(it)
-                showCreateFolder = false
-            },
+            onConfirm = { viewModel.createFolder(it); showCreateFolder = false },
             onDismiss = { showCreateFolder = false },
         )
     }
@@ -652,10 +610,7 @@ private fun WorkoutTabDialogs(
         TextInputDialog(
             title = stringResource(R.string.workout_rename_folder),
             initialValue = folder.name,
-            onConfirm = {
-                viewModel.renameFolder(folder.id, it)
-                renamingFolder = null
-            },
+            onConfirm = { viewModel.renameFolder(folder.id, it); renamingFolder = null },
             onDismiss = { renamingFolder = null },
         )
     }
@@ -682,10 +637,7 @@ private fun WorkoutTabDialogs(
     movingRoutineId?.let { routineId ->
         MoveToFolderDialog(
             folders = uiState.folders.map { it.folder },
-            onSelect = { folderId ->
-                viewModel.moveRoutineToFolder(routineId, folderId)
-                movingRoutineId = null
-            },
+            onSelect = { folderId -> viewModel.moveRoutineToFolder(routineId, folderId); movingRoutineId = null },
             onDismiss = { movingRoutineId = null },
         )
     }
@@ -760,23 +712,15 @@ private fun FolderHeaderRow(
             Box {
                 IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Outlined.MoreVert, contentDescription = stringResource(R.string.more_options)) }
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                    DropdownMenuItem(text = { Text(stringResource(R.string.action_rename)) }, onClick = {
-                        menuExpanded = false
-                        onRename()
-                    })
-                    DropdownMenuItem(text = { Text(stringResource(R.string.workout_add_routine_to_folder)) }, onClick = {
-                        menuExpanded = false
-                        onAddRoutine()
-                    })
-                    DropdownMenuItem(text = { Text(stringResource(R.string.action_delete)) }, onClick = {
-                        menuExpanded = false
-                        onDelete()
-                    })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.action_rename)) }, onClick = { menuExpanded = false; onRename() })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.workout_add_routine_to_folder)) }, onClick = { menuExpanded = false; onAddRoutine() })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.action_delete)) }, onClick = { menuExpanded = false; onDelete() })
                 }
             }
         }
     }
 }
+
 
 /**
  * M20a: applies one hover-swap from Reorderable's `onMove` to the tab's optimistic lists. Keys are
@@ -794,16 +738,14 @@ internal fun reorderTabRows(
 ) {
     val (fromKind, fromId) = fromKey.split(":", limit = 2).takeIf { it.size == 2 } ?: return
     val (toKind, toId) = toKey.split(":", limit = 2).takeIf { it.size == 2 } ?: return
-
     fun ownerFolderId(routineId: String): String? = folders.firstOrNull { f -> f.routines.any { it.routine.id == routineId } }?.folder?.id
     when (fromKind) {
         "folder" -> {
-            val targetFolderId =
-                when (toKind) {
-                    "folder" -> toId
-                    "routine" -> ownerFolderId(toId)
-                    else -> null
-                } ?: return
+            val targetFolderId = when (toKind) {
+                "folder" -> toId
+                "routine" -> ownerFolderId(toId)
+                else -> null
+            } ?: return
             val fromIndex = folders.indexOfFirst { it.folder.id == fromId }
             val toIndex = folders.indexOfFirst { it.folder.id == targetFolderId }
             if (fromIndex >= 0 && toIndex >= 0 && fromIndex != toIndex) folders.add(toIndex, folders.removeAt(fromIndex))
@@ -873,22 +815,10 @@ private fun RoutineCard(
                 Box(modifier = Modifier.weight(1f))
                 IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Outlined.MoreVert, contentDescription = stringResource(R.string.more_options)) }
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                    DropdownMenuItem(text = { Text(stringResource(R.string.action_edit)) }, onClick = {
-                        menuExpanded = false
-                        onEdit()
-                    })
-                    DropdownMenuItem(text = { Text(stringResource(R.string.action_duplicate)) }, onClick = {
-                        menuExpanded = false
-                        onDuplicate()
-                    })
-                    DropdownMenuItem(text = { Text(stringResource(R.string.workout_move_to_folder)) }, onClick = {
-                        menuExpanded = false
-                        onMove()
-                    })
-                    DropdownMenuItem(text = { Text(stringResource(R.string.action_delete)) }, onClick = {
-                        menuExpanded = false
-                        onDelete()
-                    })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.action_edit)) }, onClick = { menuExpanded = false; onEdit() })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.action_duplicate)) }, onClick = { menuExpanded = false; onDuplicate() })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.workout_move_to_folder)) }, onClick = { menuExpanded = false; onMove() })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.action_delete)) }, onClick = { menuExpanded = false; onDelete() })
                 }
             }
         }
@@ -897,10 +827,7 @@ private fun RoutineCard(
 
 /** M21a "Track a walk/run": Running/Walking is a single tap; GPS tracking + distance/duration capture happen on the live-tracking screen. */
 @Composable
-private fun QuickTrackCard(
-    exercises: QuickTrackExercises,
-    onTrack: (Exercise) -> Unit,
-) {
+private fun QuickTrackCard(exercises: QuickTrackExercises, onTrack: (Exercise) -> Unit) {
     LogEzCard(modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.md, vertical = Spacing.sm)) {
         Column(modifier = Modifier.padding(Spacing.md)) {
             Text(stringResource(R.string.workout_track_walk_run_title), style = MaterialTheme.typography.titleMedium)
@@ -925,10 +852,7 @@ private fun QuickTrackCard(
  * wherever one appears on the tab.
  */
 @Composable
-private fun StreakChip(
-    value: Int,
-    pluralsRes: Int,
-) {
+private fun StreakChip(value: Int, pluralsRes: Int) {
     Surface(
         shape = RoundedCornerShape(Radius.pill),
         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
@@ -945,10 +869,7 @@ private fun StreakChip(
 
 /** M21: today's step count, sourced from Health Connect -- a passive scorecard, same visual weight as the heatmap card above it. Never rendered at all when Health Connect has nothing to show (see the `todaySteps?.let` call site). */
 @Composable
-private fun StepsScorecard(
-    steps: Long,
-    recentSteps: List<DailyStepCount>,
-) {
+private fun StepsScorecard(steps: Long, recentSteps: List<DailyStepCount>) {
     LogEzCard(modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.md, vertical = Spacing.sm)) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(Spacing.md),
@@ -984,10 +905,7 @@ private fun StepsScorecard(
 }
 
 @Composable
-private fun SevenDayStepsChart(
-    steps: List<DailyStepCount>,
-    modifier: Modifier = Modifier,
-) {
+private fun SevenDayStepsChart(steps: List<DailyStepCount>, modifier: Modifier = Modifier) {
     val barColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.42f)
     val todayColor = MaterialTheme.colorScheme.primary
     val maxSteps = steps.maxOfOrNull { it.steps }?.coerceAtLeast(1L) ?: 1L
@@ -1004,12 +922,9 @@ private fun SevenDayStepsChart(
             val barWidth = slotWidth * 0.48f
             val minimumBarHeight = 2.dp.toPx()
             steps.forEachIndexed { index, day ->
-                val height =
-                    if (day.steps == 0L) {
-                        minimumBarHeight
-                    } else {
-                        (size.height * day.steps.toFloat() / maxSteps.toFloat()).coerceAtLeast(minimumBarHeight)
-                    }
+                val height = if (day.steps == 0L) minimumBarHeight else {
+                    (size.height * day.steps.toFloat() / maxSteps.toFloat()).coerceAtLeast(minimumBarHeight)
+                }
                 drawRoundRect(
                     color = if (index == steps.lastIndex) todayColor else barColor,
                     topLeft = Offset(index * slotWidth + (slotWidth - barWidth) / 2f, size.height - height),
@@ -1034,12 +949,7 @@ private fun SevenDayStepsChart(
 }
 
 @Composable
-private fun TextInputDialog(
-    title: String,
-    initialValue: String,
-    onConfirm: (String) -> Unit,
-    onDismiss: () -> Unit,
-) {
+private fun TextInputDialog(title: String, initialValue: String, onConfirm: (String) -> Unit, onDismiss: () -> Unit) {
     var text by remember { mutableStateOf(initialValue) }
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1053,11 +963,7 @@ private fun TextInputDialog(
 }
 
 @Composable
-private fun MoveToFolderDialog(
-    folders: List<RoutineFolderEntity>,
-    onSelect: (String?) -> Unit,
-    onDismiss: () -> Unit,
-) {
+private fun MoveToFolderDialog(folders: List<RoutineFolderEntity>, onSelect: (String?) -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.workout_move_to_folder)) },

@@ -11,9 +11,7 @@ import com.enil.logez.core.domain.repository.TransactionRunner
  * [failNextCalls] throws on that many calls before passing through — used to model a save attempt
  * that fails once (a Room error, a disk-full) and must be retryable on the next attempt.
  */
-class FakeTransactionRunner(
-    private var failNextCalls: Int = 0,
-) : TransactionRunner {
+class FakeTransactionRunner(private var failNextCalls: Int = 0) : TransactionRunner {
     var transactionCount = 0
         private set
 

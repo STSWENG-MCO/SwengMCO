@@ -28,12 +28,8 @@ import androidx.compose.ui.unit.dp
 object LogEzIcons {
     private const val STROKE_WIDTH = 2f
 
-    private fun icon(
-        name: String,
-        block: ImageVector.Builder.() -> Unit,
-    ): ImageVector =
-        ImageVector
-            .Builder(name = name, defaultWidth = 24.dp, defaultHeight = 24.dp, viewportWidth = 24f, viewportHeight = 24f)
+    private fun icon(name: String, block: ImageVector.Builder.() -> Unit): ImageVector =
+        ImageVector.Builder(name = name, defaultWidth = 24.dp, defaultHeight = 24.dp, viewportWidth = 24f, viewportHeight = 24f)
             .apply(block)
             .build()
 
@@ -49,13 +45,7 @@ object LogEzIcons {
     }
 
     /** A closed rectangle from ([left], [top]) to ([right], [bottom]) with corner radius [r]. */
-    private fun PathBuilder.roundedRect(
-        left: Float,
-        top: Float,
-        right: Float,
-        bottom: Float,
-        r: Float,
-    ) {
+    private fun PathBuilder.roundedRect(left: Float, top: Float, right: Float, bottom: Float, r: Float) {
         moveTo(left + r, top)
         lineTo(right - r, top)
         arcTo(r, r, 0f, isMoreThanHalf = false, isPositiveArc = true, x1 = right, y1 = top + r)
@@ -75,10 +65,7 @@ object LogEzIcons {
             line { roundedRect(16f, 6f, 19f, 18f, 1.2f) } // inner right plate
             line { roundedRect(2f, 8.5f, 5f, 15.5f, 1f) } // outer left plate
             line { roundedRect(19f, 8.5f, 22f, 15.5f, 1f) } // outer right plate
-            line {
-                moveTo(8f, 12f)
-                lineTo(16f, 12f)
-            } // bar
+            line { moveTo(8f, 12f); lineTo(16f, 12f) } // bar
         }
     }
 
@@ -88,12 +75,9 @@ object LogEzIcons {
             line { roundedRect(5f, 4f, 19f, 21f, 2.2f) } // board
             line { roundedRect(9f, 2.5f, 15f, 6f, 1.2f) } // clip
             line {
-                moveTo(8.5f, 10.5f)
-                lineTo(15.5f, 10.5f)
-                moveTo(8.5f, 14f)
-                lineTo(15.5f, 14f)
-                moveTo(8.5f, 17.5f)
-                lineTo(12.5f, 17.5f)
+                moveTo(8.5f, 10.5f); lineTo(15.5f, 10.5f)
+                moveTo(8.5f, 14f); lineTo(15.5f, 14f)
+                moveTo(8.5f, 17.5f); lineTo(12.5f, 17.5f)
             }
         }
     }

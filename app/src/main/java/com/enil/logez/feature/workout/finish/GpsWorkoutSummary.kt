@@ -190,16 +190,11 @@ internal fun GpsWorkoutSummary(
  * in over the first stretch of scrolling instead, so it never hides the map at rest.
  */
 @Composable
-private fun StatusBarBackdrop(
-    scroll: ScrollState,
-    statusBarTop: Dp,
-) {
+private fun StatusBarBackdrop(scroll: ScrollState, statusBarTop: Dp) {
     val rampPx = with(LocalDensity.current) { 96.dp.toPx() }
     val alpha by remember { derivedStateOf { (scroll.value / rampPx).coerceIn(0f, 1f) } }
     Box(
-        Modifier
-            .fillMaxWidth()
-            .height(statusBarTop)
+        Modifier.fillMaxWidth().height(statusBarTop)
             .graphicsLayer { this.alpha = alpha }
             .background(MaterialTheme.colorScheme.background),
     )
@@ -211,11 +206,7 @@ private fun StatusBarBackdrop(
  * corner button, opens [FullScreenRouteMap], where it does.
  */
 @Composable
-private fun HeroRouteMap(
-    routePoints: List<Pair<Double, Double>>,
-    statusBarTop: Dp,
-    onOpenMap: () -> Unit,
-) {
+private fun HeroRouteMap(routePoints: List<Pair<Double, Double>>, statusBarTop: Dp, onOpenMap: () -> Unit) {
     val background = MaterialTheme.colorScheme.background
     Box(modifier = Modifier.fillMaxWidth().height(statusBarTop + HERO_MAP_HEIGHT)) {
         RouteMapView(
@@ -229,16 +220,11 @@ private fun HeroRouteMap(
         )
         // Keeps the status bar's light icons readable over bright map areas.
         Box(
-            Modifier
-                .fillMaxWidth()
-                .height(statusBarTop + 56.dp)
+            Modifier.fillMaxWidth().height(statusBarTop + 56.dp)
                 .background(Brush.verticalGradient(listOf(background.copy(alpha = 0.82f), background.copy(alpha = 0f)))),
         )
         Box(
-            Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .height(HERO_FADE_HEIGHT)
+            Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(HERO_FADE_HEIGHT)
                 .background(Brush.verticalGradient(listOf(background.copy(alpha = 0f), background))),
         )
         MapRoundButton(
@@ -251,10 +237,7 @@ private fun HeroRouteMap(
 
 /** The same route, full screen, with every gesture on. Back or the close button returns. */
 @Composable
-internal fun FullScreenRouteMap(
-    routePoints: List<Pair<Double, Double>>,
-    onClose: () -> Unit,
-) {
+internal fun FullScreenRouteMap(routePoints: List<Pair<Double, Double>>, onClose: () -> Unit) {
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         RouteMapView(
@@ -274,11 +257,7 @@ internal fun FullScreenRouteMap(
 }
 
 @Composable
-private fun MapRoundButton(
-    icon: @Composable () -> Unit,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
+private fun MapRoundButton(icon: @Composable () -> Unit, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Surface(
         onClick = onClick,
         modifier = modifier.size(40.dp),
@@ -293,32 +272,26 @@ private fun MapRoundButton(
 
 @Composable
 private fun ActivityChip(activity: GpsActivity) {
-    val label =
-        stringResource(
-            when (activity) {
-                GpsActivity.RUN -> R.string.summary_gps_chip_run
-                GpsActivity.WALK -> R.string.summary_gps_chip_walk
-                GpsActivity.OTHER -> R.string.summary_gps_chip_other
-            },
-        )
+    val label = stringResource(
+        when (activity) {
+            GpsActivity.RUN -> R.string.summary_gps_chip_run
+            GpsActivity.WALK -> R.string.summary_gps_chip_walk
+            GpsActivity.OTHER -> R.string.summary_gps_chip_other
+        },
+    )
     Text(
         label.uppercase(currentLocale()),
         style = LogEzMono.dataSmall.copy(fontWeight = FontWeight.Medium, letterSpacing = 0.08.em),
         color = MaterialTheme.colorScheme.primary,
-        modifier =
-            Modifier
-                .clip(RoundedCornerShape(Radius.pill))
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.16f))
-                .padding(horizontal = 10.dp, vertical = Spacing.xxs),
+        modifier = Modifier
+            .clip(RoundedCornerShape(Radius.pill))
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.16f))
+            .padding(horizontal = 10.dp, vertical = Spacing.xxs),
     )
 }
 
 @Composable
-private fun HeroDistance(
-    meters: Double,
-    unit: DistanceUnit,
-    modifier: Modifier = Modifier,
-) {
+private fun HeroDistance(meters: Double, unit: DistanceUnit, modifier: Modifier = Modifier) {
     val unitLabel = if (unit == DistanceUnit.KM) "km" else "mi"
     val number = formatDistanceNumber(meters, unit)
     Column(modifier = modifier.semantics(mergeDescendants = true) {}) {
@@ -341,21 +314,17 @@ private fun HeroDistance(
 
 /** Time, average pace, average speed: the live tracking screen's three-up row, kept after the run. */
 @Composable
-private fun StatsCard(
-    uiState: WorkoutSummaryUiState,
-    modifier: Modifier = Modifier,
-) {
+private fun StatsCard(uiState: WorkoutSummaryUiState, modifier: Modifier = Modifier) {
     val km = uiState.distanceUnit == DistanceUnit.KM
-    val cells =
-        buildList {
-            add(formatElapsedClock(uiState.durationSeconds) to stringResource(R.string.summary_gps_time))
-            uiState.averagePaceSecondsPerUnit?.let {
-                add(formatPace(it) to stringResource(if (km) R.string.summary_gps_avg_pace_km else R.string.summary_gps_avg_pace_mi))
-            }
-            uiState.averageSpeedPerHour?.let {
-                add(formatOneDecimal(it) to stringResource(if (km) R.string.summary_gps_avg_speed_km else R.string.summary_gps_avg_speed_mi))
-            }
+    val cells = buildList {
+        add(formatElapsedClock(uiState.durationSeconds) to stringResource(R.string.summary_gps_time))
+        uiState.averagePaceSecondsPerUnit?.let {
+            add(formatPace(it) to stringResource(if (km) R.string.summary_gps_avg_pace_km else R.string.summary_gps_avg_pace_mi))
         }
+        uiState.averageSpeedPerHour?.let {
+            add(formatOneDecimal(it) to stringResource(if (km) R.string.summary_gps_avg_speed_km else R.string.summary_gps_avg_speed_mi))
+        }
+    }
     LogEzCard(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min).padding(horizontal = Spacing.xs, vertical = 14.dp),
@@ -386,10 +355,7 @@ private fun StatsCard(
 }
 
 @Composable
-private fun PaceCard(
-    uiState: WorkoutSummaryUiState,
-    modifier: Modifier = Modifier,
-) {
+private fun PaceCard(uiState: WorkoutSummaryUiState, modifier: Modifier = Modifier) {
     val km = uiState.distanceUnit == DistanceUnit.KM
     val fullSplits = uiState.splits.filterNot { it.isPartial }
     val fastest = fullSplits.minByOrNull { it.paceSecondsPerUnit }
@@ -419,12 +385,7 @@ private fun PaceCard(
 }
 
 @Composable
-private fun SplitsTable(
-    splits: List<RouteSplit>,
-    fastest: RouteSplit?,
-    km: Boolean,
-    modifier: Modifier = Modifier,
-) {
+private fun SplitsTable(splits: List<RouteSplit>, fastest: RouteSplit?, km: Boolean, modifier: Modifier = Modifier) {
     val showBpm = splits.any { it.averageBpm != null }
     val speeds = splits.map { 1.0 / it.paceSecondsPerUnit }
     val fastestSpeed = speeds.max()
@@ -439,9 +400,8 @@ private fun SplitsTable(
         splits.forEachIndexed { i, split ->
             val label = if (split.isPartial) formatDistanceNumber(split.distanceMeters, if (km) DistanceUnit.KM else DistanceUnit.MILES) else split.number.toString()
             val pace = formatPace(split.paceSecondsPerUnit)
-            val description =
-                split.averageBpm?.let { stringResource(R.string.summary_gps_split_bpm_a11y, label, pace, it.toString()) }
-                    ?: stringResource(R.string.summary_gps_split_a11y, label, pace)
+            val description = split.averageBpm?.let { stringResource(R.string.summary_gps_split_bpm_a11y, label, pace, it.toString()) }
+                ?: stringResource(R.string.summary_gps_split_a11y, label, pace)
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             // Minimum sizes, not fixed ones: at a large font scale the row and its columns grow and
             // the bar gives up the width.
@@ -466,18 +426,14 @@ private fun SplitsTable(
                 )
                 // Relative, not absolute: the slowest split gets a little over half the width and the
                 // fastest all of it, so a few seconds' difference is visible at all.
-                val fraction =
-                    if (fastestSpeed > slowestSpeed) {
-                        0.55f + 0.45f * ((speeds[i] - slowestSpeed) / (fastestSpeed - slowestSpeed)).toFloat()
-                    } else {
-                        1f
-                    }
+                val fraction = if (fastestSpeed > slowestSpeed) {
+                    0.55f + 0.45f * ((speeds[i] - slowestSpeed) / (fastestSpeed - slowestSpeed)).toFloat()
+                } else {
+                    1f
+                }
                 Box(modifier = Modifier.weight(1f).padding(end = Spacing.xs)) {
                     Box(
-                        Modifier
-                            .fillMaxWidth(fraction)
-                            .height(10.dp)
-                            .clip(RoundedCornerShape(Radius.pill))
+                        Modifier.fillMaxWidth(fraction).height(10.dp).clip(RoundedCornerShape(Radius.pill))
                             .background(
                                 if (split == fastest) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.primary.copy(alpha = 0.45f),
                             ),
@@ -501,11 +457,7 @@ private fun SplitsTable(
 
 /** Also shown on History's workout detail, so a run's heart rate looks the same in both places. */
 @Composable
-internal fun HeartRateCard(
-    summary: HeartRateSummary,
-    startedAtMillis: Long,
-    modifier: Modifier = Modifier,
-) {
+internal fun HeartRateCard(summary: HeartRateSummary, startedAtMillis: Long, modifier: Modifier = Modifier) {
     LogEzCard(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(Spacing.md)) {
             CardHeadingRow(
@@ -556,10 +508,7 @@ internal fun HeartRateCard(
 }
 
 @Composable
-private fun BpmStat(
-    bpm: Long,
-    label: String,
-) {
+private fun BpmStat(bpm: Long, label: String) {
     StatCell(
         value = bpm.toString(),
         label = label,
@@ -571,22 +520,17 @@ private fun BpmStat(
 
 /** One zone: its number and name, a bar against the longest zone, and the time. Lighter green for easier zones. */
 @Composable
-private fun ZoneRow(
-    zone: HeartRateZone,
-    seconds: Int,
-    longestSeconds: Int,
-) {
+private fun ZoneRow(zone: HeartRateZone, seconds: Int, longestSeconds: Int) {
     val name = heartRateZoneLabel(zone)
     val time = formatElapsedClock(seconds)
     val description = stringResource(R.string.summary_gps_zone_a11y, zone.number, name, time)
-    val alpha =
-        when (zone) {
-            HeartRateZone.ZONE_1 -> 0.28f
-            HeartRateZone.ZONE_2 -> 0.42f
-            HeartRateZone.ZONE_3 -> 0.58f
-            HeartRateZone.ZONE_4 -> 0.78f
-            HeartRateZone.ZONE_5 -> 1f
-        }
+    val alpha = when (zone) {
+        HeartRateZone.ZONE_1 -> 0.28f
+        HeartRateZone.ZONE_2 -> 0.42f
+        HeartRateZone.ZONE_3 -> 0.58f
+        HeartRateZone.ZONE_4 -> 0.78f
+        HeartRateZone.ZONE_5 -> 1f
+    }
     Row(
         modifier = Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = description },
         verticalAlignment = Alignment.CenterVertically,
@@ -603,21 +547,13 @@ private fun ZoneRow(
             )
         }
         Box(
-            modifier =
-                Modifier
-                    .weight(1f)
-                    .padding(horizontal = Spacing.xs)
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(Radius.pill))
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
+            modifier = Modifier.weight(1f).padding(horizontal = Spacing.xs).height(8.dp)
+                .clip(RoundedCornerShape(Radius.pill)).background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
             if (seconds > 0) {
                 Box(
-                    Modifier
-                        .fillMaxWidth((seconds.toFloat() / longestSeconds).coerceIn(0.03f, 1f))
-                        .fillMaxHeight()
-                        .clip(RoundedCornerShape(Radius.pill))
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = alpha)),
+                    Modifier.fillMaxWidth((seconds.toFloat() / longestSeconds).coerceIn(0.03f, 1f)).fillMaxHeight()
+                        .clip(RoundedCornerShape(Radius.pill)).background(MaterialTheme.colorScheme.primary.copy(alpha = alpha)),
                 )
             }
         }
@@ -635,10 +571,7 @@ private fun ZoneRow(
 
 /** A record on a walk/run summary: the record type leads, since the exercise is the run itself. */
 @Composable
-private fun GpsPrMedalCard(
-    medal: PrMedal,
-    distanceUnit: DistanceUnit,
-) {
+private fun GpsPrMedalCard(medal: PrMedal, distanceUnit: DistanceUnit) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(bottom = Spacing.sm),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface),
@@ -662,10 +595,7 @@ private fun GpsPrMedalCard(
 }
 
 @Composable
-private fun CardHeading(
-    text: String,
-    modifier: Modifier = Modifier,
-) {
+private fun CardHeading(text: String, modifier: Modifier = Modifier) {
     Text(
         text.uppercase(currentLocale()),
         style = MaterialTheme.typography.titleMedium.copy(letterSpacing = 0.05.em),
@@ -674,10 +604,7 @@ private fun CardHeading(
 }
 
 @Composable
-private fun CardHeadingRow(
-    title: String,
-    meta: String?,
-) {
+private fun CardHeadingRow(title: String, meta: String?) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         CardHeading(title, Modifier.weight(1f))
         if (meta != null) {
@@ -692,11 +619,7 @@ private fun CardHeadingRow(
 }
 
 @Composable
-private fun CapsLabel(
-    text: String,
-    modifier: Modifier = Modifier,
-    textAlign: TextAlign? = null,
-) {
+private fun CapsLabel(text: String, modifier: Modifier = Modifier, textAlign: TextAlign? = null) {
     Text(
         text.uppercase(currentLocale()),
         style = LogEzMono.dataSmall.copy(letterSpacing = 0.08.em),
@@ -722,10 +645,8 @@ internal fun formatFullDateTime(millis: Long): String {
  * Two decimals, always ("4.62", "0.54", "10.00"), `Locale.ROOT`: the walk/run hundredths rule
  * (Owner, 2026-09-23), and the same shape the live tracking screen ticks in.
  */
-internal fun formatDistanceNumber(
-    meters: Double,
-    unit: DistanceUnit,
-): String = "%.2f".format(Locale.ROOT, (DistanceDisplay.toDisplay(meters, unit) * 100).roundToInt() / 100.0)
+internal fun formatDistanceNumber(meters: Double, unit: DistanceUnit): String =
+    "%.2f".format(Locale.ROOT, (DistanceDisplay.toDisplay(meters, unit) * 100).roundToInt() / 100.0)
 
 internal fun formatOneDecimal(value: Double): String = "%.1f".format(Locale.ROOT, value)
 
@@ -733,12 +654,8 @@ internal fun formatOneDecimal(value: Double): String = "%.1f".format(Locale.ROOT
  * A walk/run record in the user's unit. The generic summary used to print LONGEST_DISTANCE as raw
  * meters ("537.41m") whatever the km/mi setting, and LONGEST_TIME without hours ("75:03").
  */
-internal fun formatGpsPrValue(
-    medal: PrMedal,
-    distanceUnit: DistanceUnit,
-): String =
-    when (medal.prType) {
-        PrType.LONGEST_DISTANCE -> formatDistanceNumber(medal.value, distanceUnit) + if (distanceUnit == DistanceUnit.KM) " km" else " mi"
-        PrType.LONGEST_TIME, PrType.BEST_TIME -> formatElapsedClock(medal.value.toInt())
-        else -> formatSummaryNumber(medal.value)
-    }
+internal fun formatGpsPrValue(medal: PrMedal, distanceUnit: DistanceUnit): String = when (medal.prType) {
+    PrType.LONGEST_DISTANCE -> formatDistanceNumber(medal.value, distanceUnit) + if (distanceUnit == DistanceUnit.KM) " km" else " mi"
+    PrType.LONGEST_TIME, PrType.BEST_TIME -> formatElapsedClock(medal.value.toInt())
+    else -> formatSummaryNumber(medal.value)
+}

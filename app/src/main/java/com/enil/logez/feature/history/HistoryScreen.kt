@@ -4,10 +4,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -29,6 +29,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.em
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.enil.logez.core.domain.model.DistanceUnit
+import com.enil.logez.core.domain.model.WeightUnit
 import com.enil.logez.R
 import com.enil.logez.core.designsystem.CircuitChip
 import com.enil.logez.core.designsystem.EmptyState
@@ -38,16 +40,14 @@ import com.enil.logez.core.designsystem.LogEzIcons
 import com.enil.logez.core.designsystem.ScreenTitle
 import com.enil.logez.core.designsystem.Spacing
 import com.enil.logez.core.designsystem.StatCell
-import com.enil.logez.core.designsystem.currentLocale
 import com.enil.logez.core.designsystem.logEzTopAppBarColors
-import com.enil.logez.core.designsystem.rememberClockTimeFormatter
-import com.enil.logez.core.domain.model.DistanceUnit
-import com.enil.logez.core.domain.model.WeightUnit
 import com.enil.logez.core.domain.model.WorkoutStructure
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import com.enil.logez.core.designsystem.rememberClockTimeFormatter
+import com.enil.logez.core.designsystem.currentLocale
 
 /**
  * PHASE2_PLAN.md §5.2 History tab — the landing destination, a reverse-chronological feed of
@@ -98,12 +98,7 @@ fun HistoryScreen(
 }
 
 @Composable
-private fun WorkoutHistoryCard(
-    card: WorkoutCardModel,
-    weightUnit: WeightUnit,
-    distanceUnit: DistanceUnit,
-    onClick: () -> Unit,
-) {
+private fun WorkoutHistoryCard(card: WorkoutCardModel, weightUnit: WeightUnit, distanceUnit: DistanceUnit, onClick: () -> Unit) {
     LogEzCard(modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.sm).clickable(onClick = onClick)) {
         Column(modifier = Modifier.padding(Spacing.md)) {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -189,21 +184,17 @@ private fun RecordsChip() {
  * rolls over. The clock follows the phone's 12/24-hour setting, and Today/Yesterday are resources.
  */
 @Composable
-internal fun formatCardDateTime(
-    millis: Long,
-    today: LocalDate = LocalDate.now(ZoneId.systemDefault()),
-): String {
+internal fun formatCardDateTime(millis: Long, today: LocalDate = LocalDate.now(ZoneId.systemDefault())): String {
     val zoned = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
     val date = zoned.toLocalDate()
     val locale = currentLocale()
     val time = zoned.format(rememberClockTimeFormatter())
-    val dayPart =
-        when {
-            date == today -> stringResource(R.string.history_card_today)
-            date == today.minusDays(1) -> stringResource(R.string.history_card_yesterday)
-            date.year == today.year -> zoned.format(DateTimeFormatter.ofPattern("d MMM", locale))
-            else -> zoned.format(DateTimeFormatter.ofPattern("d MMM yyyy", locale))
-        }
+    val dayPart = when {
+        date == today -> stringResource(R.string.history_card_today)
+        date == today.minusDays(1) -> stringResource(R.string.history_card_yesterday)
+        date.year == today.year -> zoned.format(DateTimeFormatter.ofPattern("d MMM", locale))
+        else -> zoned.format(DateTimeFormatter.ofPattern("d MMM yyyy", locale))
+    }
     return stringResource(R.string.history_card_date_time, dayPart, time)
 }
 
@@ -213,16 +204,6 @@ private fun formatCardDuration(totalSeconds: Int): String {
     return if (h > 0) "${h}h ${m}m" else "${m}m"
 }
 
-private fun formatCardVolume(
-    kg: Double,
-    unit: WeightUnit,
-): String =
-    com.enil.logez.core.designsystem
-        .formatWeight(kg, unit)
+private fun formatCardVolume(kg: Double, unit: WeightUnit): String = com.enil.logez.core.designsystem.formatWeight(kg, unit)
 
-private fun formatCardDistance(
-    meters: Double,
-    unit: DistanceUnit,
-): String =
-    com.enil.logez.core.designsystem
-        .formatDistance(meters, unit)
+private fun formatCardDistance(meters: Double, unit: DistanceUnit): String = com.enil.logez.core.designsystem.formatDistance(meters, unit)

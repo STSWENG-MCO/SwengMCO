@@ -27,23 +27,14 @@ object HeartRateReadWindow {
     fun queryStart(start: Instant): Instant = start.minus(RECORD_START_LOOKBACK)
 
     /** The samples whose own time lies in [start]..[end] inclusive, oldest first. */
-    fun samplesWithin(
-        samples: List<HeartRateSample>,
-        start: Instant,
-        end: Instant,
-    ): List<HeartRateSample> = samples.filter { !it.time.isBefore(start) && !it.time.isAfter(end) }.sortedBy { it.time }
+    fun samplesWithin(samples: List<HeartRateSample>, start: Instant, end: Instant): List<HeartRateSample> =
+        samples.filter { !it.time.isBefore(start) && !it.time.isAfter(end) }.sortedBy { it.time }
 
     /** One page of a Health Connect heart-rate read: every sample of the page's records, and the next page's token. */
-    data class Page(
-        val samples: List<HeartRateSample>,
-        val nextPageToken: String?,
-    )
+    data class Page(val samples: List<HeartRateSample>, val nextPageToken: String?)
 
     /** A whole read: the samples in the window, and whether [maxPages] cut it short. */
-    data class Result(
-        val samples: List<HeartRateSample>,
-        val truncated: Boolean,
-    )
+    data class Result(val samples: List<HeartRateSample>, val truncated: Boolean)
 
     /**
      * Reads every page for [start]..[end] through [fetch], which receives the widened query start

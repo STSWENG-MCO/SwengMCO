@@ -13,13 +13,14 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import com.enil.logez.R
 import com.enil.logez.feature.workout.service.WorkoutSessionService
+import androidx.compose.runtime.saveable.rememberSaveable
 
 /**
  * PHASE2_PLAN.md §9.3 — "requested contextually on the first Start Workout tap". Returns a
@@ -36,12 +37,11 @@ fun rememberStartWorkoutSession(onNavigateToLogger: (workoutId: String) -> Unit)
     var pendingWorkoutId by rememberSaveable { mutableStateOf<String?>(null) }
     var showRationale by rememberSaveable { mutableStateOf(false) }
 
-    val permissionLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            if (!granted) NotificationPromptMemory.markDeclined(context)
-            pendingWorkoutId?.let { launchServiceAndNavigate(context, it, onNavigateToLogger) }
-            pendingWorkoutId = null
-        }
+    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (!granted) NotificationPromptMemory.markDeclined(context)
+        pendingWorkoutId?.let { launchServiceAndNavigate(context, it, onNavigateToLogger) }
+        pendingWorkoutId = null
+    }
 
     if (showRationale) {
         AlertDialog(
@@ -82,11 +82,7 @@ fun rememberStartWorkoutSession(onNavigateToLogger: (workoutId: String) -> Unit)
     }
 }
 
-private fun launchServiceAndNavigate(
-    context: Context,
-    workoutId: String,
-    onNavigateToLogger: (String) -> Unit,
-) {
+private fun launchServiceAndNavigate(context: Context, workoutId: String, onNavigateToLogger: (String) -> Unit) {
     val intent = Intent(context, WorkoutSessionService::class.java).setAction(WorkoutSessionService.ACTION_START)
     ContextCompat.startForegroundService(context, intent)
     onNavigateToLogger(workoutId)
@@ -112,22 +108,18 @@ internal object NotificationPromptMemory {
     private const val PREFS = "logez_ui_flags"
     private const val KEY_DECLINED = "notification_prompt_declined"
 
-    fun wasDeclined(context: Context): Boolean = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_DECLINED, false)
+    fun wasDeclined(context: Context): Boolean =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_DECLINED, false)
 
     fun markDeclined(context: Context) {
-        context
-            .getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .edit()
-            .putBoolean(KEY_DECLINED, true)
-            .apply()
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_DECLINED, true).apply()
     }
 }
 
 /** Opens this app's page in the system notification settings. */
 internal fun openAppNotificationSettings(context: Context) {
-    val intent =
-        Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-            .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    val intent = Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+        .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName)
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     runCatching { context.startActivity(intent) }
 }

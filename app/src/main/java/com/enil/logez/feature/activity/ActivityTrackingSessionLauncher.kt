@@ -12,15 +12,16 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import com.enil.logez.R
+import com.enil.logez.feature.activity.service.ActivityTrackingService
 import com.enil.logez.core.common.PermissionDenial
 import com.enil.logez.core.common.classifyDenial
-import com.enil.logez.feature.activity.service.ActivityTrackingService
+import androidx.compose.runtime.saveable.rememberSaveable
 
 /**
  * M21a. Unlike [com.enil.logez.feature.workout.rememberStartWorkoutSession]'s notification
@@ -30,30 +31,23 @@ import com.enil.logez.feature.activity.service.ActivityTrackingService
  * "proceed either way" precedent, not an oversight).
  */
 @Composable
-fun rememberRequestLocationForTracking(
-    onGranted: () -> Unit,
-    onDenied: (PermissionDenial) -> Unit,
-): () -> Unit {
+fun rememberRequestLocationForTracking(onGranted: () -> Unit, onDenied: (PermissionDenial) -> Unit): () -> Unit {
     val context = LocalContext.current
     var showRationale by rememberSaveable { mutableStateOf(false) }
 
-    val permissionLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { grants ->
-            when {
-                grants[Manifest.permission.ACCESS_FINE_LOCATION] == true -> onGranted()
-                // Android 12+ lets the user grant only approximate location, which cannot measure a
-                // route. It used to read as a plain denial with no hint that "Precise" was the fix.
-                grants[Manifest.permission.ACCESS_COARSE_LOCATION] == true -> onDenied(PermissionDenial.ApproximateOnly)
-                else -> onDenied(classifyDenial(context, Manifest.permission.ACCESS_FINE_LOCATION))
-            }
+    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { grants ->
+        when {
+            grants[Manifest.permission.ACCESS_FINE_LOCATION] == true -> onGranted()
+            // Android 12+ lets the user grant only approximate location, which cannot measure a
+            // route. It used to read as a plain denial with no hint that "Precise" was the fix.
+            grants[Manifest.permission.ACCESS_COARSE_LOCATION] == true -> onDenied(PermissionDenial.ApproximateOnly)
+            else -> onDenied(classifyDenial(context, Manifest.permission.ACCESS_FINE_LOCATION))
         }
+    }
 
     if (showRationale) {
         AlertDialog(
-            onDismissRequest = {
-                showRationale = false
-                onDenied(PermissionDenial.Declined)
-            },
+            onDismissRequest = { showRationale = false; onDenied(PermissionDenial.Declined) },
             title = { Text(stringResource(R.string.activity_tracking_location_rationale_title)) },
             text = { Text(stringResource(R.string.activity_tracking_location_rationale_body)) },
             confirmButton = {
@@ -63,10 +57,7 @@ fun rememberRequestLocationForTracking(
                 }) { Text(stringResource(R.string.activity_tracking_location_rationale_allow)) }
             },
             dismissButton = {
-                TextButton(onClick = {
-                    showRationale = false
-                    onDenied(PermissionDenial.Declined)
-                }) { Text(stringResource(R.string.action_cancel)) }
+                TextButton(onClick = { showRationale = false; onDenied(PermissionDenial.Declined) }) { Text(stringResource(R.string.action_cancel)) }
             },
         )
     }

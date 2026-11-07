@@ -32,10 +32,7 @@ object RoutineValueUpdater {
      * session would collide on index and let the later block overwrite the earlier one's targets.
      * The first entry per index wins here as a backstop, but the caller owns the block split.
      */
-    fun updatedTargets(
-        routineSets: List<RoutineSetTargets>,
-        loggedSets: List<LoggedSetValues>,
-    ): List<RoutineSetTargets> {
+    fun updatedTargets(routineSets: List<RoutineSetTargets>, loggedSets: List<LoggedSetValues>): List<RoutineSetTargets> {
         val loggedByIndex = HashMap<Int, LoggedSetValues>()
         loggedSets.forEach { loggedByIndex.putIfAbsent(it.orderIndex, it) }
         return routineSets.map { target ->

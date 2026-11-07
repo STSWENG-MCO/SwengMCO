@@ -1,10 +1,10 @@
 package com.enil.logez.feature.widget
 
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.time.ZoneId
-import java.time.ZonedDateTime
 
 /** The only arithmetic in the midnight worker, and the only part of it that is testable. */
 class MidnightWidgetWorkerTest {

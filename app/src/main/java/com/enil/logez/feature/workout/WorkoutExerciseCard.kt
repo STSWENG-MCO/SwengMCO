@@ -4,18 +4,20 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -23,11 +25,11 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Calculate
 import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Stop
@@ -53,17 +55,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.enil.logez.R
@@ -71,25 +66,31 @@ import com.enil.logez.core.designsystem.Danger500
 import com.enil.logez.core.designsystem.Elevation
 import com.enil.logez.core.designsystem.LogEzCard
 import com.enil.logez.core.designsystem.LogEzMono
+import com.enil.logez.core.designsystem.boxedFieldColors
+import com.enil.logez.core.designsystem.formatTargetNumber
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import com.enil.logez.core.designsystem.Radius
 import com.enil.logez.core.designsystem.SetTable
 import com.enil.logez.core.designsystem.Spacing
 import com.enil.logez.core.designsystem.SupersetPalette
-import com.enil.logez.core.designsystem.Warning300
 import com.enil.logez.core.designsystem.Warning500
-import com.enil.logez.core.designsystem.boxedFieldColors
-import com.enil.logez.core.designsystem.formatTargetNumber
-import com.enil.logez.core.designsystem.parseDecimalInput
 import com.enil.logez.core.domain.calc.WeightDisplay
 import com.enil.logez.core.domain.model.Equipment
 import com.enil.logez.core.domain.model.ExerciseType
 import com.enil.logez.core.domain.model.RpeScale
 import com.enil.logez.core.domain.model.SetType
-import com.enil.logez.core.domain.model.TargetField
 import com.enil.logez.core.domain.model.WeightUnit
+import com.enil.logez.core.domain.model.TargetField
 import com.enil.logez.core.domain.model.targetFields
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import com.enil.logez.core.designsystem.parseDecimalInput
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import com.enil.logez.core.designsystem.Warning300
 
 /** REPS never needs more than 1-2 digits, so it's the weighted column that shrinks to fund the
  * wider PREVIOUS cell (Owner, 2026-09-03) — KG/TIME/DISTANCE keep the full share so 5-char values
@@ -120,11 +121,10 @@ internal fun WorkoutExerciseCard(
     val supersetColor = exercise.supersetGroup?.let { SupersetPalette[it % SupersetPalette.size] }
 
     LogEzCard(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .padding(bottom = Spacing.sm)
-                .let { m -> if (supersetSelectionActive && !isSupersetSource) m.clickable { callbacks.onConfirmSupersetTarget(exercise.id) } else m },
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(bottom = Spacing.sm)
+            .let { m -> if (supersetSelectionActive && !isSupersetSource) m.clickable { callbacks.onConfirmSupersetTarget(exercise.id) } else m },
         elevation = if (isDragging) Elevation.dragging else Elevation.card,
     ) {
         Column(modifier = Modifier.padding(Spacing.md)) {
@@ -155,20 +155,11 @@ internal fun WorkoutExerciseCard(
                         Icon(Icons.Outlined.MoreVert, contentDescription = stringResource(R.string.more_options))
                     }
                     DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                        DropdownMenuItem(text = { Text(stringResource(R.string.routine_builder_menu_replace)) }, onClick = {
-                            menuExpanded = false
-                            onOpenReplacePicker()
-                        })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.routine_builder_menu_replace)) }, onClick = { menuExpanded = false; onOpenReplacePicker() })
                         if (exercise.supersetGroup == null) {
-                            DropdownMenuItem(text = { Text(stringResource(R.string.routine_builder_menu_add_to_superset)) }, onClick = {
-                                menuExpanded = false
-                                callbacks.onStartSupersetSelection(exercise.id)
-                            })
+                            DropdownMenuItem(text = { Text(stringResource(R.string.routine_builder_menu_add_to_superset)) }, onClick = { menuExpanded = false; callbacks.onStartSupersetSelection(exercise.id) })
                         } else {
-                            DropdownMenuItem(text = { Text(stringResource(R.string.routine_builder_menu_remove_from_superset)) }, onClick = {
-                                menuExpanded = false
-                                callbacks.onRemoveFromSuperset(exercise.id)
-                            })
+                            DropdownMenuItem(text = { Text(stringResource(R.string.routine_builder_menu_remove_from_superset)) }, onClick = { menuExpanded = false; callbacks.onRemoveFromSuperset(exercise.id) })
                         }
                         // M18 §5.1.6 "Add Warm Up Sets": only for WEIGHT-field exercises with the
                         // setting on (the gate arrives force-false for circuits — M11 invariant).
@@ -186,16 +177,10 @@ internal fun WorkoutExerciseCard(
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.workout_add_warmup_sets)) },
                                 enabled = hasWorkingWeight,
-                                onClick = {
-                                    menuExpanded = false
-                                    callbacks.onAddWarmupSets(exercise.id)
-                                },
+                                onClick = { menuExpanded = false; callbacks.onAddWarmupSets(exercise.id) },
                             )
                         }
-                        DropdownMenuItem(text = { Text(stringResource(R.string.routine_builder_menu_remove_exercise)) }, onClick = {
-                            menuExpanded = false
-                            callbacks.onRemoveExercise(exercise.id)
-                        })
+                        DropdownMenuItem(text = { Text(stringResource(R.string.routine_builder_menu_remove_exercise)) }, onClick = { menuExpanded = false; callbacks.onRemoveExercise(exercise.id) })
                     }
                 }
             }
@@ -203,10 +188,7 @@ internal fun WorkoutExerciseCard(
             var notesText by remember(exercise.id) { mutableStateOf(exercise.notes) }
             OutlinedTextField(
                 value = notesText,
-                onValueChange = {
-                    notesText = it
-                    callbacks.onUpdateNotes(exercise.id, it)
-                },
+                onValueChange = { notesText = it; callbacks.onUpdateNotes(exercise.id, it) },
                 placeholder = { Text(stringResource(R.string.routine_builder_notes_hint)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth().padding(top = Spacing.xs),
@@ -236,12 +218,7 @@ internal fun WorkoutExerciseCard(
  * collection — the parent Card/Screen never reads a per-second value.
  */
 @Composable
-internal fun RestTimerBar(
-    remainingMillisFlow: Flow<Long?>,
-    onMinus15: () -> Unit,
-    onPlus15: () -> Unit,
-    onSkip: () -> Unit,
-) {
+internal fun RestTimerBar(remainingMillisFlow: Flow<Long?>, onMinus15: () -> Unit, onPlus15: () -> Unit, onSkip: () -> Unit) {
     val remainingMillis by remainingMillisFlow.collectAsStateWithLifecycle(null)
     val remainingSeconds = remainingMillis?.let { (it + 999) / 1000 } ?: return
     Column(modifier = Modifier.fillMaxWidth().padding(top = Spacing.xs)) {
@@ -338,12 +315,7 @@ private fun SetTable(
 }
 
 @Composable
-internal fun HeaderCell(
-    label: String,
-    modifier: Modifier = Modifier,
-    width: androidx.compose.ui.unit.Dp? = null,
-    textAlign: TextAlign? = null,
-) {
+internal fun HeaderCell(label: String, modifier: Modifier = Modifier, width: androidx.compose.ui.unit.Dp? = null, textAlign: TextAlign? = null) {
     Text(
         label,
         style = MaterialTheme.typography.labelSmall,
@@ -408,12 +380,7 @@ internal fun SetRow(
     Row(
         // Owner, 2026-09-03: the completed-row band's edges are now softly rounded (clip before
         // background so the fill itself respects the shape, not just the border).
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(Radius.sm))
-                .background(rowBackground)
-                .padding(vertical = Spacing.xxs),
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(Radius.sm)).background(rowBackground).padding(vertical = Spacing.xxs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // Same width as the header's ROUND/SET cell — a 36-vs-48 mismatch here shifted every
@@ -422,29 +389,14 @@ internal fun SetRow(
         Box(modifier = Modifier.width(SetTable.setCell).padding(horizontal = Spacing.xxs), contentAlignment = Alignment.Center) {
             SetBadge(setType = set.setType, position = index + 1, onClick = { typeMenuExpanded = true }, modifier = Modifier.fillMaxWidth(), showPosition = showRoundNumber)
             DropdownMenu(expanded = typeMenuExpanded, onDismissRequest = { typeMenuExpanded = false }) {
-                DropdownMenuItem(text = { Text(stringResource(R.string.set_type_normal)) }, onClick = {
-                    typeMenuExpanded = false
-                    onSetTypeChange(SetType.NORMAL)
-                })
+                DropdownMenuItem(text = { Text(stringResource(R.string.set_type_normal)) }, onClick = { typeMenuExpanded = false; onSetTypeChange(SetType.NORMAL) })
                 if (allowWarmup) {
-                    DropdownMenuItem(text = { Text(stringResource(R.string.set_type_warmup)) }, onClick = {
-                        typeMenuExpanded = false
-                        onSetTypeChange(SetType.WARMUP)
-                    })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.set_type_warmup)) }, onClick = { typeMenuExpanded = false; onSetTypeChange(SetType.WARMUP) })
                 }
-                DropdownMenuItem(text = { Text(stringResource(R.string.set_type_failure)) }, onClick = {
-                    typeMenuExpanded = false
-                    onSetTypeChange(SetType.FAILURE)
-                })
-                DropdownMenuItem(text = { Text(stringResource(R.string.set_type_dropset)) }, onClick = {
-                    typeMenuExpanded = false
-                    onSetTypeChange(SetType.DROPSET)
-                })
+                DropdownMenuItem(text = { Text(stringResource(R.string.set_type_failure)) }, onClick = { typeMenuExpanded = false; onSetTypeChange(SetType.FAILURE) })
+                DropdownMenuItem(text = { Text(stringResource(R.string.set_type_dropset)) }, onClick = { typeMenuExpanded = false; onSetTypeChange(SetType.DROPSET) })
                 if (allowDelete) {
-                    DropdownMenuItem(text = { Text(stringResource(R.string.action_delete)) }, onClick = {
-                        typeMenuExpanded = false
-                        onRemove()
-                    })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.action_delete)) }, onClick = { typeMenuExpanded = false; onRemove() })
                 }
             }
         }
@@ -457,12 +409,11 @@ internal fun SetRow(
         // grows to match (default Row sizing), and every fixed-height sibling cell in the row still
         // centers within that taller row via the Row's own verticalAlignment, unchanged.
         Box(
-            modifier =
-                Modifier
-                    .width(SetTable.previousCell)
-                    .padding(horizontal = Spacing.xxs)
-                    .heightIn(min = SetTable.cellHeight)
-                    .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), RoundedCornerShape(Radius.sm)),
+            modifier = Modifier
+                .width(SetTable.previousCell)
+                .padding(horizontal = Spacing.xxs)
+                .heightIn(min = SetTable.cellHeight)
+                .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), RoundedCornerShape(Radius.sm)),
             contentAlignment = Alignment.Center,
         ) {
             Column(
@@ -493,11 +444,7 @@ internal fun SetRow(
         }
         if (TargetField.WEIGHT in fields) {
             WeightCell(
-                valueKg = set.weightKg,
-                unit = config.weightUnit,
-                onValueChange = onWeightChange,
-                enabled = fieldsEnabled,
-                modifier = Modifier.weight(1f),
+                valueKg = set.weightKg, unit = config.weightUnit, onValueChange = onWeightChange, enabled = fieldsEnabled, modifier = Modifier.weight(1f),
                 label = stringResource(R.string.workout_set_field_a11y, index + 1, stringResource(if (config.weightUnit == WeightUnit.LB) R.string.workout_field_weight_lb else R.string.workout_field_weight_kg)),
             )
             if (showPlateCalculator) {
@@ -571,12 +518,10 @@ internal fun SetRow(
         RpePickerSheet(
             initialRpe = set.rpe,
             onDismiss = { showRpeSheet = false },
-            onConfirm = { rpe ->
-                onRpeChange(rpe)
-                showRpeSheet = false
-            },
+            onConfirm = { rpe -> onRpeChange(rpe); showRpeSheet = false },
         )
     }
+
 }
 
 /**
@@ -586,24 +531,17 @@ internal fun SetRow(
  * whole-cell tap target (opens the type menu) are unchanged.
  */
 @Composable
-internal fun SetBadge(
-    setType: SetType,
-    position: Int,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    showPosition: Boolean = true,
-) {
-    val (label, color) =
-        when (setType) {
-            // Circuit rows (Owner, 2026-09-03): the round number is redundant — each round already has
-            // its own "ROUND N" section header — so it's blank here, but the cell stays the tap target
-            // for Failure/Dropset, which a circuit row can still be marked as (WARMUP is the only type
-            // excluded in a circuit, per the M11 invariant).
-            SetType.NORMAL -> (if (showPosition) position.toString() else "") to MaterialTheme.colorScheme.onSurface
-            SetType.WARMUP -> "W" to Warning500
-            SetType.FAILURE -> "F" to Danger500
-            SetType.DROPSET -> "D" to SupersetPalette[4]
-        }
+internal fun SetBadge(setType: SetType, position: Int, onClick: () -> Unit, modifier: Modifier = Modifier, showPosition: Boolean = true) {
+    val (label, color) = when (setType) {
+        // Circuit rows (Owner, 2026-09-03): the round number is redundant — each round already has
+        // its own "ROUND N" section header — so it's blank here, but the cell stays the tap target
+        // for Failure/Dropset, which a circuit row can still be marked as (WARMUP is the only type
+        // excluded in a circuit, per the M11 invariant).
+        SetType.NORMAL -> (if (showPosition) position.toString() else "") to MaterialTheme.colorScheme.onSurface
+        SetType.WARMUP -> "W" to Warning500
+        SetType.FAILURE -> "F" to Danger500
+        SetType.DROPSET -> "D" to SupersetPalette[4]
+    }
     Surface(
         shape = RoundedCornerShape(Radius.sm),
         color = if (setType == SetType.NORMAL) Color.Transparent else color.copy(alpha = 0.15f),
@@ -624,28 +562,19 @@ internal fun SetBadge(
 internal const val COMPLETED_ROW_BAND_ALPHA = 0.15f
 
 /** M18: KG header flips to LBS when the display unit is pounds (shared by regular + circuit tables). */
-internal fun weightHeaderRes(unit: WeightUnit): Int = if (unit == WeightUnit.LB) R.string.routine_builder_col_weight_lbs else R.string.routine_builder_col_weight
+internal fun weightHeaderRes(unit: WeightUnit): Int =
+    if (unit == WeightUnit.LB) R.string.routine_builder_col_weight_lbs else R.string.routine_builder_col_weight
 
 /** M18 uniform boxed cells: the value fields' chrome — outlineVariant hairline at rest (and when
  * disabled, i.e. completed-locked rows) with the Radius token, so the text fields and the fixed
  * boxed cells (SET/PREVIOUS/RPE) render as one grid. Focus keeps the default primary outline.
  * See [com.enil.logez.core.designsystem.boxedFieldColors], shared with RoutineExerciseCard.kt. */
 @Composable
-internal fun NumberCell(
-    value: Double?,
-    onValueChange: (Double?) -> Unit,
-    enabled: Boolean,
-    modifier: Modifier = Modifier,
-    suffix: String? = null,
-    label: String? = null,
-) {
+internal fun NumberCell(value: Double?, onValueChange: (Double?) -> Unit, enabled: Boolean, modifier: Modifier = Modifier, suffix: String? = null, label: String? = null) {
     var text by remember(value) { mutableStateOf(value?.let { formatTargetNumber(it) }.orEmpty()) }
     CompactBoxedTextField(
         text = text,
-        onTextChange = { new ->
-            text = new
-            onValueChange(parseDecimalInput(new))
-        },
+        onTextChange = { new -> text = new; onValueChange(parseDecimalInput(new)) },
         enabled = enabled,
         keyboardType = KeyboardType.Decimal,
         modifier = modifier,
@@ -663,14 +592,7 @@ internal fun NumberCell(
  * so the two conversions cannot stack.
  */
 @Composable
-internal fun WeightCell(
-    valueKg: Double?,
-    unit: WeightUnit,
-    onValueChange: (Double?) -> Unit,
-    enabled: Boolean,
-    modifier: Modifier = Modifier,
-    label: String? = null,
-) {
+internal fun WeightCell(valueKg: Double?, unit: WeightUnit, onValueChange: (Double?) -> Unit, enabled: Boolean, modifier: Modifier = Modifier, label: String? = null) {
     val displayText = valueKg?.let { WeightDisplay.format(WeightDisplay.toDisplay(it, unit)) }.orEmpty()
     // Same remember(value) idiom as NumberCell: the typed string is kept until the derived display
     // text actually changes underneath it (a stored-kg or unit change), so conversion never fights
@@ -678,10 +600,7 @@ internal fun WeightCell(
     var text by remember(displayText) { mutableStateOf(displayText) }
     CompactBoxedTextField(
         text = text,
-        onTextChange = { new ->
-            text = new
-            onValueChange(parseDecimalInput(new)?.let { WeightDisplay.toKg(it, unit) })
-        },
+        onTextChange = { new -> text = new; onValueChange(parseDecimalInput(new)?.let { WeightDisplay.toKg(it, unit) }) },
         enabled = enabled,
         keyboardType = KeyboardType.Decimal,
         modifier = modifier,
@@ -690,21 +609,11 @@ internal fun WeightCell(
 }
 
 @Composable
-internal fun IntCell(
-    value: Int?,
-    onValueChange: (Int?) -> Unit,
-    enabled: Boolean,
-    modifier: Modifier = Modifier,
-    suffix: String? = null,
-    label: String? = null,
-) {
+internal fun IntCell(value: Int?, onValueChange: (Int?) -> Unit, enabled: Boolean, modifier: Modifier = Modifier, suffix: String? = null, label: String? = null) {
     var text by remember(value) { mutableStateOf(value?.toString().orEmpty()) }
     CompactBoxedTextField(
         text = text,
-        onTextChange = { new ->
-            text = new
-            onValueChange(new.toIntOrNull())
-        },
+        onTextChange = { new -> text = new; onValueChange(new.toIntOrNull()) },
         enabled = enabled,
         keyboardType = KeyboardType.Number,
         modifier = modifier,
@@ -758,10 +667,9 @@ private fun CompactBoxedTextField(
             // bodyMedium, not bodyLarge: at these cell widths the difference is "102.5" fitting
             // whole versus clipping to a sliver. Transparent while unfocused — see class doc: the
             // centered overlay Text below is what's actually visible at rest.
-            textStyle =
-                MaterialTheme.typography.bodyMedium.copy(
-                    color = if (isFocused) textColor else Color.Transparent,
-                ),
+            textStyle = MaterialTheme.typography.bodyMedium.copy(
+                color = if (isFocused) textColor else Color.Transparent,
+            ),
             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
             interactionSource = interactionSource,
             modifier = Modifier.fillMaxSize().then(if (label != null) Modifier.semantics { contentDescription = label } else Modifier),
@@ -806,12 +714,7 @@ private fun CompactBoxedTextField(
  * text. M18 uniform boxed cells: field-height hairline box like every other cell; the filled
  * primaryContainer state (an RPE is logged) keeps its tint inside the same chrome. */
 @Composable
-private fun RpeCell(
-    value: Double?,
-    enabled: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
+private fun RpeCell(value: Double?, enabled: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Surface(
         shape = RoundedCornerShape(Radius.sm),
         color = if (value != null) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
@@ -821,10 +724,9 @@ private fun RpeCell(
         Box(modifier = Modifier.height(SetTable.cellHeight), contentAlignment = Alignment.Center) {
             Text(
                 value?.let { RpeScale.format(it) } ?: "—",
-                style =
-                    LogEzMono.dataSmall.copy(
-                        color = if (value != null) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-                    ),
+                style = LogEzMono.dataSmall.copy(
+                    color = if (value != null) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
             )
         }
     }
@@ -838,11 +740,7 @@ private fun RpeCell(
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun RpePickerSheet(
-    initialRpe: Double?,
-    onDismiss: () -> Unit,
-    onConfirm: (Double?) -> Unit,
-) {
+private fun RpePickerSheet(initialRpe: Double?, onDismiss: () -> Unit, onConfirm: (Double?) -> Unit) {
     var selected by remember { mutableStateOf(initialRpe) }
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(modifier = Modifier.fillMaxWidth().padding(Spacing.md)) {

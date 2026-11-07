@@ -52,10 +52,9 @@ data class BackupManifest(
         data object TooNew : Compatibility
     }
 
-    fun compatibility(currentRoomVersion: Int): Compatibility =
-        when {
-            backupSchemaVersion > BackupFormat.SCHEMA_VERSION -> Compatibility.TooNew
-            roomSchemaVersion > currentRoomVersion -> Compatibility.TooNew
-            else -> Compatibility.Ok
-        }
+    fun compatibility(currentRoomVersion: Int): Compatibility = when {
+        backupSchemaVersion > BackupFormat.SCHEMA_VERSION -> Compatibility.TooNew
+        roomSchemaVersion > currentRoomVersion -> Compatibility.TooNew
+        else -> Compatibility.Ok
+    }
 }

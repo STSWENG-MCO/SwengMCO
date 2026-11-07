@@ -22,6 +22,7 @@ import kotlin.math.abs
  * closest answer at or above the target needs at most one largest-plate overshoot past it.
  */
 object PlateCalculator {
+
     /** DP bound cap: 5000 kg per side in quarter-units — far beyond any real target, keeps absurd input cheap. */
     private const val MAX_SIDE_QUARTERS = 20_000
 
@@ -41,11 +42,7 @@ object PlateCalculator {
     /** The entry-rounding rule, public so the equipment editor stores exactly what the solver uses. */
     fun roundToQuarterKg(kg: Double): Double = fromQuarters(toQuarters(kg))
 
-    fun solve(
-        targetKg: Double,
-        barKg: Double,
-        plateDenominationsKg: List<Double>,
-    ): Result {
+    fun solve(targetKg: Double, barKg: Double, plateDenominationsKg: List<Double>): Result {
         val barQ = toQuarters(barKg)
         val targetQ = toQuarters(targetKg)
         if (targetQ < barQ) {
@@ -55,14 +52,12 @@ object PlateCalculator {
         val loadQ = targetQ - barQ // to be split across the two sides
         if (loadQ == 0L) return Result(emptyList(), fromQuarters(barQ), exact = true, belowBar = false)
 
-        val denomsQ =
-            plateDenominationsKg
-                .asSequence()
-                .map { toQuarters(it).toInt() }
-                .filter { it > 0 }
-                .distinct()
-                .sortedDescending()
-                .toList()
+        val denomsQ = plateDenominationsKg.asSequence()
+            .map { toQuarters(it).toInt() }
+            .filter { it > 0 }
+            .distinct()
+            .sortedDescending()
+            .toList()
         if (denomsQ.isEmpty()) {
             // No plates owned: the bar alone IS the closest achievable weight.
             return Result(emptyList(), fromQuarters(barQ), exact = false, belowBar = false)
@@ -97,15 +92,14 @@ object PlateCalculator {
             }
         }
 
-        val perSide =
-            buildList {
-                var s = bestS
-                while (s > 0) {
-                    val d = firstPlate[s]
-                    add(fromQuarters(d.toLong()))
-                    s -= d
-                }
-            }.sortedDescending()
+        val perSide = buildList {
+            var s = bestS
+            while (s > 0) {
+                val d = firstPlate[s]
+                add(fromQuarters(d.toLong()))
+                s -= d
+            }
+        }.sortedDescending()
         val achievedQ = barQ + 2L * bestS
         return Result(
             perSideKg = perSide,

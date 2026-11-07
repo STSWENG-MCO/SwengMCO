@@ -61,14 +61,13 @@ object PrRebuilder {
                 PrCalculator.setCandidates(type, set, eligible, bodyweightKg).forEach { (prType, value) ->
                     val current = winners[prType]
                     if (current == null || value > current.value) {
-                        winners[prType] =
-                            PrRecord(
-                                prType = prType,
-                                value = value,
-                                workoutId = set.workoutId,
-                                workoutSetId = set.setId,
-                                achievedAt = set.workoutStartedAt,
-                            )
+                        winners[prType] = PrRecord(
+                            prType = prType,
+                            value = value,
+                            workoutId = set.workoutId,
+                            workoutSetId = set.setId,
+                            achievedAt = set.workoutStartedAt,
+                        )
                     }
                 }
             }
@@ -87,14 +86,13 @@ object PrRebuilder {
                 PrCalculator.sessionCandidates(type, sessionSets, eligible, bodyweightKg).forEach { (prType, value) ->
                     val current = winners[prType]
                     if (current == null || value > current.value) {
-                        winners[prType] =
-                            PrRecord(
-                                prType = prType,
-                                value = value,
-                                workoutId = workoutId,
-                                workoutSetId = null,
-                                achievedAt = startedAt,
-                            )
+                        winners[prType] = PrRecord(
+                            prType = prType,
+                            value = value,
+                            workoutId = workoutId,
+                            workoutSetId = null,
+                            achievedAt = startedAt,
+                        )
                     }
                 }
             }

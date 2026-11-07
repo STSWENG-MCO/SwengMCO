@@ -75,17 +75,10 @@ internal object OssNotices {
 fun LicensesScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     val notices by produceState(initialValue = emptyList<OssNotice>()) {
-        value =
-            withContext(Dispatchers.IO) {
-                runCatching {
-                    OssNotices.parse(
-                        context.assets
-                            .open(OssNotices.INDEX)
-                            .bufferedReader()
-                            .use { it.readText() },
-                    )
-                }.getOrDefault(emptyList())
-            }
+        value = withContext(Dispatchers.IO) {
+            runCatching { OssNotices.parse(context.assets.open(OssNotices.INDEX).bufferedReader().use { it.readText() }) }
+                .getOrDefault(emptyList())
+        }
     }
     var openName by rememberSaveable { mutableStateOf<String?>(null) }
     val open = notices.firstOrNull { it.name == openName }
@@ -130,12 +123,11 @@ fun LicensesScreen(onBack: () -> Unit) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     },
-                    modifier =
-                        if (notice.file != null || notice.url != null) {
-                            Modifier.clickable { openName = notice.name }
-                        } else {
-                            Modifier
-                        },
+                    modifier = if (notice.file != null || notice.url != null) {
+                        Modifier.clickable { openName = notice.name }
+                    } else {
+                        Modifier
+                    },
                 )
             }
         }
@@ -144,22 +136,13 @@ fun LicensesScreen(onBack: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun LicenseTextScreen(
-    notice: OssNotice,
-    onBack: () -> Unit,
-) {
+private fun LicenseTextScreen(notice: OssNotice, onBack: () -> Unit) {
     val context = LocalContext.current
     val text by produceState(initialValue = "", notice.file) {
-        value =
-            withContext(Dispatchers.IO) {
-                val file = notice.file ?: return@withContext notice.url.orEmpty()
-                runCatching {
-                    context.assets
-                        .open("${OssNotices.DIR}/$file")
-                        .bufferedReader()
-                        .use { it.readText() }
-                }.getOrDefault("")
-            }
+        value = withContext(Dispatchers.IO) {
+            val file = notice.file ?: return@withContext notice.url.orEmpty()
+            runCatching { context.assets.open("${OssNotices.DIR}/$file").bufferedReader().use { it.readText() } }.getOrDefault("")
+        }
     }
     Scaffold(
         topBar = {

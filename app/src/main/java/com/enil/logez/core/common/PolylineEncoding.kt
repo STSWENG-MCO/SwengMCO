@@ -64,10 +64,7 @@ object PolylineEncoding {
         return values
     }
 
-    private fun encodeValue(
-        value: Long,
-        sb: StringBuilder,
-    ) {
+    private fun encodeValue(value: Long, sb: StringBuilder) {
         var v = value shl 1
         if (v < 0) v = v.inv()
         while (v >= 0x20) {
@@ -78,10 +75,7 @@ object PolylineEncoding {
     }
 
     /** Returns the decoded delta and the index just past the consumed characters. */
-    private fun decodeValue(
-        encoded: String,
-        start: Int,
-    ): Pair<Long, Int> {
+    private fun decodeValue(encoded: String, start: Int): Pair<Long, Int> {
         var result = 0L
         var shift = 0
         var index = start

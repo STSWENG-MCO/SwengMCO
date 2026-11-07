@@ -73,23 +73,14 @@ import com.enil.logez.core.data.entity.WorkoutSetEntity
 @TypeConverters(Converters::class)
 abstract class LogEzDatabase : RoomDatabase() {
     abstract fun exerciseDao(): ExerciseDao
-
     abstract fun routineDao(): RoutineDao
-
     abstract fun workoutDao(): WorkoutDao
-
     abstract fun recordsDao(): RecordsDao
-
     abstract fun measurementDao(): MeasurementDao
-
     abstract fun analyticsDao(): AnalyticsDao
-
     abstract fun goalDao(): GoalDao
-
     abstract fun activityTrackDao(): ActivityTrackDao
-
     abstract fun wellnessDao(): WellnessDao
-
     abstract fun workoutHeartRateSampleDao(): WorkoutHeartRateSampleDao
 
     /** Backup/restore only -- whole-table reads and the app's only unscoped deletes. */
@@ -106,32 +97,30 @@ abstract class LogEzDatabase : RoomDatabase() {
         const val DATABASE_NAME = "logez.db"
 
         /** v1 -> v2 (M8d): a brand-new table only, nothing existing changes shape. */
-        val MIGRATION_1_2 =
-            object : Migration(1, 2) {
-                override fun migrate(db: SupportSQLiteDatabase) {
-                    db.execSQL(
-                        """
-                        CREATE TABLE IF NOT EXISTS `goal_definitions` (
-                            `id` TEXT NOT NULL,
-                            `metric` TEXT NOT NULL,
-                            `period` TEXT NOT NULL,
-                            `target_value` REAL NOT NULL,
-                            `created_at` INTEGER NOT NULL,
-                            `updated_at` INTEGER NOT NULL,
-                            PRIMARY KEY(`id`)
-                        )
-                        """.trimIndent(),
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `goal_definitions` (
+                        `id` TEXT NOT NULL,
+                        `metric` TEXT NOT NULL,
+                        `period` TEXT NOT NULL,
+                        `target_value` REAL NOT NULL,
+                        `created_at` INTEGER NOT NULL,
+                        `updated_at` INTEGER NOT NULL,
+                        PRIMARY KEY(`id`)
                     )
-                }
+                    """.trimIndent(),
+                )
             }
+        }
 
         /** v2 -> v3 (M8e): one new nullable column, no existing data touched. */
-        val MIGRATION_2_3 =
-            object : Migration(2, 3) {
-                override fun migrate(db: SupportSQLiteDatabase) {
-                    db.execSQL("ALTER TABLE `exercises` ADD COLUMN `primary_muscle_head` TEXT")
-                }
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `exercises` ADD COLUMN `primary_muscle_head` TEXT")
             }
+        }
 
         /**
          * v3 -> v4 (M8e revision — Owner feedback: heads should be a checklist, not a single
@@ -148,19 +137,18 @@ abstract class LogEzDatabase : RoomDatabase() {
          * `debug13.9`, caught and fixed the same day via [LogEzDatabaseMigrationTest]'s real-open
          * reproduction test).
          */
-        val MIGRATION_3_4 =
-            object : Migration(3, 4) {
-                override fun migrate(db: SupportSQLiteDatabase) {
-                    db.execSQL("ALTER TABLE `exercises` ADD COLUMN `muscle_heads` TEXT NOT NULL DEFAULT '[]'")
-                    db.execSQL(
-                        """
-                        UPDATE `exercises`
-                        SET `muscle_heads` = '["' || `primary_muscle_head` || '"]'
-                        WHERE `primary_muscle_head` IS NOT NULL
-                        """.trimIndent(),
-                    )
-                }
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `exercises` ADD COLUMN `muscle_heads` TEXT NOT NULL DEFAULT '[]'")
+                db.execSQL(
+                    """
+                    UPDATE `exercises`
+                    SET `muscle_heads` = '["' || `primary_muscle_head` || '"]'
+                    WHERE `primary_muscle_head` IS NOT NULL
+                    """.trimIndent(),
+                )
             }
+        }
 
         /**
          * v4 -> v5 (M11 circuits): one defaulted TEXT column on each of `routines` and `workouts`.
@@ -169,82 +157,78 @@ abstract class LogEzDatabase : RoomDatabase() {
          * `@ColumnInfo(defaultValue = "'REGULAR'")` declarations or Room's post-migration schema
          * validation rejects the live table on the next open (the `debug13.9` failure mode).
          */
-        val MIGRATION_4_5 =
-            object : Migration(4, 5) {
-                override fun migrate(db: SupportSQLiteDatabase) {
-                    db.execSQL("ALTER TABLE `routines` ADD COLUMN `structure` TEXT NOT NULL DEFAULT 'REGULAR'")
-                    db.execSQL("ALTER TABLE `workouts` ADD COLUMN `structure` TEXT NOT NULL DEFAULT 'REGULAR'")
-                }
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `routines` ADD COLUMN `structure` TEXT NOT NULL DEFAULT 'REGULAR'")
+                db.execSQL("ALTER TABLE `workouts` ADD COLUMN `structure` TEXT NOT NULL DEFAULT 'REGULAR'")
             }
+        }
 
         /** v5 -> v6 (M21a): a brand-new table only, nothing existing changes shape. */
-        val MIGRATION_5_6 =
-            object : Migration(5, 6) {
-                override fun migrate(db: SupportSQLiteDatabase) {
-                    // FOREIGN KEY clause required verbatim -- ActivityTrackEntity declares one, and
-                    // Room's post-migration TableInfo comparison rejects a table missing it exactly
-                    // like a genuinely wrong column would (the debug13.9 failure mode).
-                    db.execSQL(
-                        """
-                        CREATE TABLE IF NOT EXISTS `activity_tracks` (
-                            `id` TEXT NOT NULL,
-                            `workout_set_id` TEXT NOT NULL,
-                            `route_polyline` TEXT,
-                            `point_count` INTEGER NOT NULL,
-                            `avg_accuracy_m` REAL,
-                            PRIMARY KEY(`id`),
-                            FOREIGN KEY(`workout_set_id`) REFERENCES `workout_sets`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
-                        )
-                        """.trimIndent(),
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // FOREIGN KEY clause required verbatim -- ActivityTrackEntity declares one, and
+                // Room's post-migration TableInfo comparison rejects a table missing it exactly
+                // like a genuinely wrong column would (the debug13.9 failure mode).
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `activity_tracks` (
+                        `id` TEXT NOT NULL,
+                        `workout_set_id` TEXT NOT NULL,
+                        `route_polyline` TEXT,
+                        `point_count` INTEGER NOT NULL,
+                        `avg_accuracy_m` REAL,
+                        PRIMARY KEY(`id`),
+                        FOREIGN KEY(`workout_set_id`) REFERENCES `workout_sets`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
                     )
-                    db.execSQL(
-                        "CREATE UNIQUE INDEX IF NOT EXISTS `index_activity_tracks_workout_set_id` ON `activity_tracks` (`workout_set_id`)",
-                    )
-                }
+                    """.trimIndent(),
+                )
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS `index_activity_tracks_workout_set_id` ON `activity_tracks` (`workout_set_id`)",
+                )
             }
+        }
 
         /** v6 -> v7 (M21e): a brand-new table only, nothing existing changes shape. */
-        val MIGRATION_6_7 =
-            object : Migration(6, 7) {
-                override fun migrate(db: SupportSQLiteDatabase) {
-                    db.execSQL(
-                        """
-                        CREATE TABLE IF NOT EXISTS `daily_wellness_totals` (
-                            `date` TEXT NOT NULL,
-                            `steps` INTEGER NOT NULL,
-                            `calories_burned` REAL,
-                            `updated_at` INTEGER NOT NULL,
-                            PRIMARY KEY(`date`)
-                        )
-                        """.trimIndent(),
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `daily_wellness_totals` (
+                        `date` TEXT NOT NULL,
+                        `steps` INTEGER NOT NULL,
+                        `calories_burned` REAL,
+                        `updated_at` INTEGER NOT NULL,
+                        PRIMARY KEY(`date`)
                     )
-                }
+                    """.trimIndent(),
+                )
             }
+        }
 
         /** v7 -> v8 (M21f): a brand-new table only, nothing existing changes shape. */
-        val MIGRATION_7_8 =
-            object : Migration(7, 8) {
-                override fun migrate(db: SupportSQLiteDatabase) {
-                    // FOREIGN KEY clause required verbatim -- WorkoutHeartRateSampleEntity declares
-                    // one, and Room's post-migration TableInfo comparison rejects a table missing it
-                    // exactly like a genuinely wrong column would (the debug13.9 failure mode).
-                    db.execSQL(
-                        """
-                        CREATE TABLE IF NOT EXISTS `workout_heart_rate_samples` (
-                            `id` TEXT NOT NULL,
-                            `workout_id` TEXT NOT NULL,
-                            `recorded_at` INTEGER NOT NULL,
-                            `bpm` INTEGER NOT NULL,
-                            PRIMARY KEY(`id`),
-                            FOREIGN KEY(`workout_id`) REFERENCES `workouts`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
-                        )
-                        """.trimIndent(),
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // FOREIGN KEY clause required verbatim -- WorkoutHeartRateSampleEntity declares
+                // one, and Room's post-migration TableInfo comparison rejects a table missing it
+                // exactly like a genuinely wrong column would (the debug13.9 failure mode).
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `workout_heart_rate_samples` (
+                        `id` TEXT NOT NULL,
+                        `workout_id` TEXT NOT NULL,
+                        `recorded_at` INTEGER NOT NULL,
+                        `bpm` INTEGER NOT NULL,
+                        PRIMARY KEY(`id`),
+                        FOREIGN KEY(`workout_id`) REFERENCES `workouts`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
                     )
-                    db.execSQL(
-                        "CREATE INDEX IF NOT EXISTS `index_workout_heart_rate_samples_workout_id` ON `workout_heart_rate_samples` (`workout_id`)",
-                    )
-                }
+                    """.trimIndent(),
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_workout_heart_rate_samples_workout_id` ON `workout_heart_rate_samples` (`workout_id`)",
+                )
             }
+        }
 
         /**
          * v8 -> v9 (M23a): one defaulted column on `workouts`, plus a backfill. Additive — every
@@ -262,23 +246,22 @@ abstract class LogEzDatabase : RoomDatabase() {
          * track row yet and stays STRENGTH; that is the one row this cannot classify, and the
          * interrupted-run recovery path degrades it to the Logger with a blank set.
          */
-        val MIGRATION_8_9 =
-            object : Migration(8, 9) {
-                override fun migrate(db: SupportSQLiteDatabase) {
-                    db.execSQL("ALTER TABLE `workouts` ADD COLUMN `kind` TEXT NOT NULL DEFAULT 'STRENGTH'")
-                    db.execSQL(
-                        """
-                        UPDATE `workouts` SET `kind` = 'GPS_TRACKED'
-                        WHERE `id` IN (
-                            SELECT we.`workout_id`
-                            FROM `activity_tracks` t
-                            JOIN `workout_sets` ws ON ws.`id` = t.`workout_set_id`
-                            JOIN `workout_exercises` we ON we.`id` = ws.`workout_exercise_id`
-                        )
-                        """.trimIndent(),
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `workouts` ADD COLUMN `kind` TEXT NOT NULL DEFAULT 'STRENGTH'")
+                db.execSQL(
+                    """
+                    UPDATE `workouts` SET `kind` = 'GPS_TRACKED'
+                    WHERE `id` IN (
+                        SELECT we.`workout_id`
+                        FROM `activity_tracks` t
+                        JOIN `workout_sets` ws ON ws.`id` = t.`workout_set_id`
+                        JOIN `workout_exercises` we ON we.`id` = ws.`workout_exercise_id`
                     )
-                }
+                    """.trimIndent(),
+                )
             }
+        }
 
         /**
          * v9 -> v10 (walk/run summary, 2026-09-26): one nullable column on `activity_tracks`, the
@@ -286,11 +269,10 @@ abstract class LogEzDatabase : RoomDatabase() {
          * rebuilt. Additive with no default: every run tracked before this reads back null and
          * simply shows no splits, which is honest, since its timing was never kept.
          */
-        val MIGRATION_9_10 =
-            object : Migration(9, 10) {
-                override fun migrate(db: SupportSQLiteDatabase) {
-                    db.execSQL("ALTER TABLE `activity_tracks` ADD COLUMN `route_times` TEXT")
-                }
+        val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `activity_tracks` ADD COLUMN `route_times` TEXT")
             }
+        }
     }
 }

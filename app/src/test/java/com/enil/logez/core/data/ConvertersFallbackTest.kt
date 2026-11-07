@@ -29,16 +29,20 @@ class ConvertersFallbackTest {
     fun `an unknown workout kind decodes as STRENGTH`() = assertEquals(WorkoutKind.STRENGTH, c.toWorkoutKind("SWIM"))
 
     @Test
-    fun `unknown entries are dropped from a muscle group list, known ones kept`() = assertEquals(listOf(MuscleGroup.CHEST), c.toMuscleGroupList("""["NOPE","CHEST"]"""))
+    fun `unknown entries are dropped from a muscle group list, known ones kept`() =
+        assertEquals(listOf(MuscleGroup.CHEST), c.toMuscleGroupList("""["NOPE","CHEST"]"""))
 
     @Test
-    fun `unknown entries are dropped from a muscle head list`() = assertEquals(listOf(MuscleHead.UPPER_CHEST), c.toMuscleHeadList("""["UPPER_CHEST","GONE"]"""))
+    fun `unknown entries are dropped from a muscle head list`() =
+        assertEquals(listOf(MuscleHead.UPPER_CHEST), c.toMuscleHeadList("""["UPPER_CHEST","GONE"]"""))
 
     @Test
-    fun `an unknown legacy single muscle head decodes as null instead of throwing`() = assertEquals(null, c.toMuscleHead("RETIRED_HEAD"))
+    fun `an unknown legacy single muscle head decodes as null instead of throwing`() =
+        assertEquals(null, c.toMuscleHead("RETIRED_HEAD"))
 
     @Test
-    fun `a known legacy single muscle head still round-trips`() = assertEquals(MuscleHead.TRICEPS_LONG_HEAD, c.toMuscleHead(c.fromMuscleHead(MuscleHead.TRICEPS_LONG_HEAD)))
+    fun `a known legacy single muscle head still round-trips`() =
+        assertEquals(MuscleHead.TRICEPS_LONG_HEAD, c.toMuscleHead(c.fromMuscleHead(MuscleHead.TRICEPS_LONG_HEAD)))
 
     @Test
     fun `a null legacy single muscle head stays null`() = assertEquals(null, c.toMuscleHead(null))

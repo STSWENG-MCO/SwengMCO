@@ -5,22 +5,16 @@ import kotlinx.coroutines.flow.Flow
 /** Body measurements and progress photos, tracked over time independently of workouts. */
 interface MeasurementRepository {
     fun observeAll(): Flow<List<BodyMeasurement>>
-
     suspend fun upsert(measurement: BodyMeasurement)
-
     suspend fun getByDate(date: String): BodyMeasurement?
-
     suspend fun deleteByDate(date: String)
 
     /** §8.1 bodyweight resolution: newest entry on/before [date] with a non-null weight. */
     suspend fun getLatestWeightKgOnOrBefore(date: String): Double?
 
     fun observeAllPhotos(): Flow<List<ProgressPhoto>>
-
     suspend fun upsertPhoto(photo: ProgressPhoto)
-
     suspend fun getPhotoByDate(date: String): ProgressPhoto?
-
     suspend fun deletePhoto(photo: ProgressPhoto)
 }
 

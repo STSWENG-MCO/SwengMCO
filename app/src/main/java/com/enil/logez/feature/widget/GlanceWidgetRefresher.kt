@@ -13,22 +13,20 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class GlanceWidgetRefresher
-    @Inject
-    constructor(
-        @ApplicationContext private val context: Context,
-        private val logger: AppLogger,
-    ) : WidgetRefresher {
-        /** A no-op when the user has not placed the widget, so callers need no guard. */
-        override suspend fun refresh() {
-            runCatching { WeeklyProgressWidget().updateAll(context) }
-                .onFailure { logger.e(TAG, "Widget refresh failed", it) }
-        }
-
-        private companion object {
-            const val TAG = "GlanceWidgetRefresher"
-        }
+class GlanceWidgetRefresher @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val logger: AppLogger,
+) : WidgetRefresher {
+    /** A no-op when the user has not placed the widget, so callers need no guard. */
+    override suspend fun refresh() {
+        runCatching { WeeklyProgressWidget().updateAll(context) }
+            .onFailure { logger.e(TAG, "Widget refresh failed", it) }
     }
+
+    private companion object {
+        const val TAG = "GlanceWidgetRefresher"
+    }
+}
 
 @Module
 @InstallIn(SingletonComponent::class)

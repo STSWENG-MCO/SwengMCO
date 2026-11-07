@@ -10,10 +10,7 @@ import androidx.compose.ui.unit.dp
  * *fixed* [ShareCardExportDensity], so the encoded PNG is exactly 1080×1920 px on every device —
  * output resolution must not depend on whatever screen density the phone happens to have.
  */
-enum class ShareCardFormat(
-    val width: Dp,
-    val height: Dp,
-) {
+enum class ShareCardFormat(val width: Dp, val height: Dp) {
     STORY(360.dp, 640.dp),
 }
 

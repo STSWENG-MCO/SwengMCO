@@ -9,11 +9,7 @@ package com.enil.logez.core.data.media
  * not tens of megabytes, while Coil's own decode-time downsampling (M20b's other half) still
  * applies on top of that at each call site's own smaller size.
  */
-internal fun inSampleSizeFor(
-    width: Int,
-    height: Int,
-    target: Int,
-): Int {
+internal fun inSampleSizeFor(width: Int, height: Int, target: Int): Int {
     if (width <= 0 || height <= 0 || target <= 0) return 1
     var inSampleSize = 1
     val longEdge = maxOf(width, height)

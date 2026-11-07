@@ -28,10 +28,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.enil.logez.R
-import com.enil.logez.core.data.media.MediaFileJanitor
 import com.enil.logez.core.designsystem.Spacing
 import java.io.File
 import java.util.UUID
+import com.enil.logez.core.data.media.MediaFileJanitor
 
 /**
  * M22a: in-app camera capture for progress photos. No overlay of a previous photo this pass (a
@@ -45,10 +45,7 @@ import java.util.UUID
  * permanent storage and delete the temp file afterward, success or failure.
  */
 @Composable
-fun CameraCaptureScreen(
-    onCaptured: (Uri) -> Unit,
-    onCancel: () -> Unit,
-) {
+fun CameraCaptureScreen(onCaptured: (Uri) -> Unit, onCancel: () -> Unit) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val mainExecutor = remember { ContextCompat.getMainExecutor(context) }

@@ -31,10 +31,7 @@ fun ConfirmDialog(
         title = { Text(title) },
         text = { Text(body) },
         confirmButton = {
-            TextButton(onClick = {
-                onDismissRequest()
-                onConfirm()
-            }) { Text(confirmLabel) }
+            TextButton(onClick = { onDismissRequest(); onConfirm() }) { Text(confirmLabel) }
         },
         dismissButton = {
             TextButton(onClick = onDismissRequest) { Text(dismissLabel) }

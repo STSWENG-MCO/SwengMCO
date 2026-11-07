@@ -71,34 +71,21 @@ private fun parseRegions(regions: List<MuscleBodyRegion>): ParsedRegions {
     }
 
     val hitScale = Matrix().apply { scale(HIT_TEST_SCALE, HIT_TEST_SCALE) }
-    val hitRegions =
-        muscles.mapValues { (_, path) ->
-            val scaledAndroidPath =
-                Path()
-                    .apply {
-                        addPath(path)
-                        transform(hitScale)
-                    }.asAndroidPath()
-            val rectF = android.graphics.RectF()
-            scaledAndroidPath.computeBounds(rectF, true)
-            val bounds = android.graphics.Rect()
-            rectF.roundOut(bounds)
-            Region().apply { setPath(scaledAndroidPath, Region(bounds)) }
-        }
+    val hitRegions = muscles.mapValues { (_, path) ->
+        val scaledAndroidPath = Path().apply { addPath(path); transform(hitScale) }.asAndroidPath()
+        val rectF = android.graphics.RectF()
+        scaledAndroidPath.computeBounds(rectF, true)
+        val bounds = android.graphics.Rect()
+        rectF.roundOut(bounds)
+        Region().apply { setPath(scaledAndroidPath, Region(bounds)) }
+    }
     return ParsedRegions(silhouette, muscles, hitRegions)
 }
 
-private data class FigureTransform(
-    val originX: Float,
-    val originY: Float,
-    val scale: Float,
-)
+private data class FigureTransform(val originX: Float, val originY: Float, val scale: Float)
 
 /** Uniform "contain" fit of the [MUSCLE_BODY_VIEW_BOX] square figure into the canvas, centered. */
-private fun fitTransform(
-    canvasWidth: Float,
-    canvasHeight: Float,
-): FigureTransform {
+private fun fitTransform(canvasWidth: Float, canvasHeight: Float): FigureTransform {
     val scale = minOf(canvasWidth / MUSCLE_BODY_VIEW_BOX, canvasHeight / MUSCLE_BODY_VIEW_BOX)
     val drawnWidth = MUSCLE_BODY_VIEW_BOX * scale
     val drawnHeight = MUSCLE_BODY_VIEW_BOX * scale
@@ -127,54 +114,43 @@ fun BodyDiagram(
     val fillColor = MaterialTheme.colorScheme.primary
     val outlineColor = MaterialTheme.colorScheme.tertiary
 
-    val parsed =
-        remember(variant) {
-            parseRegions(if (variant == MuscleDiagramVariant.MALE) MALE_MUSCLE_REGIONS else FEMALE_MUSCLE_REGIONS)
-        }
+    val parsed = remember(variant) {
+        parseRegions(if (variant == MuscleDiagramVariant.MALE) MALE_MUSCLE_REGIONS else FEMALE_MUSCLE_REGIONS)
+    }
 
     Canvas(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .aspectRatio(1f) // MUSCLE_BODY_VIEW_BOX is a square viewBox
-                .let { m ->
-                    if (onRegionTap == null) {
-                        m
-                    } else {
-                        m.pointerInput(Unit) {
-                            detectTapGestures { tap ->
-                                val transform = fitTransform(size.width.toFloat(), size.height.toFloat())
-                                val nativeX = (tap.x - transform.originX) / transform.scale
-                                val nativeY = (tap.y - transform.originY) / transform.scale
-                                val hitX = (nativeX * HIT_TEST_SCALE).toInt()
-                                val hitY = (nativeY * HIT_TEST_SCALE).toInt()
+        modifier = modifier
+            .fillMaxWidth()
+            .aspectRatio(1f) // MUSCLE_BODY_VIEW_BOX is a square viewBox
+            .let { m ->
+                if (onRegionTap == null) m
+                else m.pointerInput(Unit) {
+                    detectTapGestures { tap ->
+                        val transform = fitTransform(size.width.toFloat(), size.height.toFloat())
+                        val nativeX = (tap.x - transform.originX) / transform.scale
+                        val nativeY = (tap.y - transform.originY) / transform.scale
+                        val hitX = (nativeX * HIT_TEST_SCALE).toInt()
+                        val hitY = (nativeY * HIT_TEST_SCALE).toInt()
+                        fun bestMatchAt(dx: Int, dy: Int) = parsed.hitRegions
+                            .filter { (_, region) -> region.contains(hitX + dx, hitY + dy) }
+                            .minByOrNull { (_, region) -> region.bounds.let { it.width().toLong() * it.height() } }
 
-                                fun bestMatchAt(
-                                    dx: Int,
-                                    dy: Int,
-                                ) = parsed.hitRegions
-                                    .filter { (_, region) -> region.contains(hitX + dx, hitY + dy) }
-                                    .minByOrNull { (_, region) -> region.bounds.let { it.width().toLong() * it.height() } }
-
-                                // The exact tap point is authoritative whenever it matches anything — a
-                                // genuinely unambiguous tap must never be overridden by a neighboring
-                                // group's region just because a probe offset happens to land there first.
-                                // A tap landing exactly ON the seam between two adjoining muscles can miss
-                                // both by a pixel or two in hit-test space — the grid search (diagonals
-                                // included, since seams can run diagonally) exists only to bridge that
-                                // exact-miss case, not to second-guess an exact hit.
-                                val exact = bestMatchAt(0, 0)
-                                val hit =
-                                    exact ?: (-1..1)
-                                        .asSequence()
-                                        .flatMap { gx -> (-1..1).asSequence().map { gy -> gx to gy } }
-                                        .filterNot { (gx, gy) -> gx == 0 && gy == 0 }
-                                        .firstNotNullOfOrNull { (gx, gy) -> bestMatchAt(gx * SEAM_TOLERANCE, gy * SEAM_TOLERANCE) }
-                                hit?.let { (group, _) -> onRegionTap(group) }
-                            }
-                        }
+                        // The exact tap point is authoritative whenever it matches anything — a
+                        // genuinely unambiguous tap must never be overridden by a neighboring
+                        // group's region just because a probe offset happens to land there first.
+                        // A tap landing exactly ON the seam between two adjoining muscles can miss
+                        // both by a pixel or two in hit-test space — the grid search (diagonals
+                        // included, since seams can run diagonally) exists only to bridge that
+                        // exact-miss case, not to second-guess an exact hit.
+                        val exact = bestMatchAt(0, 0)
+                        val hit = exact ?: (-1..1).asSequence()
+                            .flatMap { gx -> (-1..1).asSequence().map { gy -> gx to gy } }
+                            .filterNot { (gx, gy) -> gx == 0 && gy == 0 }
+                            .firstNotNullOfOrNull { (gx, gy) -> bestMatchAt(gx * SEAM_TOLERANCE, gy * SEAM_TOLERANCE) }
+                        hit?.let { (group, _) -> onRegionTap(group) }
                     }
-                },
+                }
+            },
     ) {
         val transform = fitTransform(size.width, size.height)
         translate(left = transform.originX, top = transform.originY) {

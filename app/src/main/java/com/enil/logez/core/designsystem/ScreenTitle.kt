@@ -16,10 +16,7 @@ import androidx.compose.ui.unit.em
  * deleted with `Glow.kt` in `ef2230f` (2026-08-27) and the app has none anywhere now.
  */
 @Composable
-fun ScreenTitle(
-    text: String,
-    modifier: Modifier = Modifier,
-) {
+fun ScreenTitle(text: String, modifier: Modifier = Modifier) {
     Text(
         text.uppercase(currentLocale()),
         style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold, letterSpacing = 0.06.em),
@@ -39,4 +36,5 @@ fun ScreenTitle(
  * sitting on top of it.
  */
 @Composable
-fun logEzTopAppBarColors(): TopAppBarColors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+fun logEzTopAppBarColors(): TopAppBarColors =
+    TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)

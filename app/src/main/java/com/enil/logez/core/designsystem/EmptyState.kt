@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 
 /**
  * The one honest-empty-state component every screen in the app uses (PHASE2_PLAN.md: "empty
@@ -30,10 +31,9 @@ fun EmptyState(
     onCtaClick: () -> Unit = {},
 ) {
     Column(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .padding(PaddingValues(Spacing.xl)),
+        modifier = modifier
+            .fillMaxSize()
+            .padding(PaddingValues(Spacing.xl)),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {

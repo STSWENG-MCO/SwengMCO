@@ -11,78 +11,75 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-private val V3_SCHEMA_SQL =
-    listOf(
-        """CREATE TABLE IF NOT EXISTS `exercises` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `exercise_type` TEXT NOT NULL, `primary_muscle_group` TEXT NOT NULL, `secondary_muscle_groups` TEXT NOT NULL, `equipment` TEXT NOT NULL, `instructions` TEXT NOT NULL, `media_path` TEXT, `is_custom` INTEGER NOT NULL, `is_bodyweight_volume_eligible` INTEGER NOT NULL, `is_deleted` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, `primary_muscle_head` TEXT, PRIMARY KEY(`id`))""",
-        """CREATE INDEX IF NOT EXISTS `index_exercises_primary_muscle_group` ON `exercises` (`primary_muscle_group`)""",
-        """CREATE INDEX IF NOT EXISTS `index_exercises_equipment` ON `exercises` (`equipment`)""",
-        """CREATE INDEX IF NOT EXISTS `index_exercises_is_deleted` ON `exercises` (`is_deleted`)""",
-        """CREATE TABLE IF NOT EXISTS `routine_folders` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `order_index` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`))""",
-        """CREATE TABLE IF NOT EXISTS `routines` (`id` TEXT NOT NULL, `folder_id` TEXT, `name` TEXT NOT NULL, `notes` TEXT, `order_index` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`folder_id`) REFERENCES `routine_folders`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )""",
-        """CREATE INDEX IF NOT EXISTS `index_routines_folder_id` ON `routines` (`folder_id`)""",
-        """CREATE TABLE IF NOT EXISTS `routine_exercises` (`id` TEXT NOT NULL, `routine_id` TEXT NOT NULL, `exercise_id` TEXT NOT NULL, `order_index` INTEGER NOT NULL, `superset_group` INTEGER, `rest_timer_seconds` INTEGER, `notes` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`routine_id`) REFERENCES `routines`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`exercise_id`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )""",
-        """CREATE INDEX IF NOT EXISTS `index_routine_exercises_routine_id` ON `routine_exercises` (`routine_id`)""",
-        """CREATE INDEX IF NOT EXISTS `index_routine_exercises_exercise_id` ON `routine_exercises` (`exercise_id`)""",
-        """CREATE TABLE IF NOT EXISTS `routine_sets` (`id` TEXT NOT NULL, `routine_exercise_id` TEXT NOT NULL, `order_index` INTEGER NOT NULL, `set_type` TEXT NOT NULL, `target_weight_kg` REAL, `target_reps` INTEGER, `target_rep_range_min` INTEGER, `target_rep_range_max` INTEGER, `target_duration_seconds` INTEGER, `target_distance_meters` REAL, PRIMARY KEY(`id`), FOREIGN KEY(`routine_exercise_id`) REFERENCES `routine_exercises`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )""",
-        """CREATE INDEX IF NOT EXISTS `index_routine_sets_routine_exercise_id` ON `routine_sets` (`routine_exercise_id`)""",
-        """CREATE TABLE IF NOT EXISTS `workouts` (`id` TEXT NOT NULL, `routine_id` TEXT, `title` TEXT NOT NULL, `notes` TEXT, `status` TEXT NOT NULL, `started_at` INTEGER NOT NULL, `ended_at` INTEGER, `duration_seconds` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`routine_id`) REFERENCES `routines`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )""",
-        """CREATE INDEX IF NOT EXISTS `index_workouts_routine_id` ON `workouts` (`routine_id`)""",
-        """CREATE INDEX IF NOT EXISTS `index_workouts_status` ON `workouts` (`status`)""",
-        """CREATE INDEX IF NOT EXISTS `index_workouts_started_at` ON `workouts` (`started_at`)""",
-        """CREATE TABLE IF NOT EXISTS `workout_exercises` (`id` TEXT NOT NULL, `workout_id` TEXT NOT NULL, `exercise_id` TEXT NOT NULL, `order_index` INTEGER NOT NULL, `superset_group` INTEGER, `rest_timer_seconds` INTEGER, `notes` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`workout_id`) REFERENCES `workouts`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`exercise_id`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )""",
-        """CREATE INDEX IF NOT EXISTS `index_workout_exercises_workout_id` ON `workout_exercises` (`workout_id`)""",
-        """CREATE INDEX IF NOT EXISTS `index_workout_exercises_exercise_id` ON `workout_exercises` (`exercise_id`)""",
-        """CREATE TABLE IF NOT EXISTS `workout_sets` (`id` TEXT NOT NULL, `workout_exercise_id` TEXT NOT NULL, `order_index` INTEGER NOT NULL, `set_type` TEXT NOT NULL, `weight_kg` REAL, `reps` INTEGER, `duration_seconds` INTEGER, `distance_meters` REAL, `rpe` REAL, `custom_metric` REAL, `is_completed` INTEGER NOT NULL, `completed_at` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`workout_exercise_id`) REFERENCES `workout_exercises`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )""",
-        """CREATE INDEX IF NOT EXISTS `index_workout_sets_workout_exercise_id` ON `workout_sets` (`workout_exercise_id`)""",
-        """CREATE TABLE IF NOT EXISTS `personal_records` (`id` TEXT NOT NULL, `exercise_id` TEXT NOT NULL, `workout_id` TEXT NOT NULL, `workout_set_id` TEXT, `pr_type` TEXT NOT NULL, `value` REAL NOT NULL, `achieved_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`exercise_id`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`workout_id`) REFERENCES `workouts`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )""",
-        """CREATE UNIQUE INDEX IF NOT EXISTS `index_personal_records_exercise_id_pr_type` ON `personal_records` (`exercise_id`, `pr_type`)""",
-        """CREATE INDEX IF NOT EXISTS `index_personal_records_workout_id` ON `personal_records` (`workout_id`)""",
-        """CREATE TABLE IF NOT EXISTS `body_measurements` (`date` TEXT NOT NULL, `weight_kg` REAL, `lean_mass_kg` REAL, `fat_percent` REAL, `neck_cm` REAL, `shoulder_cm` REAL, `chest_cm` REAL, `left_bicep_cm` REAL, `right_bicep_cm` REAL, `left_forearm_cm` REAL, `right_forearm_cm` REAL, `abdomen_cm` REAL, `waist_cm` REAL, `hips_cm` REAL, `left_thigh_cm` REAL, `right_thigh_cm` REAL, `left_calf_cm` REAL, `right_calf_cm` REAL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`date`))""",
-        """CREATE TABLE IF NOT EXISTS `progress_photos` (`id` TEXT NOT NULL, `date` TEXT NOT NULL, `file_path` TEXT NOT NULL, `created_at` INTEGER NOT NULL, PRIMARY KEY(`id`))""",
-        """CREATE INDEX IF NOT EXISTS `index_progress_photos_date` ON `progress_photos` (`date`)""",
-        """CREATE TABLE IF NOT EXISTS `goal_definitions` (`id` TEXT NOT NULL, `metric` TEXT NOT NULL, `period` TEXT NOT NULL, `target_value` REAL NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`))""",
-    )
+private val V3_SCHEMA_SQL = listOf(
+    """CREATE TABLE IF NOT EXISTS `exercises` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `exercise_type` TEXT NOT NULL, `primary_muscle_group` TEXT NOT NULL, `secondary_muscle_groups` TEXT NOT NULL, `equipment` TEXT NOT NULL, `instructions` TEXT NOT NULL, `media_path` TEXT, `is_custom` INTEGER NOT NULL, `is_bodyweight_volume_eligible` INTEGER NOT NULL, `is_deleted` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, `primary_muscle_head` TEXT, PRIMARY KEY(`id`))""",
+    """CREATE INDEX IF NOT EXISTS `index_exercises_primary_muscle_group` ON `exercises` (`primary_muscle_group`)""",
+    """CREATE INDEX IF NOT EXISTS `index_exercises_equipment` ON `exercises` (`equipment`)""",
+    """CREATE INDEX IF NOT EXISTS `index_exercises_is_deleted` ON `exercises` (`is_deleted`)""",
+    """CREATE TABLE IF NOT EXISTS `routine_folders` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `order_index` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`))""",
+    """CREATE TABLE IF NOT EXISTS `routines` (`id` TEXT NOT NULL, `folder_id` TEXT, `name` TEXT NOT NULL, `notes` TEXT, `order_index` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`folder_id`) REFERENCES `routine_folders`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )""",
+    """CREATE INDEX IF NOT EXISTS `index_routines_folder_id` ON `routines` (`folder_id`)""",
+    """CREATE TABLE IF NOT EXISTS `routine_exercises` (`id` TEXT NOT NULL, `routine_id` TEXT NOT NULL, `exercise_id` TEXT NOT NULL, `order_index` INTEGER NOT NULL, `superset_group` INTEGER, `rest_timer_seconds` INTEGER, `notes` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`routine_id`) REFERENCES `routines`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`exercise_id`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )""",
+    """CREATE INDEX IF NOT EXISTS `index_routine_exercises_routine_id` ON `routine_exercises` (`routine_id`)""",
+    """CREATE INDEX IF NOT EXISTS `index_routine_exercises_exercise_id` ON `routine_exercises` (`exercise_id`)""",
+    """CREATE TABLE IF NOT EXISTS `routine_sets` (`id` TEXT NOT NULL, `routine_exercise_id` TEXT NOT NULL, `order_index` INTEGER NOT NULL, `set_type` TEXT NOT NULL, `target_weight_kg` REAL, `target_reps` INTEGER, `target_rep_range_min` INTEGER, `target_rep_range_max` INTEGER, `target_duration_seconds` INTEGER, `target_distance_meters` REAL, PRIMARY KEY(`id`), FOREIGN KEY(`routine_exercise_id`) REFERENCES `routine_exercises`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )""",
+    """CREATE INDEX IF NOT EXISTS `index_routine_sets_routine_exercise_id` ON `routine_sets` (`routine_exercise_id`)""",
+    """CREATE TABLE IF NOT EXISTS `workouts` (`id` TEXT NOT NULL, `routine_id` TEXT, `title` TEXT NOT NULL, `notes` TEXT, `status` TEXT NOT NULL, `started_at` INTEGER NOT NULL, `ended_at` INTEGER, `duration_seconds` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`routine_id`) REFERENCES `routines`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )""",
+    """CREATE INDEX IF NOT EXISTS `index_workouts_routine_id` ON `workouts` (`routine_id`)""",
+    """CREATE INDEX IF NOT EXISTS `index_workouts_status` ON `workouts` (`status`)""",
+    """CREATE INDEX IF NOT EXISTS `index_workouts_started_at` ON `workouts` (`started_at`)""",
+    """CREATE TABLE IF NOT EXISTS `workout_exercises` (`id` TEXT NOT NULL, `workout_id` TEXT NOT NULL, `exercise_id` TEXT NOT NULL, `order_index` INTEGER NOT NULL, `superset_group` INTEGER, `rest_timer_seconds` INTEGER, `notes` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`workout_id`) REFERENCES `workouts`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`exercise_id`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )""",
+    """CREATE INDEX IF NOT EXISTS `index_workout_exercises_workout_id` ON `workout_exercises` (`workout_id`)""",
+    """CREATE INDEX IF NOT EXISTS `index_workout_exercises_exercise_id` ON `workout_exercises` (`exercise_id`)""",
+    """CREATE TABLE IF NOT EXISTS `workout_sets` (`id` TEXT NOT NULL, `workout_exercise_id` TEXT NOT NULL, `order_index` INTEGER NOT NULL, `set_type` TEXT NOT NULL, `weight_kg` REAL, `reps` INTEGER, `duration_seconds` INTEGER, `distance_meters` REAL, `rpe` REAL, `custom_metric` REAL, `is_completed` INTEGER NOT NULL, `completed_at` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`workout_exercise_id`) REFERENCES `workout_exercises`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )""",
+    """CREATE INDEX IF NOT EXISTS `index_workout_sets_workout_exercise_id` ON `workout_sets` (`workout_exercise_id`)""",
+    """CREATE TABLE IF NOT EXISTS `personal_records` (`id` TEXT NOT NULL, `exercise_id` TEXT NOT NULL, `workout_id` TEXT NOT NULL, `workout_set_id` TEXT, `pr_type` TEXT NOT NULL, `value` REAL NOT NULL, `achieved_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`exercise_id`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`workout_id`) REFERENCES `workouts`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )""",
+    """CREATE UNIQUE INDEX IF NOT EXISTS `index_personal_records_exercise_id_pr_type` ON `personal_records` (`exercise_id`, `pr_type`)""",
+    """CREATE INDEX IF NOT EXISTS `index_personal_records_workout_id` ON `personal_records` (`workout_id`)""",
+    """CREATE TABLE IF NOT EXISTS `body_measurements` (`date` TEXT NOT NULL, `weight_kg` REAL, `lean_mass_kg` REAL, `fat_percent` REAL, `neck_cm` REAL, `shoulder_cm` REAL, `chest_cm` REAL, `left_bicep_cm` REAL, `right_bicep_cm` REAL, `left_forearm_cm` REAL, `right_forearm_cm` REAL, `abdomen_cm` REAL, `waist_cm` REAL, `hips_cm` REAL, `left_thigh_cm` REAL, `right_thigh_cm` REAL, `left_calf_cm` REAL, `right_calf_cm` REAL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`date`))""",
+    """CREATE TABLE IF NOT EXISTS `progress_photos` (`id` TEXT NOT NULL, `date` TEXT NOT NULL, `file_path` TEXT NOT NULL, `created_at` INTEGER NOT NULL, PRIMARY KEY(`id`))""",
+    """CREATE INDEX IF NOT EXISTS `index_progress_photos_date` ON `progress_photos` (`date`)""",
+    """CREATE TABLE IF NOT EXISTS `goal_definitions` (`id` TEXT NOT NULL, `metric` TEXT NOT NULL, `period` TEXT NOT NULL, `target_value` REAL NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`))""",
+)
 
 /** The real v4 schema: v3 plus `exercises.muscle_heads` (createSql taken verbatim from the exported `4.json`). */
-private val V4_SCHEMA_SQL =
-    V3_SCHEMA_SQL.map { sql ->
-        if (sql.startsWith("CREATE TABLE IF NOT EXISTS `exercises`")) {
-            """CREATE TABLE IF NOT EXISTS `exercises` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `exercise_type` TEXT NOT NULL, `primary_muscle_group` TEXT NOT NULL, `secondary_muscle_groups` TEXT NOT NULL, `equipment` TEXT NOT NULL, `instructions` TEXT NOT NULL, `media_path` TEXT, `is_custom` INTEGER NOT NULL, `is_bodyweight_volume_eligible` INTEGER NOT NULL, `is_deleted` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, `muscle_heads` TEXT NOT NULL DEFAULT '[]', `primary_muscle_head` TEXT, PRIMARY KEY(`id`))"""
-        } else {
-            sql
-        }
+private val V4_SCHEMA_SQL = V3_SCHEMA_SQL.map { sql ->
+    if (sql.startsWith("CREATE TABLE IF NOT EXISTS `exercises`")) {
+        """CREATE TABLE IF NOT EXISTS `exercises` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `exercise_type` TEXT NOT NULL, `primary_muscle_group` TEXT NOT NULL, `secondary_muscle_groups` TEXT NOT NULL, `equipment` TEXT NOT NULL, `instructions` TEXT NOT NULL, `media_path` TEXT, `is_custom` INTEGER NOT NULL, `is_bodyweight_volume_eligible` INTEGER NOT NULL, `is_deleted` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, `muscle_heads` TEXT NOT NULL DEFAULT '[]', `primary_muscle_head` TEXT, PRIMARY KEY(`id`))"""
+    } else {
+        sql
     }
+}
 
-private val V1_SCHEMA_SQL =
-    listOf(
-        """CREATE TABLE IF NOT EXISTS `exercises` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `exercise_type` TEXT NOT NULL, `primary_muscle_group` TEXT NOT NULL, `secondary_muscle_groups` TEXT NOT NULL, `equipment` TEXT NOT NULL, `instructions` TEXT NOT NULL, `media_path` TEXT, `is_custom` INTEGER NOT NULL, `is_bodyweight_volume_eligible` INTEGER NOT NULL, `is_deleted` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`))""",
-        """CREATE INDEX IF NOT EXISTS `index_exercises_primary_muscle_group` ON `exercises` (`primary_muscle_group`)""",
-        """CREATE INDEX IF NOT EXISTS `index_exercises_equipment` ON `exercises` (`equipment`)""",
-        """CREATE INDEX IF NOT EXISTS `index_exercises_is_deleted` ON `exercises` (`is_deleted`)""",
-        """CREATE TABLE IF NOT EXISTS `routine_folders` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `order_index` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`))""",
-        """CREATE TABLE IF NOT EXISTS `routines` (`id` TEXT NOT NULL, `folder_id` TEXT, `name` TEXT NOT NULL, `notes` TEXT, `order_index` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`folder_id`) REFERENCES `routine_folders`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )""",
-        """CREATE INDEX IF NOT EXISTS `index_routines_folder_id` ON `routines` (`folder_id`)""",
-        """CREATE TABLE IF NOT EXISTS `routine_exercises` (`id` TEXT NOT NULL, `routine_id` TEXT NOT NULL, `exercise_id` TEXT NOT NULL, `order_index` INTEGER NOT NULL, `superset_group` INTEGER, `rest_timer_seconds` INTEGER, `notes` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`routine_id`) REFERENCES `routines`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`exercise_id`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )""",
-        """CREATE INDEX IF NOT EXISTS `index_routine_exercises_routine_id` ON `routine_exercises` (`routine_id`)""",
-        """CREATE INDEX IF NOT EXISTS `index_routine_exercises_exercise_id` ON `routine_exercises` (`exercise_id`)""",
-        """CREATE TABLE IF NOT EXISTS `routine_sets` (`id` TEXT NOT NULL, `routine_exercise_id` TEXT NOT NULL, `order_index` INTEGER NOT NULL, `set_type` TEXT NOT NULL, `target_weight_kg` REAL, `target_reps` INTEGER, `target_rep_range_min` INTEGER, `target_rep_range_max` INTEGER, `target_duration_seconds` INTEGER, `target_distance_meters` REAL, PRIMARY KEY(`id`), FOREIGN KEY(`routine_exercise_id`) REFERENCES `routine_exercises`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )""",
-        """CREATE INDEX IF NOT EXISTS `index_routine_sets_routine_exercise_id` ON `routine_sets` (`routine_exercise_id`)""",
-        """CREATE TABLE IF NOT EXISTS `workouts` (`id` TEXT NOT NULL, `routine_id` TEXT, `title` TEXT NOT NULL, `notes` TEXT, `status` TEXT NOT NULL, `started_at` INTEGER NOT NULL, `ended_at` INTEGER, `duration_seconds` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`routine_id`) REFERENCES `routines`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )""",
-        """CREATE INDEX IF NOT EXISTS `index_workouts_routine_id` ON `workouts` (`routine_id`)""",
-        """CREATE INDEX IF NOT EXISTS `index_workouts_status` ON `workouts` (`status`)""",
-        """CREATE INDEX IF NOT EXISTS `index_workouts_started_at` ON `workouts` (`started_at`)""",
-        """CREATE TABLE IF NOT EXISTS `workout_exercises` (`id` TEXT NOT NULL, `workout_id` TEXT NOT NULL, `exercise_id` TEXT NOT NULL, `order_index` INTEGER NOT NULL, `superset_group` INTEGER, `rest_timer_seconds` INTEGER, `notes` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`workout_id`) REFERENCES `workouts`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`exercise_id`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )""",
-        """CREATE INDEX IF NOT EXISTS `index_workout_exercises_workout_id` ON `workout_exercises` (`workout_id`)""",
-        """CREATE INDEX IF NOT EXISTS `index_workout_exercises_exercise_id` ON `workout_exercises` (`exercise_id`)""",
-        """CREATE TABLE IF NOT EXISTS `workout_sets` (`id` TEXT NOT NULL, `workout_exercise_id` TEXT NOT NULL, `order_index` INTEGER NOT NULL, `set_type` TEXT NOT NULL, `weight_kg` REAL, `reps` INTEGER, `duration_seconds` INTEGER, `distance_meters` REAL, `rpe` REAL, `custom_metric` REAL, `is_completed` INTEGER NOT NULL, `completed_at` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`workout_exercise_id`) REFERENCES `workout_exercises`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )""",
-        """CREATE INDEX IF NOT EXISTS `index_workout_sets_workout_exercise_id` ON `workout_sets` (`workout_exercise_id`)""",
-        """CREATE TABLE IF NOT EXISTS `personal_records` (`id` TEXT NOT NULL, `exercise_id` TEXT NOT NULL, `workout_id` TEXT NOT NULL, `workout_set_id` TEXT, `pr_type` TEXT NOT NULL, `value` REAL NOT NULL, `achieved_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`exercise_id`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`workout_id`) REFERENCES `workouts`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )""",
-        """CREATE UNIQUE INDEX IF NOT EXISTS `index_personal_records_exercise_id_pr_type` ON `personal_records` (`exercise_id`, `pr_type`)""",
-        """CREATE INDEX IF NOT EXISTS `index_personal_records_workout_id` ON `personal_records` (`workout_id`)""",
-        """CREATE TABLE IF NOT EXISTS `body_measurements` (`date` TEXT NOT NULL, `weight_kg` REAL, `lean_mass_kg` REAL, `fat_percent` REAL, `neck_cm` REAL, `shoulder_cm` REAL, `chest_cm` REAL, `left_bicep_cm` REAL, `right_bicep_cm` REAL, `left_forearm_cm` REAL, `right_forearm_cm` REAL, `abdomen_cm` REAL, `waist_cm` REAL, `hips_cm` REAL, `left_thigh_cm` REAL, `right_thigh_cm` REAL, `left_calf_cm` REAL, `right_calf_cm` REAL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`date`))""",
-        """CREATE TABLE IF NOT EXISTS `progress_photos` (`id` TEXT NOT NULL, `date` TEXT NOT NULL, `file_path` TEXT NOT NULL, `created_at` INTEGER NOT NULL, PRIMARY KEY(`id`))""",
-        """CREATE INDEX IF NOT EXISTS `index_progress_photos_date` ON `progress_photos` (`date`)""",
-    )
+private val V1_SCHEMA_SQL = listOf(
+    """CREATE TABLE IF NOT EXISTS `exercises` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `exercise_type` TEXT NOT NULL, `primary_muscle_group` TEXT NOT NULL, `secondary_muscle_groups` TEXT NOT NULL, `equipment` TEXT NOT NULL, `instructions` TEXT NOT NULL, `media_path` TEXT, `is_custom` INTEGER NOT NULL, `is_bodyweight_volume_eligible` INTEGER NOT NULL, `is_deleted` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`))""",
+    """CREATE INDEX IF NOT EXISTS `index_exercises_primary_muscle_group` ON `exercises` (`primary_muscle_group`)""",
+    """CREATE INDEX IF NOT EXISTS `index_exercises_equipment` ON `exercises` (`equipment`)""",
+    """CREATE INDEX IF NOT EXISTS `index_exercises_is_deleted` ON `exercises` (`is_deleted`)""",
+    """CREATE TABLE IF NOT EXISTS `routine_folders` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `order_index` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`))""",
+    """CREATE TABLE IF NOT EXISTS `routines` (`id` TEXT NOT NULL, `folder_id` TEXT, `name` TEXT NOT NULL, `notes` TEXT, `order_index` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`folder_id`) REFERENCES `routine_folders`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )""",
+    """CREATE INDEX IF NOT EXISTS `index_routines_folder_id` ON `routines` (`folder_id`)""",
+    """CREATE TABLE IF NOT EXISTS `routine_exercises` (`id` TEXT NOT NULL, `routine_id` TEXT NOT NULL, `exercise_id` TEXT NOT NULL, `order_index` INTEGER NOT NULL, `superset_group` INTEGER, `rest_timer_seconds` INTEGER, `notes` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`routine_id`) REFERENCES `routines`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`exercise_id`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )""",
+    """CREATE INDEX IF NOT EXISTS `index_routine_exercises_routine_id` ON `routine_exercises` (`routine_id`)""",
+    """CREATE INDEX IF NOT EXISTS `index_routine_exercises_exercise_id` ON `routine_exercises` (`exercise_id`)""",
+    """CREATE TABLE IF NOT EXISTS `routine_sets` (`id` TEXT NOT NULL, `routine_exercise_id` TEXT NOT NULL, `order_index` INTEGER NOT NULL, `set_type` TEXT NOT NULL, `target_weight_kg` REAL, `target_reps` INTEGER, `target_rep_range_min` INTEGER, `target_rep_range_max` INTEGER, `target_duration_seconds` INTEGER, `target_distance_meters` REAL, PRIMARY KEY(`id`), FOREIGN KEY(`routine_exercise_id`) REFERENCES `routine_exercises`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )""",
+    """CREATE INDEX IF NOT EXISTS `index_routine_sets_routine_exercise_id` ON `routine_sets` (`routine_exercise_id`)""",
+    """CREATE TABLE IF NOT EXISTS `workouts` (`id` TEXT NOT NULL, `routine_id` TEXT, `title` TEXT NOT NULL, `notes` TEXT, `status` TEXT NOT NULL, `started_at` INTEGER NOT NULL, `ended_at` INTEGER, `duration_seconds` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`routine_id`) REFERENCES `routines`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )""",
+    """CREATE INDEX IF NOT EXISTS `index_workouts_routine_id` ON `workouts` (`routine_id`)""",
+    """CREATE INDEX IF NOT EXISTS `index_workouts_status` ON `workouts` (`status`)""",
+    """CREATE INDEX IF NOT EXISTS `index_workouts_started_at` ON `workouts` (`started_at`)""",
+    """CREATE TABLE IF NOT EXISTS `workout_exercises` (`id` TEXT NOT NULL, `workout_id` TEXT NOT NULL, `exercise_id` TEXT NOT NULL, `order_index` INTEGER NOT NULL, `superset_group` INTEGER, `rest_timer_seconds` INTEGER, `notes` TEXT, PRIMARY KEY(`id`), FOREIGN KEY(`workout_id`) REFERENCES `workouts`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`exercise_id`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )""",
+    """CREATE INDEX IF NOT EXISTS `index_workout_exercises_workout_id` ON `workout_exercises` (`workout_id`)""",
+    """CREATE INDEX IF NOT EXISTS `index_workout_exercises_exercise_id` ON `workout_exercises` (`exercise_id`)""",
+    """CREATE TABLE IF NOT EXISTS `workout_sets` (`id` TEXT NOT NULL, `workout_exercise_id` TEXT NOT NULL, `order_index` INTEGER NOT NULL, `set_type` TEXT NOT NULL, `weight_kg` REAL, `reps` INTEGER, `duration_seconds` INTEGER, `distance_meters` REAL, `rpe` REAL, `custom_metric` REAL, `is_completed` INTEGER NOT NULL, `completed_at` INTEGER, PRIMARY KEY(`id`), FOREIGN KEY(`workout_exercise_id`) REFERENCES `workout_exercises`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )""",
+    """CREATE INDEX IF NOT EXISTS `index_workout_sets_workout_exercise_id` ON `workout_sets` (`workout_exercise_id`)""",
+    """CREATE TABLE IF NOT EXISTS `personal_records` (`id` TEXT NOT NULL, `exercise_id` TEXT NOT NULL, `workout_id` TEXT NOT NULL, `workout_set_id` TEXT, `pr_type` TEXT NOT NULL, `value` REAL NOT NULL, `achieved_at` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`exercise_id`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`workout_id`) REFERENCES `workouts`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )""",
+    """CREATE UNIQUE INDEX IF NOT EXISTS `index_personal_records_exercise_id_pr_type` ON `personal_records` (`exercise_id`, `pr_type`)""",
+    """CREATE INDEX IF NOT EXISTS `index_personal_records_workout_id` ON `personal_records` (`workout_id`)""",
+    """CREATE TABLE IF NOT EXISTS `body_measurements` (`date` TEXT NOT NULL, `weight_kg` REAL, `lean_mass_kg` REAL, `fat_percent` REAL, `neck_cm` REAL, `shoulder_cm` REAL, `chest_cm` REAL, `left_bicep_cm` REAL, `right_bicep_cm` REAL, `left_forearm_cm` REAL, `right_forearm_cm` REAL, `abdomen_cm` REAL, `waist_cm` REAL, `hips_cm` REAL, `left_thigh_cm` REAL, `right_thigh_cm` REAL, `left_calf_cm` REAL, `right_calf_cm` REAL, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`date`))""",
+    """CREATE TABLE IF NOT EXISTS `progress_photos` (`id` TEXT NOT NULL, `date` TEXT NOT NULL, `file_path` TEXT NOT NULL, `created_at` INTEGER NOT NULL, PRIMARY KEY(`id`))""",
+    """CREATE INDEX IF NOT EXISTS `index_progress_photos_date` ON `progress_photos` (`date`)""",
+)
 
 /**
  * M8d — the project's first real schema migration (project-rules.md: `fallbackToDestructiveMigration`
@@ -116,22 +113,14 @@ private val V1_SCHEMA_SQL =
 class LogEzDatabaseMigrationTest {
     /** An empty "v1" database — sufficient here because MIGRATION_1_2 only adds a new, independent table. */
     private fun openV1(): SupportSQLiteOpenHelper {
-        val callback =
-            object : SupportSQLiteOpenHelper.Callback(1) {
-                override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) = Unit
-
-                override fun onUpgrade(
-                    db: androidx.sqlite.db.SupportSQLiteDatabase,
-                    oldVersion: Int,
-                    newVersion: Int,
-                ) = Unit
-            }
-        val config =
-            SupportSQLiteOpenHelper.Configuration
-                .builder(ApplicationProvider.getApplicationContext())
-                .name(null) // in-memory
-                .callback(callback)
-                .build()
+        val callback = object : SupportSQLiteOpenHelper.Callback(1) {
+            override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) = Unit
+            override fun onUpgrade(db: androidx.sqlite.db.SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+        }
+        val config = SupportSQLiteOpenHelper.Configuration.builder(ApplicationProvider.getApplicationContext())
+            .name(null) // in-memory
+            .callback(callback)
+            .build()
         return FrameworkSQLiteOpenHelperFactory().create(config)
     }
 
@@ -141,32 +130,24 @@ class LogEzDatabaseMigrationTest {
      * 11-table schema, matching [openV1]'s same "sufficient for what this migration does" scope.
      */
     private fun openV2(): SupportSQLiteOpenHelper {
-        val callback =
-            object : SupportSQLiteOpenHelper.Callback(2) {
-                override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
-                    db.execSQL(
-                        """
-                        CREATE TABLE `exercises` (
-                            `id` TEXT NOT NULL, `name` TEXT NOT NULL, `exercise_type` TEXT NOT NULL,
-                            `primary_muscle_group` TEXT NOT NULL, `is_custom` INTEGER NOT NULL,
-                            PRIMARY KEY(`id`)
-                        )
-                        """.trimIndent(),
+        val callback = object : SupportSQLiteOpenHelper.Callback(2) {
+            override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE `exercises` (
+                        `id` TEXT NOT NULL, `name` TEXT NOT NULL, `exercise_type` TEXT NOT NULL,
+                        `primary_muscle_group` TEXT NOT NULL, `is_custom` INTEGER NOT NULL,
+                        PRIMARY KEY(`id`)
                     )
-                }
-
-                override fun onUpgrade(
-                    db: androidx.sqlite.db.SupportSQLiteDatabase,
-                    oldVersion: Int,
-                    newVersion: Int,
-                ) = Unit
+                    """.trimIndent(),
+                )
             }
-        val config =
-            SupportSQLiteOpenHelper.Configuration
-                .builder(ApplicationProvider.getApplicationContext())
-                .name(null)
-                .callback(callback)
-                .build()
+            override fun onUpgrade(db: androidx.sqlite.db.SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+        }
+        val config = SupportSQLiteOpenHelper.Configuration.builder(ApplicationProvider.getApplicationContext())
+            .name(null)
+            .callback(callback)
+            .build()
         return FrameworkSQLiteOpenHelperFactory().create(config)
     }
 
@@ -219,33 +200,25 @@ class LogEzDatabaseMigrationTest {
 
     /** A "v3" stand-in: `exercises` including the `primary_muscle_head` column MIGRATION_3_4 reads from. */
     private fun openV3(): SupportSQLiteOpenHelper {
-        val callback =
-            object : SupportSQLiteOpenHelper.Callback(3) {
-                override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
-                    db.execSQL(
-                        """
-                        CREATE TABLE `exercises` (
-                            `id` TEXT NOT NULL, `name` TEXT NOT NULL, `exercise_type` TEXT NOT NULL,
-                            `primary_muscle_group` TEXT NOT NULL, `is_custom` INTEGER NOT NULL,
-                            `primary_muscle_head` TEXT,
-                            PRIMARY KEY(`id`)
-                        )
-                        """.trimIndent(),
+        val callback = object : SupportSQLiteOpenHelper.Callback(3) {
+            override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE `exercises` (
+                        `id` TEXT NOT NULL, `name` TEXT NOT NULL, `exercise_type` TEXT NOT NULL,
+                        `primary_muscle_group` TEXT NOT NULL, `is_custom` INTEGER NOT NULL,
+                        `primary_muscle_head` TEXT,
+                        PRIMARY KEY(`id`)
                     )
-                }
-
-                override fun onUpgrade(
-                    db: androidx.sqlite.db.SupportSQLiteDatabase,
-                    oldVersion: Int,
-                    newVersion: Int,
-                ) = Unit
+                    """.trimIndent(),
+                )
             }
-        val config =
-            SupportSQLiteOpenHelper.Configuration
-                .builder(ApplicationProvider.getApplicationContext())
-                .name(null)
-                .callback(callback)
-                .build()
+            override fun onUpgrade(db: androidx.sqlite.db.SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+        }
+        val config = SupportSQLiteOpenHelper.Configuration.builder(ApplicationProvider.getApplicationContext())
+            .name(null)
+            .callback(callback)
+            .build()
         return FrameworkSQLiteOpenHelperFactory().create(config)
     }
 
@@ -373,42 +346,34 @@ class LogEzDatabaseMigrationTest {
      * enough columns to insert realistic rows, matching [openV2]/[openV3]'s scope.
      */
     private fun openV4(): SupportSQLiteOpenHelper {
-        val callback =
-            object : SupportSQLiteOpenHelper.Callback(4) {
-                override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
-                    db.execSQL(
-                        """
-                        CREATE TABLE `routines` (
-                            `id` TEXT NOT NULL, `folder_id` TEXT, `name` TEXT NOT NULL, `notes` TEXT,
-                            `order_index` INTEGER NOT NULL, `created_at` INTEGER NOT NULL,
-                            `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`)
-                        )
-                        """.trimIndent(),
+        val callback = object : SupportSQLiteOpenHelper.Callback(4) {
+            override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE `routines` (
+                        `id` TEXT NOT NULL, `folder_id` TEXT, `name` TEXT NOT NULL, `notes` TEXT,
+                        `order_index` INTEGER NOT NULL, `created_at` INTEGER NOT NULL,
+                        `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`)
                     )
-                    db.execSQL(
-                        """
-                        CREATE TABLE `workouts` (
-                            `id` TEXT NOT NULL, `routine_id` TEXT, `title` TEXT NOT NULL, `notes` TEXT,
-                            `status` TEXT NOT NULL, `started_at` INTEGER NOT NULL, `ended_at` INTEGER,
-                            `duration_seconds` INTEGER NOT NULL, `created_at` INTEGER NOT NULL,
-                            `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`)
-                        )
-                        """.trimIndent(),
+                    """.trimIndent(),
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE `workouts` (
+                        `id` TEXT NOT NULL, `routine_id` TEXT, `title` TEXT NOT NULL, `notes` TEXT,
+                        `status` TEXT NOT NULL, `started_at` INTEGER NOT NULL, `ended_at` INTEGER,
+                        `duration_seconds` INTEGER NOT NULL, `created_at` INTEGER NOT NULL,
+                        `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`)
                     )
-                }
-
-                override fun onUpgrade(
-                    db: androidx.sqlite.db.SupportSQLiteDatabase,
-                    oldVersion: Int,
-                    newVersion: Int,
-                ) = Unit
+                    """.trimIndent(),
+                )
             }
-        val config =
-            SupportSQLiteOpenHelper.Configuration
-                .builder(ApplicationProvider.getApplicationContext())
-                .name(null)
-                .callback(callback)
-                .build()
+            override fun onUpgrade(db: androidx.sqlite.db.SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+        }
+        val config = SupportSQLiteOpenHelper.Configuration.builder(ApplicationProvider.getApplicationContext())
+            .name(null)
+            .callback(callback)
+            .build()
         return FrameworkSQLiteOpenHelperFactory().create(config)
     }
 
@@ -481,33 +446,25 @@ class LogEzDatabaseMigrationTest {
      * "sufficient for what this migration does" scope.
      */
     private fun openV5(): SupportSQLiteOpenHelper {
-        val callback =
-            object : SupportSQLiteOpenHelper.Callback(5) {
-                override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
-                    db.execSQL(
-                        """
-                        CREATE TABLE `workout_sets` (
-                            `id` TEXT NOT NULL, `workout_exercise_id` TEXT NOT NULL, `order_index` INTEGER NOT NULL,
-                            `set_type` TEXT NOT NULL, `weight_kg` REAL, `reps` INTEGER, `duration_seconds` INTEGER,
-                            `distance_meters` REAL, `rpe` REAL, `custom_metric` REAL, `is_completed` INTEGER NOT NULL,
-                            `completed_at` INTEGER, PRIMARY KEY(`id`)
-                        )
-                        """.trimIndent(),
+        val callback = object : SupportSQLiteOpenHelper.Callback(5) {
+            override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE `workout_sets` (
+                        `id` TEXT NOT NULL, `workout_exercise_id` TEXT NOT NULL, `order_index` INTEGER NOT NULL,
+                        `set_type` TEXT NOT NULL, `weight_kg` REAL, `reps` INTEGER, `duration_seconds` INTEGER,
+                        `distance_meters` REAL, `rpe` REAL, `custom_metric` REAL, `is_completed` INTEGER NOT NULL,
+                        `completed_at` INTEGER, PRIMARY KEY(`id`)
                     )
-                }
-
-                override fun onUpgrade(
-                    db: androidx.sqlite.db.SupportSQLiteDatabase,
-                    oldVersion: Int,
-                    newVersion: Int,
-                ) = Unit
+                    """.trimIndent(),
+                )
             }
-        val config =
-            SupportSQLiteOpenHelper.Configuration
-                .builder(ApplicationProvider.getApplicationContext())
-                .name(null)
-                .callback(callback)
-                .build()
+            override fun onUpgrade(db: androidx.sqlite.db.SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+        }
+        val config = SupportSQLiteOpenHelper.Configuration.builder(ApplicationProvider.getApplicationContext())
+            .name(null)
+            .callback(callback)
+            .build()
         return FrameworkSQLiteOpenHelperFactory().create(config)
     }
 
@@ -563,22 +520,14 @@ class LogEzDatabaseMigrationTest {
 
     /** v6 is an empty stand-in — MIGRATION_6_7 only ever CREATEs a brand-new table, no existing one is read. */
     private fun openV6(): SupportSQLiteOpenHelper {
-        val callback =
-            object : SupportSQLiteOpenHelper.Callback(6) {
-                override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) = Unit
-
-                override fun onUpgrade(
-                    db: androidx.sqlite.db.SupportSQLiteDatabase,
-                    oldVersion: Int,
-                    newVersion: Int,
-                ) = Unit
-            }
-        val config =
-            SupportSQLiteOpenHelper.Configuration
-                .builder(ApplicationProvider.getApplicationContext())
-                .name(null)
-                .callback(callback)
-                .build()
+        val callback = object : SupportSQLiteOpenHelper.Callback(6) {
+            override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) = Unit
+            override fun onUpgrade(db: androidx.sqlite.db.SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+        }
+        val config = SupportSQLiteOpenHelper.Configuration.builder(ApplicationProvider.getApplicationContext())
+            .name(null)
+            .callback(callback)
+            .build()
         return FrameworkSQLiteOpenHelperFactory().create(config)
     }
 
@@ -633,33 +582,25 @@ class LogEzDatabaseMigrationTest {
      * for what this migration does" scope.
      */
     private fun openV7(): SupportSQLiteOpenHelper {
-        val callback =
-            object : SupportSQLiteOpenHelper.Callback(7) {
-                override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
-                    db.execSQL(
-                        """
-                        CREATE TABLE `workouts` (
-                            `id` TEXT NOT NULL, `routine_id` TEXT, `title` TEXT NOT NULL, `notes` TEXT,
-                            `status` TEXT NOT NULL, `started_at` INTEGER NOT NULL, `ended_at` INTEGER,
-                            `duration_seconds` INTEGER NOT NULL, `created_at` INTEGER NOT NULL,
-                            `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`)
-                        )
-                        """.trimIndent(),
+        val callback = object : SupportSQLiteOpenHelper.Callback(7) {
+            override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE `workouts` (
+                        `id` TEXT NOT NULL, `routine_id` TEXT, `title` TEXT NOT NULL, `notes` TEXT,
+                        `status` TEXT NOT NULL, `started_at` INTEGER NOT NULL, `ended_at` INTEGER,
+                        `duration_seconds` INTEGER NOT NULL, `created_at` INTEGER NOT NULL,
+                        `updated_at` INTEGER NOT NULL, PRIMARY KEY(`id`)
                     )
-                }
-
-                override fun onUpgrade(
-                    db: androidx.sqlite.db.SupportSQLiteDatabase,
-                    oldVersion: Int,
-                    newVersion: Int,
-                ) = Unit
+                    """.trimIndent(),
+                )
             }
-        val config =
-            SupportSQLiteOpenHelper.Configuration
-                .builder(ApplicationProvider.getApplicationContext())
-                .name(null)
-                .callback(callback)
-                .build()
+            override fun onUpgrade(db: androidx.sqlite.db.SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+        }
+        val config = SupportSQLiteOpenHelper.Configuration.builder(ApplicationProvider.getApplicationContext())
+            .name(null)
+            .callback(callback)
+            .build()
         return FrameworkSQLiteOpenHelperFactory().create(config)
     }
 
@@ -717,46 +658,38 @@ class LogEzDatabaseMigrationTest {
      * Room's validator, so a faithful-but-unused column would be noise.
      */
     private fun openV8(): SupportSQLiteOpenHelper {
-        val callback =
-            object : SupportSQLiteOpenHelper.Callback(8) {
-                override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
-                    db.execSQL(
-                        """
-                        CREATE TABLE `workouts` (
-                            `id` TEXT NOT NULL, `routine_id` TEXT, `title` TEXT NOT NULL, `notes` TEXT,
-                            `status` TEXT NOT NULL, `started_at` INTEGER NOT NULL, `ended_at` INTEGER,
-                            `duration_seconds` INTEGER NOT NULL, `created_at` INTEGER NOT NULL,
-                            `updated_at` INTEGER NOT NULL,
-                            `structure` TEXT NOT NULL DEFAULT 'REGULAR', PRIMARY KEY(`id`)
-                        )
-                        """.trimIndent(),
+        val callback = object : SupportSQLiteOpenHelper.Callback(8) {
+            override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE `workouts` (
+                        `id` TEXT NOT NULL, `routine_id` TEXT, `title` TEXT NOT NULL, `notes` TEXT,
+                        `status` TEXT NOT NULL, `started_at` INTEGER NOT NULL, `ended_at` INTEGER,
+                        `duration_seconds` INTEGER NOT NULL, `created_at` INTEGER NOT NULL,
+                        `updated_at` INTEGER NOT NULL,
+                        `structure` TEXT NOT NULL DEFAULT 'REGULAR', PRIMARY KEY(`id`)
                     )
-                    db.execSQL(
-                        "CREATE TABLE `workout_exercises` (`id` TEXT NOT NULL, `workout_id` TEXT NOT NULL, " +
-                            "`exercise_id` TEXT NOT NULL, `order_index` INTEGER NOT NULL, PRIMARY KEY(`id`))",
-                    )
-                    db.execSQL(
-                        "CREATE TABLE `workout_sets` (`id` TEXT NOT NULL, `workout_exercise_id` TEXT NOT NULL, " +
-                            "`order_index` INTEGER NOT NULL, PRIMARY KEY(`id`))",
-                    )
-                    db.execSQL(
-                        "CREATE TABLE `activity_tracks` (`id` TEXT NOT NULL, `workout_set_id` TEXT NOT NULL, " +
-                            "`route_polyline` TEXT, `point_count` INTEGER NOT NULL, `avg_accuracy_m` REAL, PRIMARY KEY(`id`))",
-                    )
-                }
-
-                override fun onUpgrade(
-                    db: androidx.sqlite.db.SupportSQLiteDatabase,
-                    oldVersion: Int,
-                    newVersion: Int,
-                ) = Unit
+                    """.trimIndent(),
+                )
+                db.execSQL(
+                    "CREATE TABLE `workout_exercises` (`id` TEXT NOT NULL, `workout_id` TEXT NOT NULL, " +
+                        "`exercise_id` TEXT NOT NULL, `order_index` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+                )
+                db.execSQL(
+                    "CREATE TABLE `workout_sets` (`id` TEXT NOT NULL, `workout_exercise_id` TEXT NOT NULL, " +
+                        "`order_index` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+                )
+                db.execSQL(
+                    "CREATE TABLE `activity_tracks` (`id` TEXT NOT NULL, `workout_set_id` TEXT NOT NULL, " +
+                        "`route_polyline` TEXT, `point_count` INTEGER NOT NULL, `avg_accuracy_m` REAL, PRIMARY KEY(`id`))",
+                )
             }
-        val config =
-            SupportSQLiteOpenHelper.Configuration
-                .builder(ApplicationProvider.getApplicationContext())
-                .name(null)
-                .callback(callback)
-                .build()
+            override fun onUpgrade(db: androidx.sqlite.db.SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+        }
+        val config = SupportSQLiteOpenHelper.Configuration.builder(ApplicationProvider.getApplicationContext())
+            .name(null)
+            .callback(callback)
+            .build()
         return FrameworkSQLiteOpenHelperFactory().create(config)
     }
 
@@ -830,30 +763,21 @@ class LogEzDatabaseMigrationTest {
      * checks MIGRATION_4_5's live columns against what [com.enil.logez.core.data.entity.RoutineEntity]
      * and [com.enil.logez.core.data.entity.WorkoutEntity] declare, `defaultValue` included.
      */
-
     /** A "v9" stand-in with just `activity_tracks` as v9 created it (5_6's createSql, unchanged since). */
     private fun openV9(): SupportSQLiteOpenHelper {
-        val callback =
-            object : SupportSQLiteOpenHelper.Callback(9) {
-                override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
-                    db.execSQL(
-                        "CREATE TABLE IF NOT EXISTS `activity_tracks` (`id` TEXT NOT NULL, `workout_set_id` TEXT NOT NULL, " +
-                            "`route_polyline` TEXT, `point_count` INTEGER NOT NULL, `avg_accuracy_m` REAL, PRIMARY KEY(`id`))",
-                    )
-                }
-
-                override fun onUpgrade(
-                    db: androidx.sqlite.db.SupportSQLiteDatabase,
-                    oldVersion: Int,
-                    newVersion: Int,
-                ) = Unit
+        val callback = object : SupportSQLiteOpenHelper.Callback(9) {
+            override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `activity_tracks` (`id` TEXT NOT NULL, `workout_set_id` TEXT NOT NULL, " +
+                        "`route_polyline` TEXT, `point_count` INTEGER NOT NULL, `avg_accuracy_m` REAL, PRIMARY KEY(`id`))",
+                )
             }
-        val config =
-            SupportSQLiteOpenHelper.Configuration
-                .builder(ApplicationProvider.getApplicationContext())
-                .name(null)
-                .callback(callback)
-                .build()
+            override fun onUpgrade(db: androidx.sqlite.db.SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+        }
+        val config = SupportSQLiteOpenHelper.Configuration.builder(ApplicationProvider.getApplicationContext())
+            .name(null)
+            .callback(callback)
+            .build()
         return FrameworkSQLiteOpenHelperFactory().create(config)
     }
 
@@ -889,40 +813,25 @@ class LogEzDatabaseMigrationTest {
         val dbFile = context.getDatabasePath("repro_v4_to_v5.db")
         dbFile.delete()
         try {
-            val seedCallback =
-                object : SupportSQLiteOpenHelper.Callback(4) {
-                    override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
-                        V4_SCHEMA_SQL.forEach { db.execSQL(it) }
-                    }
-
-                    override fun onUpgrade(
-                        db: androidx.sqlite.db.SupportSQLiteDatabase,
-                        oldVersion: Int,
-                        newVersion: Int,
-                    ) = Unit
+            val seedCallback = object : SupportSQLiteOpenHelper.Callback(4) {
+                override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                    V4_SCHEMA_SQL.forEach { db.execSQL(it) }
                 }
-            val seedConfig =
-                SupportSQLiteOpenHelper.Configuration
-                    .builder(context)
-                    .name(dbFile.name)
-                    .callback(seedCallback)
-                    .build()
+                override fun onUpgrade(db: androidx.sqlite.db.SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+            }
+            val seedConfig = SupportSQLiteOpenHelper.Configuration.builder(context)
+                .name(dbFile.name)
+                .callback(seedCallback)
+                .build()
             FrameworkSQLiteOpenHelperFactory().create(seedConfig).writableDatabase.close()
 
-            val db =
-                Room
-                    .databaseBuilder(context, LogEzDatabase::class.java, dbFile.absolutePath)
-                    .addMigrations(
-                        LogEzDatabase.MIGRATION_1_2,
-                        LogEzDatabase.MIGRATION_2_3,
-                        LogEzDatabase.MIGRATION_3_4,
-                        LogEzDatabase.MIGRATION_4_5,
-                        LogEzDatabase.MIGRATION_5_6,
-                        LogEzDatabase.MIGRATION_6_7,
-                        LogEzDatabase.MIGRATION_7_8,
-                        LogEzDatabase.MIGRATION_8_9,
-                        LogEzDatabase.MIGRATION_9_10,
-                    ).build()
+            val db = Room.databaseBuilder(context, LogEzDatabase::class.java, dbFile.absolutePath)
+                .addMigrations(
+                    LogEzDatabase.MIGRATION_1_2, LogEzDatabase.MIGRATION_2_3, LogEzDatabase.MIGRATION_3_4,
+                    LogEzDatabase.MIGRATION_4_5, LogEzDatabase.MIGRATION_5_6, LogEzDatabase.MIGRATION_6_7,
+                    LogEzDatabase.MIGRATION_7_8, LogEzDatabase.MIGRATION_8_9, LogEzDatabase.MIGRATION_9_10,
+                )
+                .build()
 
             db.openHelper.writableDatabase // forces Room to actually open + migrate + validate
             db.close()
@@ -948,40 +857,25 @@ class LogEzDatabaseMigrationTest {
         val dbFile = context.getDatabasePath("repro_v3_to_v4.db")
         dbFile.delete()
         try {
-            val seedCallback =
-                object : SupportSQLiteOpenHelper.Callback(3) {
-                    override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
-                        V3_SCHEMA_SQL.forEach { db.execSQL(it) }
-                    }
-
-                    override fun onUpgrade(
-                        db: androidx.sqlite.db.SupportSQLiteDatabase,
-                        oldVersion: Int,
-                        newVersion: Int,
-                    ) = Unit
+            val seedCallback = object : SupportSQLiteOpenHelper.Callback(3) {
+                override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                    V3_SCHEMA_SQL.forEach { db.execSQL(it) }
                 }
-            val seedConfig =
-                SupportSQLiteOpenHelper.Configuration
-                    .builder(context)
-                    .name(dbFile.name)
-                    .callback(seedCallback)
-                    .build()
+                override fun onUpgrade(db: androidx.sqlite.db.SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+            }
+            val seedConfig = SupportSQLiteOpenHelper.Configuration.builder(context)
+                .name(dbFile.name)
+                .callback(seedCallback)
+                .build()
             FrameworkSQLiteOpenHelperFactory().create(seedConfig).writableDatabase.close()
 
-            val db =
-                Room
-                    .databaseBuilder(context, LogEzDatabase::class.java, dbFile.absolutePath)
-                    .addMigrations(
-                        LogEzDatabase.MIGRATION_1_2,
-                        LogEzDatabase.MIGRATION_2_3,
-                        LogEzDatabase.MIGRATION_3_4,
-                        LogEzDatabase.MIGRATION_4_5,
-                        LogEzDatabase.MIGRATION_5_6,
-                        LogEzDatabase.MIGRATION_6_7,
-                        LogEzDatabase.MIGRATION_7_8,
-                        LogEzDatabase.MIGRATION_8_9,
-                        LogEzDatabase.MIGRATION_9_10,
-                    ).build()
+            val db = Room.databaseBuilder(context, LogEzDatabase::class.java, dbFile.absolutePath)
+                .addMigrations(
+                    LogEzDatabase.MIGRATION_1_2, LogEzDatabase.MIGRATION_2_3, LogEzDatabase.MIGRATION_3_4,
+                    LogEzDatabase.MIGRATION_4_5, LogEzDatabase.MIGRATION_5_6, LogEzDatabase.MIGRATION_6_7,
+                    LogEzDatabase.MIGRATION_7_8, LogEzDatabase.MIGRATION_8_9, LogEzDatabase.MIGRATION_9_10,
+                )
+                .build()
 
             db.openHelper.writableDatabase // forces Room to actually open + migrate + validate
             db.close()
@@ -1006,40 +900,25 @@ class LogEzDatabaseMigrationTest {
         val dbFile = context.getDatabasePath("repro_v1_to_v4.db")
         dbFile.delete()
         try {
-            val seedCallback =
-                object : SupportSQLiteOpenHelper.Callback(1) {
-                    override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
-                        V1_SCHEMA_SQL.forEach { db.execSQL(it) }
-                    }
-
-                    override fun onUpgrade(
-                        db: androidx.sqlite.db.SupportSQLiteDatabase,
-                        oldVersion: Int,
-                        newVersion: Int,
-                    ) = Unit
+            val seedCallback = object : SupportSQLiteOpenHelper.Callback(1) {
+                override fun onCreate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                    V1_SCHEMA_SQL.forEach { db.execSQL(it) }
                 }
-            val seedConfig =
-                SupportSQLiteOpenHelper.Configuration
-                    .builder(context)
-                    .name(dbFile.name)
-                    .callback(seedCallback)
-                    .build()
+                override fun onUpgrade(db: androidx.sqlite.db.SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+            }
+            val seedConfig = SupportSQLiteOpenHelper.Configuration.builder(context)
+                .name(dbFile.name)
+                .callback(seedCallback)
+                .build()
             FrameworkSQLiteOpenHelperFactory().create(seedConfig).writableDatabase.close()
 
-            val db =
-                Room
-                    .databaseBuilder(context, LogEzDatabase::class.java, dbFile.absolutePath)
-                    .addMigrations(
-                        LogEzDatabase.MIGRATION_1_2,
-                        LogEzDatabase.MIGRATION_2_3,
-                        LogEzDatabase.MIGRATION_3_4,
-                        LogEzDatabase.MIGRATION_4_5,
-                        LogEzDatabase.MIGRATION_5_6,
-                        LogEzDatabase.MIGRATION_6_7,
-                        LogEzDatabase.MIGRATION_7_8,
-                        LogEzDatabase.MIGRATION_8_9,
-                        LogEzDatabase.MIGRATION_9_10,
-                    ).build()
+            val db = Room.databaseBuilder(context, LogEzDatabase::class.java, dbFile.absolutePath)
+                .addMigrations(
+                    LogEzDatabase.MIGRATION_1_2, LogEzDatabase.MIGRATION_2_3, LogEzDatabase.MIGRATION_3_4,
+                    LogEzDatabase.MIGRATION_4_5, LogEzDatabase.MIGRATION_5_6, LogEzDatabase.MIGRATION_6_7,
+                    LogEzDatabase.MIGRATION_7_8, LogEzDatabase.MIGRATION_8_9, LogEzDatabase.MIGRATION_9_10,
+                )
+                .build()
 
             db.openHelper.writableDatabase // forces Room to actually open + migrate (1->2->3->4->5) + validate
             db.close()

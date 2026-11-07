@@ -15,24 +15,19 @@ enum class BodyRegion { CHEST, BACK, SHOULDERS, ARMS, CORE, QUADS, HAMSTRINGS_GL
  *  none of the four are body regions, so they never appear on the wheel (they stay counted in the
  *  existing per-group distribution list; see [balanceAxes]'s KDoc for how that list and the wheel
  *  can disagree in percentage terms). */
-fun MuscleGroup.toBodyRegion(): BodyRegion? =
-    when (this) {
-        MuscleGroup.CHEST -> BodyRegion.CHEST
-        MuscleGroup.LATS, MuscleGroup.UPPER_BACK, MuscleGroup.TRAPS, MuscleGroup.LOWER_BACK -> BodyRegion.BACK
-        MuscleGroup.SHOULDERS -> BodyRegion.SHOULDERS
-        MuscleGroup.BICEPS, MuscleGroup.TRICEPS, MuscleGroup.FOREARMS -> BodyRegion.ARMS
-        MuscleGroup.ABDOMINALS -> BodyRegion.CORE
-        MuscleGroup.QUADRICEPS -> BodyRegion.QUADS
-        MuscleGroup.HAMSTRINGS, MuscleGroup.GLUTES -> BodyRegion.HAMSTRINGS_GLUTES
-        MuscleGroup.CALVES, MuscleGroup.ADDUCTORS, MuscleGroup.ABDUCTORS -> BodyRegion.LOWER_LEG
-        MuscleGroup.CARDIO, MuscleGroup.NECK, MuscleGroup.FULL_BODY, MuscleGroup.OTHER -> null
-    }
+fun MuscleGroup.toBodyRegion(): BodyRegion? = when (this) {
+    MuscleGroup.CHEST -> BodyRegion.CHEST
+    MuscleGroup.LATS, MuscleGroup.UPPER_BACK, MuscleGroup.TRAPS, MuscleGroup.LOWER_BACK -> BodyRegion.BACK
+    MuscleGroup.SHOULDERS -> BodyRegion.SHOULDERS
+    MuscleGroup.BICEPS, MuscleGroup.TRICEPS, MuscleGroup.FOREARMS -> BodyRegion.ARMS
+    MuscleGroup.ABDOMINALS -> BodyRegion.CORE
+    MuscleGroup.QUADRICEPS -> BodyRegion.QUADS
+    MuscleGroup.HAMSTRINGS, MuscleGroup.GLUTES -> BodyRegion.HAMSTRINGS_GLUTES
+    MuscleGroup.CALVES, MuscleGroup.ADDUCTORS, MuscleGroup.ABDUCTORS -> BodyRegion.LOWER_LEG
+    MuscleGroup.CARDIO, MuscleGroup.NECK, MuscleGroup.FULL_BODY, MuscleGroup.OTHER -> null
+}
 
-data class RegionShare(
-    val region: BodyRegion,
-    val setCount: Int,
-    val sharePercent: Int,
-)
+data class RegionShare(val region: BodyRegion, val setCount: Int, val sharePercent: Int)
 
 /**
  * Maps [MuscleStatsCalculator.GroupShare]s (per raw [MuscleGroup], from the existing distribution
@@ -44,11 +39,10 @@ data class RegionShare(
  * computed over the FULL set total including Cardio/Full body/Other/Neck.
  */
 fun balanceAxes(current: List<MuscleStatsCalculator.GroupShare>): List<RegionShare> {
-    val setCountByRegion =
-        current
-            .mapNotNull { share -> share.group.toBodyRegion()?.let { region -> region to share.setCount } }
-            .groupBy(keySelector = { it.first }, valueTransform = { it.second })
-            .mapValues { (_, counts) -> counts.sum() }
+    val setCountByRegion = current
+        .mapNotNull { share -> share.group.toBodyRegion()?.let { region -> region to share.setCount } }
+        .groupBy(keySelector = { it.first }, valueTransform = { it.second })
+        .mapValues { (_, counts) -> counts.sum() }
     val totalInRegions = setCountByRegion.values.sum()
     return BodyRegion.entries.map { region ->
         val setCount = setCountByRegion[region] ?: 0

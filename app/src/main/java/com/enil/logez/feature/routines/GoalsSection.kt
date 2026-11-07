@@ -36,11 +36,11 @@ import com.enil.logez.core.designsystem.ConfirmDialog
 import com.enil.logez.core.designsystem.LogEzCard
 import com.enil.logez.core.designsystem.LogEzMono
 import com.enil.logez.core.designsystem.Spacing
-import com.enil.logez.core.designsystem.parseDecimalInput
 import com.enil.logez.core.domain.model.GoalMetric
 import com.enil.logez.core.domain.model.GoalPeriod
 import com.enil.logez.core.domain.model.WeightUnit
 import com.enil.logez.feature.analytics.AnalyticsFormatters
+import com.enil.logez.core.designsystem.parseDecimalInput
 
 /** M8d — Goals card: active goals with a progress bar each, "Add Goal", per-goal delete. */
 @Composable
@@ -87,10 +87,7 @@ fun GoalsSection(
 
     if (showAddDialog) {
         AddGoalDialog(
-            onConfirm = { metric, period, target ->
-                onCreateGoal(metric, period, target)
-                showAddDialog = false
-            },
+            onConfirm = { metric, period, target -> onCreateGoal(metric, period, target); showAddDialog = false },
             onDismiss = { showAddDialog = false },
         )
     }
@@ -107,12 +104,7 @@ fun GoalsSection(
 }
 
 @Composable
-private fun GoalItem(
-    row: GoalRow,
-    weightUnit: WeightUnit,
-    onDelete: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
+private fun GoalItem(row: GoalRow, weightUnit: WeightUnit, onDelete: () -> Unit, modifier: Modifier = Modifier) {
     val progress = row.progress
     val fraction = if (progress.target > 0.0) (progress.current / progress.target).toFloat().coerceIn(0f, 1f) else 0f
     Column(modifier = modifier.fillMaxWidth()) {
@@ -142,10 +134,7 @@ private fun GoalItem(
 }
 
 @Composable
-private fun AddGoalDialog(
-    onConfirm: (GoalMetric, GoalPeriod, Double) -> Unit,
-    onDismiss: () -> Unit,
-) {
+private fun AddGoalDialog(onConfirm: (GoalMetric, GoalPeriod, Double) -> Unit, onDismiss: () -> Unit) {
     var metric by remember { mutableStateOf(GoalMetric.VOLUME) }
     var period by remember { mutableStateOf(GoalPeriod.WEEKLY) }
     var targetText by remember { mutableStateOf("") }
@@ -194,30 +183,22 @@ private fun AddGoalDialog(
 }
 
 @Composable
-private fun goalMetricLabel(metric: GoalMetric): String =
-    when (metric) {
-        GoalMetric.REPS -> stringResource(R.string.goal_metric_reps)
-        GoalMetric.VOLUME -> stringResource(R.string.goal_metric_volume)
-        GoalMetric.DURATION -> stringResource(R.string.goal_metric_duration)
-        GoalMetric.WORKOUT_COUNT -> stringResource(R.string.goal_metric_workout_count)
-    }
+private fun goalMetricLabel(metric: GoalMetric): String = when (metric) {
+    GoalMetric.REPS -> stringResource(R.string.goal_metric_reps)
+    GoalMetric.VOLUME -> stringResource(R.string.goal_metric_volume)
+    GoalMetric.DURATION -> stringResource(R.string.goal_metric_duration)
+    GoalMetric.WORKOUT_COUNT -> stringResource(R.string.goal_metric_workout_count)
+}
 
 @Composable
-private fun goalPeriodLabel(period: GoalPeriod): String =
-    when (period) {
-        GoalPeriod.DAILY -> stringResource(R.string.goal_period_daily)
-        GoalPeriod.WEEKLY -> stringResource(R.string.goal_period_weekly)
-        GoalPeriod.MONTHLY -> stringResource(R.string.goal_period_monthly)
-    }
+private fun goalPeriodLabel(period: GoalPeriod): String = when (period) {
+    GoalPeriod.DAILY -> stringResource(R.string.goal_period_daily)
+    GoalPeriod.WEEKLY -> stringResource(R.string.goal_period_weekly)
+    GoalPeriod.MONTHLY -> stringResource(R.string.goal_period_monthly)
+}
 
-private fun goalProgressText(
-    metric: GoalMetric,
-    current: Double,
-    target: Double,
-    unit: WeightUnit,
-): String =
-    when (metric) {
-        GoalMetric.VOLUME -> "${AnalyticsFormatters.volume(current, unit)} / ${AnalyticsFormatters.volume(target, unit)}"
-        GoalMetric.DURATION -> "${AnalyticsFormatters.durationHoursMinutes(current.toLong())} / ${AnalyticsFormatters.durationHoursMinutes(target.toLong())}"
-        GoalMetric.REPS, GoalMetric.WORKOUT_COUNT -> "${AnalyticsFormatters.count(current)} / ${AnalyticsFormatters.count(target)}"
-    }
+private fun goalProgressText(metric: GoalMetric, current: Double, target: Double, unit: WeightUnit): String = when (metric) {
+    GoalMetric.VOLUME -> "${AnalyticsFormatters.volume(current, unit)} / ${AnalyticsFormatters.volume(target, unit)}"
+    GoalMetric.DURATION -> "${AnalyticsFormatters.durationHoursMinutes(current.toLong())} / ${AnalyticsFormatters.durationHoursMinutes(target.toLong())}"
+    GoalMetric.REPS, GoalMetric.WORKOUT_COUNT -> "${AnalyticsFormatters.count(current)} / ${AnalyticsFormatters.count(target)}"
+}

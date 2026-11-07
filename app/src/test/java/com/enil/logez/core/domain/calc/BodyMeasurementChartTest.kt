@@ -1,36 +1,21 @@
 package com.enil.logez.core.domain.calc
 
 import com.enil.logez.core.domain.repository.BodyMeasurement
+import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.time.LocalDate
 
 class BodyMeasurementChartTest {
+
     /** Noon UTC 2026-08-22 -- resolves to 2026-08-22 in every plausible test JVM zone. */
     private val today = LocalDate.parse("2026-08-22")
 
-    private fun entry(
-        date: String,
-        waistCm: Double?,
-    ) = BodyMeasurement(
-        date = date,
-        weightKg = null,
-        leanMassKg = null,
-        fatPercent = null,
-        neckCm = null,
-        shoulderCm = null,
-        chestCm = null,
-        leftBicepCm = null,
-        rightBicepCm = null,
-        leftForearmCm = null,
-        rightForearmCm = null,
-        abdomenCm = null,
-        waistCm = waistCm,
-        hipsCm = null,
-        leftThighCm = null,
-        rightThighCm = null,
-        leftCalfCm = null,
-        rightCalfCm = null,
+    private fun entry(date: String, waistCm: Double?) = BodyMeasurement(
+        date = date, weightKg = null, leanMassKg = null, fatPercent = null,
+        neckCm = null, shoulderCm = null, chestCm = null,
+        leftBicepCm = null, rightBicepCm = null, leftForearmCm = null, rightForearmCm = null,
+        abdomenCm = null, waistCm = waistCm, hipsCm = null,
+        leftThighCm = null, rightThighCm = null, leftCalfCm = null, rightCalfCm = null,
         updatedAt = 0L,
     )
 
@@ -73,30 +58,16 @@ class BodyMeasurementChartTest {
 
     @Test
     fun `a different metric on the same entries reads independently`() {
-        val entries =
-            listOf(
-                BodyMeasurement(
-                    date = "2026-08-20",
-                    weightKg = 70.0,
-                    leanMassKg = null,
-                    fatPercent = null,
-                    neckCm = null,
-                    shoulderCm = null,
-                    chestCm = null,
-                    leftBicepCm = null,
-                    rightBicepCm = null,
-                    leftForearmCm = null,
-                    rightForearmCm = null,
-                    abdomenCm = null,
-                    waistCm = 80.0,
-                    hipsCm = null,
-                    leftThighCm = null,
-                    rightThighCm = null,
-                    leftCalfCm = null,
-                    rightCalfCm = null,
-                    updatedAt = 0L,
-                ),
-            )
+        val entries = listOf(
+            BodyMeasurement(
+                date = "2026-08-20", weightKg = 70.0, leanMassKg = null, fatPercent = null,
+                neckCm = null, shoulderCm = null, chestCm = null,
+                leftBicepCm = null, rightBicepCm = null, leftForearmCm = null, rightForearmCm = null,
+                abdomenCm = null, waistCm = 80.0, hipsCm = null,
+                leftThighCm = null, rightThighCm = null, leftCalfCm = null, rightCalfCm = null,
+                updatedAt = 0L,
+            ),
+        )
         val weightPoints = BodyMeasurementChart.points(BodyMeasurementMetric.WEIGHT, entries, ChartRange.ALL_TIME, today)
         val waistPoints = BodyMeasurementChart.points(BodyMeasurementMetric.WAIST, entries, ChartRange.ALL_TIME, today)
         assertEquals(70.0, weightPoints.single().value, 0.0)
@@ -106,10 +77,7 @@ class BodyMeasurementChartTest {
     @Test
     fun `empty input produces an empty list, for every range`() {
         for (range in ChartRange.entries) {
-            assertEquals(
-                emptyList<BodyMeasurementPoint>(),
-                BodyMeasurementChart.points(BodyMeasurementMetric.WAIST, emptyList(), range, today),
-            )
+            assertEquals(emptyList<BodyMeasurementPoint>(), BodyMeasurementChart.points(BodyMeasurementMetric.WAIST, emptyList(), range, today))
         }
     }
 }

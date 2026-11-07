@@ -6,6 +6,7 @@ import org.junit.Test
 
 /** M18: the single kg ↔ display-unit boundary for weight input cells. */
 class WeightDisplayTest {
+
     // --- Conversions ---
 
     @Test

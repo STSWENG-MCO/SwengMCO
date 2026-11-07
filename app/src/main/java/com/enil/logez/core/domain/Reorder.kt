@@ -9,10 +9,7 @@ package com.enil.logez.core.domain
  * screen-side optimistic copy of the list, so if that copy is ever stale or partial the worst case
  * is a lost move — never a silently dropped exercise (`mapNotNull` alone would delete it).
  */
-fun <T> List<T>.reorderedBy(
-    orderedIds: List<String>,
-    id: (T) -> String,
-): List<T> {
+fun <T> List<T>.reorderedBy(orderedIds: List<String>, id: (T) -> String): List<T> {
     val byId = associateBy(id)
     val named = orderedIds.distinct().mapNotNull { byId[it] }
     val namedIds = named.mapTo(HashSet()) { id(it) }

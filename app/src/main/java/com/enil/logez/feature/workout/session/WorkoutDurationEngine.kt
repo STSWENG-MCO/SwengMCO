@@ -9,12 +9,7 @@ package com.enil.logez.feature.workout.session
  * virtual time).
  */
 object WorkoutDurationEngine {
-    fun elapsedSeconds(
-        accumulatedActiveSeconds: Long,
-        isPaused: Boolean,
-        lastResumedAtMillis: Long?,
-        nowMillis: Long,
-    ): Long =
+    fun elapsedSeconds(accumulatedActiveSeconds: Long, isPaused: Boolean, lastResumedAtMillis: Long?, nowMillis: Long): Long =
         if (isPaused || lastResumedAtMillis == null) {
             accumulatedActiveSeconds
         } else {
@@ -22,9 +17,6 @@ object WorkoutDurationEngine {
         }
 
     /** Folds the just-finished active span into the accumulator; caller clears `lastResumedAtMillis` and sets `isPaused = true`. */
-    fun accumulateOnPause(
-        accumulatedActiveSeconds: Long,
-        lastResumedAtMillis: Long?,
-        nowMillis: Long,
-    ): Long = accumulatedActiveSeconds + ((nowMillis - (lastResumedAtMillis ?: nowMillis)) / 1000).coerceAtLeast(0)
+    fun accumulateOnPause(accumulatedActiveSeconds: Long, lastResumedAtMillis: Long?, nowMillis: Long): Long =
+        accumulatedActiveSeconds + ((nowMillis - (lastResumedAtMillis ?: nowMillis)) / 1000).coerceAtLeast(0)
 }

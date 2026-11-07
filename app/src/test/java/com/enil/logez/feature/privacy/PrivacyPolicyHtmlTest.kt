@@ -1,12 +1,12 @@
 package com.enil.logez.feature.privacy
 
 import com.enil.logez.BuildConfig
+import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
-import java.io.File
 
 class PrivacyPolicyHtmlTest {
     /**
@@ -20,11 +20,10 @@ class PrivacyPolicyHtmlTest {
         val expected = PrivacyPolicyHtml.render(PrivacyPolicyContent.document(BuildConfig.CONTACT_EMAIL))
         val site = File("../site/privacy/index.html")
         if (!site.isFile || site.readText() != expected) {
-            val regenerated =
-                File("build/privacy-policy/index.html").apply {
-                    parentFile!!.mkdirs()
-                    writeText(expected)
-                }
+            val regenerated = File("build/privacy-policy/index.html").apply {
+                parentFile!!.mkdirs()
+                writeText(expected)
+            }
             fail(
                 "site/privacy/index.html is out of date with PrivacyPolicyContent (or logez.contactEmail changed). " +
                     "Copy ${regenerated.absolutePath} over it.",

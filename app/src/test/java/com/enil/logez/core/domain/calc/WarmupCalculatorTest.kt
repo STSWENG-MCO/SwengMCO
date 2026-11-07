@@ -10,6 +10,7 @@ import org.junit.Test
 
 /** M18 §5.1.6: the warm-up ladder generator, checked with literal hand-computed values. */
 class WarmupCalculatorTest {
+
     private val defaultEquipment = PlateEquipment() // 20 kg bar; 1.25/2.5/5/10/15/20/25 plates
 
     @Test
@@ -38,13 +39,7 @@ class WarmupCalculatorTest {
     @Test
     fun `a barbell step below the bar clamps to the bar itself`() {
         // Working 40 kg at 40% = 16 kg < the 20 kg bar → the empty bar is the warm-up weight.
-        val plan =
-            WarmupCalculator.generate(
-                40.0,
-                listOf(WarmupStep(percent = 0.40, reps = 5)),
-                barbell = true,
-                equipment = defaultEquipment,
-            )
+        val plan = WarmupCalculator.generate(40.0, listOf(WarmupStep(percent = 0.40, reps = 5)), barbell = true, equipment = defaultEquipment)
         assertEquals(listOf(WarmupSetPlan(weightKg = 20.0, reps = 5)), plan)
     }
 

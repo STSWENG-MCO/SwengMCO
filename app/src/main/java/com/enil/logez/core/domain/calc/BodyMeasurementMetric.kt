@@ -8,9 +8,7 @@ import com.enil.logez.core.domain.repository.BodyMeasurement
 enum class MetricKind { WEIGHT, LENGTH, PERCENT }
 
 /** One entry per field on [BodyMeasurement] (minus [BodyMeasurement.date]/[BodyMeasurement.updatedAt]). */
-enum class BodyMeasurementMetric(
-    val kind: MetricKind,
-) {
+enum class BodyMeasurementMetric(val kind: MetricKind) {
     WEIGHT(MetricKind.WEIGHT),
     LEAN_MASS(MetricKind.WEIGHT),
     FAT_PERCENT(MetricKind.PERCENT),
@@ -34,46 +32,35 @@ enum class BodyMeasurementMetric(
  * body-composition metrics most people track without a tape measure. An explicit, named set, not
  * derived from [MetricKind] -- kind and Simplified-membership are different axes that only
  * coincidentally align today (every non-LENGTH metric happens to also be a Simplified one). */
-val SIMPLIFIED_METRICS: Set<BodyMeasurementMetric> =
-    setOf(
-        BodyMeasurementMetric.WEIGHT,
-        BodyMeasurementMetric.LEAN_MASS,
-        BodyMeasurementMetric.FAT_PERCENT,
-    )
+val SIMPLIFIED_METRICS: Set<BodyMeasurementMetric> = setOf(
+    BodyMeasurementMetric.WEIGHT,
+    BodyMeasurementMetric.LEAN_MASS,
+    BodyMeasurementMetric.FAT_PERCENT,
+)
 
 /** The metrics the Measurements screen shows for entry/display in [mode]. */
 fun visibleMetrics(mode: MeasurementsTrackingMode): List<BodyMeasurementMetric> =
-    if (mode ==
-        MeasurementsTrackingMode.COMPLETE
-    ) {
-        BodyMeasurementMetric.entries
-    } else {
-        BodyMeasurementMetric.entries.filter {
-            it in
-                SIMPLIFIED_METRICS
-        }
-    }
+    if (mode == MeasurementsTrackingMode.COMPLETE) BodyMeasurementMetric.entries else BodyMeasurementMetric.entries.filter { it in SIMPLIFIED_METRICS }
 
 /** The one place a [BodyMeasurementMetric] maps to its field on [BodyMeasurement] -- a copy-paste
  * mistake across these 17 near-identical branches has exactly one spot to hide, and one test file
  * ([com.enil.logez.core.domain.calc.BodyMeasurementMetricTest]) that checks every branch. */
-fun BodyMeasurement.valueFor(metric: BodyMeasurementMetric): Double? =
-    when (metric) {
-        BodyMeasurementMetric.WEIGHT -> weightKg
-        BodyMeasurementMetric.LEAN_MASS -> leanMassKg
-        BodyMeasurementMetric.FAT_PERCENT -> fatPercent
-        BodyMeasurementMetric.NECK -> neckCm
-        BodyMeasurementMetric.SHOULDER -> shoulderCm
-        BodyMeasurementMetric.CHEST -> chestCm
-        BodyMeasurementMetric.LEFT_BICEP -> leftBicepCm
-        BodyMeasurementMetric.RIGHT_BICEP -> rightBicepCm
-        BodyMeasurementMetric.LEFT_FOREARM -> leftForearmCm
-        BodyMeasurementMetric.RIGHT_FOREARM -> rightForearmCm
-        BodyMeasurementMetric.ABDOMEN -> abdomenCm
-        BodyMeasurementMetric.WAIST -> waistCm
-        BodyMeasurementMetric.HIPS -> hipsCm
-        BodyMeasurementMetric.LEFT_THIGH -> leftThighCm
-        BodyMeasurementMetric.RIGHT_THIGH -> rightThighCm
-        BodyMeasurementMetric.LEFT_CALF -> leftCalfCm
-        BodyMeasurementMetric.RIGHT_CALF -> rightCalfCm
-    }
+fun BodyMeasurement.valueFor(metric: BodyMeasurementMetric): Double? = when (metric) {
+    BodyMeasurementMetric.WEIGHT -> weightKg
+    BodyMeasurementMetric.LEAN_MASS -> leanMassKg
+    BodyMeasurementMetric.FAT_PERCENT -> fatPercent
+    BodyMeasurementMetric.NECK -> neckCm
+    BodyMeasurementMetric.SHOULDER -> shoulderCm
+    BodyMeasurementMetric.CHEST -> chestCm
+    BodyMeasurementMetric.LEFT_BICEP -> leftBicepCm
+    BodyMeasurementMetric.RIGHT_BICEP -> rightBicepCm
+    BodyMeasurementMetric.LEFT_FOREARM -> leftForearmCm
+    BodyMeasurementMetric.RIGHT_FOREARM -> rightForearmCm
+    BodyMeasurementMetric.ABDOMEN -> abdomenCm
+    BodyMeasurementMetric.WAIST -> waistCm
+    BodyMeasurementMetric.HIPS -> hipsCm
+    BodyMeasurementMetric.LEFT_THIGH -> leftThighCm
+    BodyMeasurementMetric.RIGHT_THIGH -> rightThighCm
+    BodyMeasurementMetric.LEFT_CALF -> leftCalfCm
+    BodyMeasurementMetric.RIGHT_CALF -> rightCalfCm
+}

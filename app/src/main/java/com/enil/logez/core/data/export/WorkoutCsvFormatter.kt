@@ -38,55 +38,37 @@ data class WorkoutCsvRow(
  * reproduce on an English-locale emulator.
  */
 object WorkoutCsvFormatter {
-    val HEADER: List<String> =
-        listOf(
-            "title",
-            "start_time",
-            "end_time",
-            "description",
-            "exercise_title",
-            "superset_id",
-            "exercise_notes",
-            "set_index",
-            "set_type",
-            "weight_kg",
-            "reps",
-            "distance_km",
-            "duration_seconds",
-            "rpe",
-        )
+    val HEADER: List<String> = listOf(
+        "title", "start_time", "end_time", "description", "exercise_title", "superset_id",
+        "exercise_notes", "set_index", "set_type", "weight_kg", "reps", "distance_km",
+        "duration_seconds", "rpe",
+    )
 
     private val TIMESTAMP = DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm", Locale.ENGLISH)
 
     fun header(): String = CsvWriter.row(HEADER)
 
-    fun row(
-        row: WorkoutCsvRow,
-        zone: ZoneId,
-    ): String =
-        CsvWriter.row(
-            listOf(
-                row.workoutTitle,
-                formatTimestamp(row.startedAt, zone),
-                row.endedAt?.let { formatTimestamp(it, zone) },
-                row.workoutNotes,
-                row.exerciseName,
-                row.supersetGroup?.toString(),
-                row.exerciseNotes,
-                row.setIndex.toString(),
-                row.setType.name.lowercase(Locale.ROOT),
-                row.weightKg?.let(::formatDecimal),
-                row.reps?.toString(),
-                row.distanceMeters?.let { formatDecimal(it / 1000.0) },
-                row.durationSeconds?.toString(),
-                row.rpe?.let(::formatDecimal),
-            ),
-        )
+    fun row(row: WorkoutCsvRow, zone: ZoneId): String = CsvWriter.row(
+        listOf(
+            row.workoutTitle,
+            formatTimestamp(row.startedAt, zone),
+            row.endedAt?.let { formatTimestamp(it, zone) },
+            row.workoutNotes,
+            row.exerciseName,
+            row.supersetGroup?.toString(),
+            row.exerciseNotes,
+            row.setIndex.toString(),
+            row.setType.name.lowercase(Locale.ROOT),
+            row.weightKg?.let(::formatDecimal),
+            row.reps?.toString(),
+            row.distanceMeters?.let { formatDecimal(it / 1000.0) },
+            row.durationSeconds?.toString(),
+            row.rpe?.let(::formatDecimal),
+        ),
+    )
 
-    private fun formatTimestamp(
-        epochMillis: Long,
-        zone: ZoneId,
-    ): String = Instant.ofEpochMilli(epochMillis).atZone(zone).format(TIMESTAMP)
+    private fun formatTimestamp(epochMillis: Long, zone: ZoneId): String =
+        Instant.ofEpochMilli(epochMillis).atZone(zone).format(TIMESTAMP)
 
     /** Trailing zeros trimmed, so 100.0 kg writes as `100` rather than `100.00`. */
     internal fun formatDecimal(value: Double): String {

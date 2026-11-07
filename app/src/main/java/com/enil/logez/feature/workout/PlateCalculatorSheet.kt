@@ -25,13 +25,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import com.enil.logez.R
 import com.enil.logez.core.designsystem.LogEzMono
 import com.enil.logez.core.designsystem.Spacing
-import com.enil.logez.core.designsystem.parseDecimalInput
 import com.enil.logez.core.domain.calc.PlateCalculator
 import com.enil.logez.core.domain.model.PlateEquipment
 import com.enil.logez.core.domain.model.WeightUnit
 import com.skydoves.flexible.bottomsheet.material3.FlexibleBottomSheet
 import com.skydoves.flexible.core.FlexibleSheetSize
 import com.skydoves.flexible.core.rememberFlexibleBottomSheetState
+import com.enil.logez.core.designsystem.parseDecimalInput
 
 /**
  * §5.1.5 Plate Calculator sheet (M17). Deliberately thin — every solve goes through the tested
@@ -86,12 +86,11 @@ internal fun PlateCalculatorSheet(
 
     FlexibleBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState =
-            rememberFlexibleBottomSheetState(
-                isModal = false,
-                skipSlightlyExpanded = false,
-                flexibleSheetSize = FlexibleSheetSize(fullyExpanded = 0.85f, intermediatelyExpanded = 0.45f, slightlyExpanded = 0.15f),
-            ),
+        sheetState = rememberFlexibleBottomSheetState(
+            isModal = false,
+            skipSlightlyExpanded = false,
+            flexibleSheetSize = FlexibleSheetSize(fullyExpanded = 0.85f, intermediatelyExpanded = 0.45f, slightlyExpanded = 0.15f),
+        ),
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(Spacing.md).padding(bottom = Spacing.lg)) {
@@ -140,10 +139,9 @@ internal fun PlateCalculatorSheet(
                 )
             } else {
                 // Live solve: recomputed only when target, bar, or equipment actually changes.
-                val result =
-                    remember(targetKg, selectedBarKg, equipment.platesKg) {
-                        PlateCalculator.solve(targetKg, selectedBarKg, equipment.platesKg)
-                    }
+                val result = remember(targetKg, selectedBarKg, equipment.platesKg) {
+                    PlateCalculator.solve(targetKg, selectedBarKg, equipment.platesKg)
+                }
                 PlateSolveResult(result = result, weightUnit = weightUnit, platesEmpty = equipment.platesKg.isEmpty(), onApply = onApply, onDismiss = onDismiss)
             }
         }
@@ -168,12 +166,11 @@ private fun PlateSolveResult(
         return
     }
 
-    val perSideLabel =
-        if (result.perSideKg.isEmpty()) {
-            "—"
-        } else {
-            result.perSideKg.joinToString(" · ") { formatWeightNumber(toDisplay(it, weightUnit)) }
-        }
+    val perSideLabel = if (result.perSideKg.isEmpty()) {
+        "—"
+    } else {
+        result.perSideKg.joinToString(" · ") { formatWeightNumber(toDisplay(it, weightUnit)) }
+    }
     Text(
         stringResource(R.string.workout_plate_per_side, perSideLabel),
         style = LogEzMono.dataMedium,
@@ -203,10 +200,7 @@ private fun PlateSolveResult(
             modifier = Modifier.padding(top = Spacing.md),
         )
         Row(modifier = Modifier.fillMaxWidth().padding(top = Spacing.sm)) {
-            Button(onClick = {
-                onApply(result.achievedKg)
-                onDismiss()
-            }) {
+            Button(onClick = { onApply(result.achievedKg); onDismiss() }) {
                 Text(stringResource(R.string.workout_plate_use, formatWeight(result.achievedKg, weightUnit)))
             }
         }
@@ -219,30 +213,16 @@ private fun WeightUnit.shortLabel(): String = if (this == WeightUnit.KG) "kg" el
 // the weight cells use — so the two surfaces can never disagree about what "100 lb" means. The
 // apply path stays canonical kg end-to-end (solve → achievedKg → onApply → the cell's kg value),
 // so the sheet's internal conversion and the cell's display conversion never stack.
-private fun toDisplay(
-    kg: Double,
-    unit: WeightUnit,
-): Double =
-    com.enil.logez.core.domain.calc.WeightDisplay
-        .toDisplay(kg, unit)
+private fun toDisplay(kg: Double, unit: WeightUnit): Double = com.enil.logez.core.domain.calc.WeightDisplay.toDisplay(kg, unit)
 
-private fun toKg(
-    display: Double,
-    unit: WeightUnit,
-): Double =
-    com.enil.logez.core.domain.calc.WeightDisplay
-        .toKg(display, unit)
+private fun toKg(display: Double, unit: WeightUnit): Double = com.enil.logez.core.domain.calc.WeightDisplay.toKg(display, unit)
 
-private fun formatWeight(
-    kg: Double,
-    unit: WeightUnit,
-): String = "${formatWeightNumber(toDisplay(kg, unit))} ${unit.shortLabel()}"
+private fun formatWeight(kg: Double, unit: WeightUnit): String =
+    "${formatWeightNumber(toDisplay(kg, unit))} ${unit.shortLabel()}"
 
 /**
  * Whole numbers bare, otherwise up to two decimals with trailing zeros trimmed ("1.25", "2.5").
  * Locale.ROOT keeps the decimal separator a dot on comma-decimal locales — the pre-filled target
  * text must round-trip through [String.toDoubleOrNull], which only parses dots.
  */
-private fun formatWeightNumber(value: Double): String =
-    com.enil.logez.core.domain.calc.WeightDisplay
-        .format(value)
+private fun formatWeightNumber(value: Double): String = com.enil.logez.core.domain.calc.WeightDisplay.format(value)

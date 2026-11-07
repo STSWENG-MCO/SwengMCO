@@ -1,6 +1,6 @@
 package com.enil.logez.feature.routines
 
-import android.content.res.Resources
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -29,22 +29,23 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.res.pluralStringResource
 import com.enil.logez.R
 import com.enil.logez.core.designsystem.CircuitChip
 import com.enil.logez.core.designsystem.LogEzCard
 import com.enil.logez.core.designsystem.Spacing
 import com.enil.logez.core.designsystem.logEzTopAppBarColors
 import com.enil.logez.core.domain.model.WorkoutStructure
+import com.enil.logez.feature.workout.StartResult
 import com.enil.logez.feature.activity.InterruptedTrackingDialog
 import com.enil.logez.feature.workout.InProgressWorkout
-import com.enil.logez.feature.workout.StartResult
 import com.enil.logez.feature.workout.rememberStartWorkoutSession
 import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalResources
+import android.content.res.Resources
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,16 +64,12 @@ fun RoutineDetailScreen(
     var interruptedRun by remember { mutableStateOf<Pair<String, Long>?>(null) }
     val startSession = rememberStartWorkoutSession(onNavigateToLogger)
 
-    fun start() =
-        scope.launch {
-            when (val result = viewModel.startRoutine()) {
-                is StartResult.Started -> startSession(result.workoutId)
-                is StartResult.AlreadyInProgress -> {
-                    showResumeDialog = true
-                    inProgressWorkoutId = result.workoutId
-                }
-            }
+    fun start() = scope.launch {
+        when (val result = viewModel.startRoutine()) {
+            is StartResult.Started -> startSession(result.workoutId)
+            is StartResult.AlreadyInProgress -> { showResumeDialog = true; inProgressWorkoutId = result.workoutId }
         }
+    }
 
     Scaffold(
         topBar = {
@@ -149,14 +146,12 @@ fun RoutineDetailScreen(
         }
     }
 
+
     interruptedRun?.let { (workoutId, startedAt) ->
         InterruptedTrackingDialog(
             workoutId = workoutId,
             startedAt = startedAt,
-            onKeptTime = { id ->
-                interruptedRun = null
-                onNavigateToFinish(id)
-            },
+            onKeptTime = { id -> interruptedRun = null; onNavigateToFinish(id) },
             onDiscarded = { interruptedRun = null },
         )
     }
@@ -186,10 +181,7 @@ fun RoutineDetailScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = {
-                    showResumeDialog = false
-                    scope.launch { startSession(viewModel.discardInProgressAndStart()) }
-                }) {
+                TextButton(onClick = { showResumeDialog = false; scope.launch { startSession(viewModel.discardInProgressAndStart()) } }) {
                     Text(stringResource(R.string.workout_resume_discard_action))
                 }
             },
@@ -197,18 +189,9 @@ fun RoutineDetailScreen(
     }
 }
 
-private fun formatDetailSetTargets(
-    res: Resources,
-    set: com.enil.logez.core.data.entity.RoutineSetEntity,
-    unit: com.enil.logez.core.domain.model.WeightUnit,
-): String {
+private fun formatDetailSetTargets(res: Resources, set: com.enil.logez.core.data.entity.RoutineSetEntity, unit: com.enil.logez.core.domain.model.WeightUnit): String {
     val parts = mutableListOf<String>()
-    set.targetWeightKg?.let {
-        parts.add(
-            com.enil.logez.core.designsystem
-                .formatWeight(it, unit),
-        )
-    }
+    set.targetWeightKg?.let { parts.add(com.enil.logez.core.designsystem.formatWeight(it, unit)) }
     if (set.targetRepRangeMin != null) {
         parts.add(res.getString(R.string.routine_detail_rep_range, set.targetRepRangeMin, set.targetRepRangeMax))
     } else {
@@ -219,6 +202,4 @@ private fun formatDetailSetTargets(
     return if (parts.isEmpty()) "—" else parts.joinToString(" · ")
 }
 
-private fun formatNum(value: Double): String =
-    com.enil.logez.core.designsystem
-        .formatTargetNumber(value)
+private fun formatNum(value: Double): String = com.enil.logez.core.designsystem.formatTargetNumber(value)

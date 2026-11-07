@@ -4,9 +4,7 @@ import com.enil.logez.core.common.Clock
 import kotlin.time.Instant
 
 /** PHASE2_PLAN.md §10.1 rule 3: inject a settable clock — never real system time in tests. */
-class FakeClock(
-    var currentMillis: Long = EPOCH_MILLIS,
-) : Clock {
+class FakeClock(var currentMillis: Long = EPOCH_MILLIS) : Clock {
     override fun now(): Instant = Instant.fromEpochMilliseconds(currentMillis)
 
     companion object {

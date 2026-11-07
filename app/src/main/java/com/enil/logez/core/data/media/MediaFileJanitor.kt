@@ -6,11 +6,11 @@ import com.enil.logez.core.data.backup.BackupWriter
 import com.enil.logez.core.data.backup.RestoreMarker
 import com.enil.logez.core.data.dao.BackupDao
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Deletes a media file once no row points at it. The seam ViewModels depend on, so their tests
@@ -24,10 +24,9 @@ interface MediaFileCleaner {
     suspend fun deleteIfUnreferenced(relativePath: String)
 
     companion object {
-        val NoOp: MediaFileCleaner =
-            object : MediaFileCleaner {
-                override suspend fun deleteIfUnreferenced(relativePath: String) = Unit
-            }
+        val NoOp: MediaFileCleaner = object : MediaFileCleaner {
+            override suspend fun deleteIfUnreferenced(relativePath: String) = Unit
+        }
     }
 }
 
@@ -54,8 +53,7 @@ class MediaFileJanitor(
     /** Where the camera screen writes its temporary full-size captures; null skips that sweep. */
     private val cacheDir: File? = null,
 ) : MediaFileCleaner {
-    @Inject
-    constructor(
+    @Inject constructor(
         @ApplicationContext context: Context,
         backupDao: BackupDao,
         logger: AppLogger,
@@ -75,26 +73,25 @@ class MediaFileJanitor(
      * not delete a capture that is still being saved. Does nothing while a restore is mid-way,
      * because its staged rows and files are not live yet. Returns how many files it deleted.
      */
-    suspend fun sweepOrphans(): Int =
-        withContext(Dispatchers.IO) {
-            if (RestoreMarker(filesDir).read() != null) return@withContext 0
-            val referenced = referencedPaths()
-            val cutoff = nowMillis() - GRACE_MILLIS
-            var deleted = 0
-            BackupWriter.mediaDirectories(filesDir).forEach { dir ->
-                dir.listFiles()?.forEach { file ->
-                    val relative = "${dir.name}/${file.name}"
-                    if (file.isFile && relative !in referenced && file.lastModified() < cutoff && file.delete()) deleted++
-                }
+    suspend fun sweepOrphans(): Int = withContext(Dispatchers.IO) {
+        if (RestoreMarker(filesDir).read() != null) return@withContext 0
+        val referenced = referencedPaths()
+        val cutoff = nowMillis() - GRACE_MILLIS
+        var deleted = 0
+        BackupWriter.mediaDirectories(filesDir).forEach { dir ->
+            dir.listFiles()?.forEach { file ->
+                val relative = "${dir.name}/${file.name}"
+                if (file.isFile && relative !in referenced && file.lastModified() < cutoff && file.delete()) deleted++
             }
-            // Full-size camera captures wait in the cache until they are copied or discarded; a process
-            // death during the "replace today's photo?" dialog orphaned them there.
-            cacheDir?.listFiles()?.forEach { file ->
-                if (file.isFile && file.name.startsWith(CAMERA_CAPTURE_PREFIX) && file.lastModified() < cutoff && file.delete()) deleted++
-            }
-            if (deleted > 0) logger.e(TAG, "Removed $deleted unreferenced media file(s)", null)
-            deleted
         }
+        // Full-size camera captures wait in the cache until they are copied or discarded; a process
+        // death during the "replace today's photo?" dialog orphaned them there.
+        cacheDir?.listFiles()?.forEach { file ->
+            if (file.isFile && file.name.startsWith(CAMERA_CAPTURE_PREFIX) && file.lastModified() < cutoff && file.delete()) deleted++
+        }
+        if (deleted > 0) logger.e(TAG, "Removed $deleted unreferenced media file(s)", null)
+        deleted
+    }
 
     /** Null for anything that is not a plain file name inside one of the two media directories. */
     private fun resolveMediaFile(relativePath: String): File? {

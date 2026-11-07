@@ -88,15 +88,14 @@ val Gold500 = Color(0xFFFFC24B)
  * Ordered lightest-first so lower group indices — the ones a typical routine actually uses — are
  * the most vibrant, matching the palette's own hierarchy rule.
  */
-val SupersetPalette =
-    listOf(
-        Color(0xFFC1FF7A), // pale yellow-green
-        Color(0xFFA5FF3D), // vivid yellow-green
-        Color(0xFF14FFA5), // spring green
-        Color(0xFF4BFF14), // pure green
-        Color(0xFFA8E6D1), // pale mint
-        Color(0xFF88DD92), // sage green
-        Color(0xFF10C638), // grass
-        Color(0xFF518E0B), // olive-green
-        Color(0xFF0B8E62), // deep teal-green
-    )
+val SupersetPalette = listOf(
+    Color(0xFFC1FF7A), // pale yellow-green
+    Color(0xFFA5FF3D), // vivid yellow-green
+    Color(0xFF14FFA5), // spring green
+    Color(0xFF4BFF14), // pure green
+    Color(0xFFA8E6D1), // pale mint
+    Color(0xFF88DD92), // sage green
+    Color(0xFF10C638), // grass
+    Color(0xFF518E0B), // olive-green
+    Color(0xFF0B8E62), // deep teal-green
+)

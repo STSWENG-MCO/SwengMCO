@@ -22,10 +22,7 @@ class SummaryFormattersTest {
 
     @Test
     fun `the plan's ONE_REP_MAX vector rounds to one decimal`() {
-        assertEquals(
-            "106.7 kg",
-            SummaryFormatters.formatMetricValue(ChartMetric.ONE_REP_MAX, 106.66666666666667, WeightUnit.KG, DistanceUnit.KM),
-        )
+        assertEquals("106.7 kg", SummaryFormatters.formatMetricValue(ChartMetric.ONE_REP_MAX, 106.66666666666667, WeightUnit.KG, DistanceUnit.KM))
     }
 
     @Test

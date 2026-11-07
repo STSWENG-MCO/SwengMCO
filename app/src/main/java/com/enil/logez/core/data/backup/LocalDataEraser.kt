@@ -9,17 +9,17 @@ import com.enil.logez.core.domain.model.UserSettings
 import com.enil.logez.core.domain.repository.SettingsRepository
 import com.enil.logez.core.domain.repository.TransactionRunner
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
-import org.maplibre.android.MapLibre
-import org.maplibre.android.offline.OfflineManager
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.resume
+import org.maplibre.android.MapLibre
+import org.maplibre.android.offline.OfflineManager
 
 /**
  * Settings > Data > "Delete all data" (Play-readiness audit, 2026-09-25). Until this existed the
@@ -45,83 +45,71 @@ import kotlin.coroutines.resume
  * user already exported, or images saved to Pictures, live outside the app and are not touched.
  */
 @Singleton
-class LocalDataEraser
-    @Inject
-    constructor(
-        @param:ApplicationContext private val context: Context,
-        private val backupDao: BackupDao,
-        private val transactionRunner: TransactionRunner,
-        private val settingsRepository: SettingsRepository,
-        private val seedManager: SeedManager,
-        private val widgetRefresher: WidgetRefresher,
-        private val logger: AppLogger,
-    ) {
-        suspend fun eraseEverything() =
-            withContext(NonCancellable) {
-                seedManager.resetSeedVersion()
+class LocalDataEraser @Inject constructor(
+    @param:ApplicationContext private val context: Context,
+    private val backupDao: BackupDao,
+    private val transactionRunner: TransactionRunner,
+    private val settingsRepository: SettingsRepository,
+    private val seedManager: SeedManager,
+    private val widgetRefresher: WidgetRefresher,
+    private val logger: AppLogger,
+) {
+    suspend fun eraseEverything() = withContext(NonCancellable) {
+        seedManager.resetSeedVersion()
 
-                transactionRunner.runInTransaction {
-                    BackupTables.WIPE_ORDER.forEach { backupDao.wipe(it) }
-                }
-
-                // Past the commit nothing may throw out of here: the caller would report "nothing was
-                // changed" about data that is already gone. Each remaining step is logged and skipped.
-                runCatching { withContext(Dispatchers.IO) { deleteMediaAndCache(context.filesDir, context.cacheDir) } }
-                    .onFailure { logger.e(TAG, "Deleting media and cache after the wipe failed", it) }
-                resetMapCache()
-                runCatching { settingsRepository.replaceAll(UserSettings()) }
-                    .onFailure { logger.e(TAG, "Resetting settings after the wipe failed", it) }
-                runCatching { seedManager.seedIfNeeded() }
-                    .onFailure { logger.e(TAG, "Re-seeding after deleting all data failed", it) }
-                runCatching { widgetRefresher.refresh() }
-                    .onFailure { logger.e(TAG, "Widget refresh after deleting all data failed", it) }
-            }
-
-        /**
-         * MapLibre keeps downloaded tiles in its own database under filesDir. Its API needs the
-         * library initialised on the main thread and answers through a callback. Best effort: a
-         * failure is logged, never allowed to fail the erase, and bounded so a stuck callback cannot
-         * hang it.
-         */
-        private suspend fun resetMapCache() {
-            val done =
-                withTimeoutOrNull(MAP_CACHE_TIMEOUT_MS) {
-                    withContext(Dispatchers.Main) {
-                        MapLibre.getInstance(context)
-                        suspendCancellableCoroutine { cont ->
-                            OfflineManager.getInstance(context).resetDatabase(
-                                object : OfflineManager.FileSourceCallback {
-                                    override fun onSuccess() {
-                                        if (cont.isActive) cont.resume(Unit)
-                                    }
-
-                                    override fun onError(message: String) {
-                                        logger.e(TAG, "Resetting the map tile cache failed: $message", null)
-                                        if (cont.isActive) cont.resume(Unit)
-                                    }
-                                },
-                            )
-                        }
-                    }
-                }
-            if (done == null) logger.e(TAG, "Resetting the map tile cache timed out", null)
+        transactionRunner.runInTransaction {
+            BackupTables.WIPE_ORDER.forEach { backupDao.wipe(it) }
         }
 
-        private companion object {
-            const val TAG = "LocalDataEraser"
-            const val MAP_CACHE_TIMEOUT_MS = 10_000L
-        }
+        // Past the commit nothing may throw out of here: the caller would report "nothing was
+        // changed" about data that is already gone. Each remaining step is logged and skipped.
+        runCatching { withContext(Dispatchers.IO) { deleteMediaAndCache(context.filesDir, context.cacheDir) } }
+            .onFailure { logger.e(TAG, "Deleting media and cache after the wipe failed", it) }
+        resetMapCache()
+        runCatching { settingsRepository.replaceAll(UserSettings()) }
+            .onFailure { logger.e(TAG, "Resetting settings after the wipe failed", it) }
+        runCatching { seedManager.seedIfNeeded() }
+            .onFailure { logger.e(TAG, "Re-seeding after deleting all data failed", it) }
+        runCatching { widgetRefresher.refresh() }
+            .onFailure { logger.e(TAG, "Widget refresh after deleting all data failed", it) }
     }
+
+    /**
+     * MapLibre keeps downloaded tiles in its own database under filesDir. Its API needs the
+     * library initialised on the main thread and answers through a callback. Best effort: a
+     * failure is logged, never allowed to fail the erase, and bounded so a stuck callback cannot
+     * hang it.
+     */
+    private suspend fun resetMapCache() {
+        val done = withTimeoutOrNull(MAP_CACHE_TIMEOUT_MS) {
+            withContext(Dispatchers.Main) {
+                MapLibre.getInstance(context)
+                suspendCancellableCoroutine { cont ->
+                    OfflineManager.getInstance(context).resetDatabase(object : OfflineManager.FileSourceCallback {
+                        override fun onSuccess() { if (cont.isActive) cont.resume(Unit) }
+                        override fun onError(message: String) {
+                            logger.e(TAG, "Resetting the map tile cache failed: $message", null)
+                            if (cont.isActive) cont.resume(Unit)
+                        }
+                    })
+                }
+            }
+        }
+        if (done == null) logger.e(TAG, "Resetting the map tile cache timed out", null)
+    }
+
+    private companion object {
+        const val TAG = "LocalDataEraser"
+        const val MAP_CACHE_TIMEOUT_MS = 10_000L
+    }
+}
 
 /**
  * Deletes both photo directories, their half-swapped ".old" copies, any staged restore (a full
  * copy of a backup) with its marker, and everything in the cache. Split out so it is testable on
  * plain files.
  */
-internal fun deleteMediaAndCache(
-    filesDir: File,
-    cacheDir: File,
-) {
+internal fun deleteMediaAndCache(filesDir: File, cacheDir: File) {
     listOf(BackupWriter.PROGRESS_PHOTOS_DIR, BackupWriter.EXERCISE_MEDIA_DIR).forEach { name ->
         File(filesDir, name).deleteRecursively()
         File(filesDir, "$name.old").deleteRecursively()

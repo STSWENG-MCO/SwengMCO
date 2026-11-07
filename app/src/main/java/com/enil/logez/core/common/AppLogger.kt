@@ -9,17 +9,9 @@ package com.enil.logez.core.common
  * wire one up just to exercise an unrelated code path.
  */
 interface AppLogger {
-    fun e(
-        tag: String,
-        message: String,
-        throwable: Throwable? = null,
-    )
+    fun e(tag: String, message: String, throwable: Throwable? = null)
 
     object NoOp : AppLogger {
-        override fun e(
-            tag: String,
-            message: String,
-            throwable: Throwable?,
-        ) = Unit
+        override fun e(tag: String, message: String, throwable: Throwable?) = Unit
     }
 }

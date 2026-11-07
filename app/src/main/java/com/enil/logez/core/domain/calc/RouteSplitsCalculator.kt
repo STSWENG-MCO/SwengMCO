@@ -47,10 +47,7 @@ object RouteSplitsCalculator {
      * Cumulative meters at each point, [points] being (lat, lng), scaled so the total equals
      * [trackedDistanceMeters] when it is given and positive (see the class doc).
      */
-    fun cumulativeMeters(
-        points: List<Pair<Double, Double>>,
-        trackedDistanceMeters: Double? = null,
-    ): DoubleArray {
+    fun cumulativeMeters(points: List<Pair<Double, Double>>, trackedDistanceMeters: Double? = null): DoubleArray {
         val cumulative = DoubleArray(points.size)
         for (i in 1 until points.size) {
             val (lat1, lng1) = points[i - 1]
@@ -119,9 +116,8 @@ object RouteSplitsCalculator {
         val series = mutableListOf<Pair<Long, Double>>()
         var t = times.first() + PACE_WINDOW_SECONDS
         while (t <= times.last()) {
-            val covered =
-                distanceAtTime(cumulative, times, t.toDouble()) -
-                    distanceAtTime(cumulative, times, (t - PACE_WINDOW_SECONDS).toDouble())
+            val covered = distanceAtTime(cumulative, times, t.toDouble()) -
+                distanceAtTime(cumulative, times, (t - PACE_WINDOW_SECONDS).toDouble())
             if (covered >= MIN_PACE_WINDOW_METERS) {
                 series += (startedAtMillis + t * 1000L) to PACE_WINDOW_SECONDS / (covered / unitMeters)
             }
@@ -160,22 +156,14 @@ object RouteSplitsCalculator {
         return times.map { t -> maxOf(t, highest).also { highest = it } }
     }
 
-    private fun timeAtDistance(
-        cumulative: DoubleArray,
-        times: List<Int>,
-        meters: Double,
-    ): Double {
+    private fun timeAtDistance(cumulative: DoubleArray, times: List<Int>, meters: Double): Double {
         val i = (1 until cumulative.size).firstOrNull { cumulative[it] >= meters } ?: return times.last().toDouble()
         val span = cumulative[i] - cumulative[i - 1]
         val fraction = if (span > 0.0) (meters - cumulative[i - 1]) / span else 1.0
         return times[i - 1] + fraction * (times[i] - times[i - 1])
     }
 
-    private fun distanceAtTime(
-        cumulative: DoubleArray,
-        times: List<Int>,
-        seconds: Double,
-    ): Double {
+    private fun distanceAtTime(cumulative: DoubleArray, times: List<Int>, seconds: Double): Double {
         if (seconds <= times.first()) return 0.0
         if (seconds >= times.last()) return cumulative.last()
         val i = (1 until times.size).first { times[it] >= seconds }

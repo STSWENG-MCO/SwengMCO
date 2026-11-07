@@ -9,6 +9,7 @@ import org.junit.Test
  * grid, dedupe, stay sorted, and the last bar can never be removed. All expected values literal.
  */
 class PlateEquipmentTest {
+
     @Test
     fun `default equipment is one 20 bar and the seven standard denominations`() {
         assertEquals(listOf(20.0), defaultPlateEquipment.barsKg)

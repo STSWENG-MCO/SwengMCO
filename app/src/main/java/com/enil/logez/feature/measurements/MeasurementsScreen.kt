@@ -28,10 +28,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -39,20 +37,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.enil.logez.R
-import com.enil.logez.core.common.PermissionDenial
-import com.enil.logez.core.common.openAppDetailsSettings
 import com.enil.logez.core.designsystem.ConfirmDialog
 import com.enil.logez.core.designsystem.LineChart
 import com.enil.logez.core.designsystem.LineChartPoint
@@ -64,19 +56,27 @@ import com.enil.logez.core.domain.calc.ChartRange
 import com.enil.logez.core.domain.calc.LengthDisplay
 import com.enil.logez.core.domain.calc.MetricKind
 import com.enil.logez.core.domain.calc.WeightDisplay
-import com.enil.logez.core.domain.calc.valueFor
 import com.enil.logez.core.domain.calc.visibleMetrics
 import com.enil.logez.core.domain.model.LengthUnit
 import com.enil.logez.core.domain.model.MeasurementsTrackingMode
 import com.enil.logez.core.domain.model.WeightUnit
+import com.enil.logez.core.domain.calc.valueFor
 import com.enil.logez.core.domain.repository.BodyMeasurement
 import com.enil.logez.core.domain.repository.ProgressPhoto
 import com.enil.logez.feature.settings.SettingsRadioDialog
 import com.enil.logez.feature.settings.SettingsValueRow
-import kotlinx.coroutines.launch
 import java.io.File
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import com.enil.logez.core.common.PermissionDenial
+import com.enil.logez.core.common.openAppDetailsSettings
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalResources
+import kotlinx.coroutines.launch
+import androidx.compose.ui.Alignment
 
 /**
  * PHASE2_PLAN.md §5.2 "Measurements" (Profile → Measurements). No overlay-camera compositing this
@@ -103,22 +103,20 @@ fun MeasurementsScreen(
     val resources = LocalResources.current
 
     // A camera denial used to do nothing at all: the tap just appeared to fail.
-    val requestCameraPermission =
-        rememberRequestCameraPermission(
-            onGranted = onOpenCamera,
-            onDenied = { denial ->
-                scope.launch {
-                    val blocked = denial == PermissionDenial.Blocked
-                    val result =
-                        snackbarHostState.showSnackbar(
-                            message = resources.getString(if (blocked) R.string.measurements_camera_blocked else R.string.measurements_camera_denied),
-                            actionLabel = if (blocked) resources.getString(R.string.permission_open_settings) else null,
-                            duration = SnackbarDuration.Long,
-                        )
-                    if (result == SnackbarResult.ActionPerformed) openAppDetailsSettings(context)
-                }
-            },
-        )
+    val requestCameraPermission = rememberRequestCameraPermission(
+        onGranted = onOpenCamera,
+        onDenied = { denial ->
+            scope.launch {
+                val blocked = denial == PermissionDenial.Blocked
+                val result = snackbarHostState.showSnackbar(
+                    message = resources.getString(if (blocked) R.string.measurements_camera_blocked else R.string.measurements_camera_denied),
+                    actionLabel = if (blocked) resources.getString(R.string.permission_open_settings) else null,
+                    duration = SnackbarDuration.Long,
+                )
+                if (result == SnackbarResult.ActionPerformed) openAppDetailsSettings(context)
+            }
+        },
+    )
 
     LaunchedEffect(capturedPhotoPath) {
         if (capturedPhotoPath != null) {
@@ -173,11 +171,10 @@ fun MeasurementsScreen(
                             selected = uiState.selectedRange == range,
                             onClick = { viewModel.selectRange(range) },
                             label = { Text(stringResource(range.labelRes())) },
-                            colors =
-                                FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = MaterialTheme.colorScheme.primary,
-                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-                                ),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                            ),
                         )
                     }
                 }
@@ -192,11 +189,10 @@ fun MeasurementsScreen(
                             selected = uiState.selectedMetric == metric,
                             onClick = { viewModel.selectMetric(metric) },
                             label = { Text(stringResource(metric.labelRes())) },
-                            colors =
-                                FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = MaterialTheme.colorScheme.primary,
-                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-                                ),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                            ),
                         )
                     }
                 }
@@ -293,10 +289,7 @@ fun MeasurementsScreen(
             weightUnit = uiState.weightUnit,
             lengthUnit = uiState.lengthUnit,
             trackingMode = uiState.trackingMode,
-            onConfirm = { measurement ->
-                viewModel.saveEntry(measurement)
-                entryDialogTarget = null
-            },
+            onConfirm = { measurement -> viewModel.saveEntry(measurement); entryDialogTarget = null },
             onDismiss = { entryDialogTarget = null },
         )
     }
@@ -307,10 +300,7 @@ fun MeasurementsScreen(
             options = MeasurementsTrackingMode.entries,
             selected = uiState.trackingMode,
             optionLabel = { trackingModeDescriptiveLabel(it) },
-            onSelect = {
-                viewModel.setTrackingMode(it)
-                showTrackingModeDialog = false
-            },
+            onSelect = { viewModel.setTrackingMode(it); showTrackingModeDialog = false },
             onDismiss = { showTrackingModeDialog = false },
         )
     }
@@ -350,10 +340,7 @@ fun MeasurementsScreen(
     }
 }
 
-private data class EntryDialogTarget(
-    val initial: BodyMeasurement?,
-    val defaultDate: LocalDate,
-)
+private data class EntryDialogTarget(val initial: BodyMeasurement?, val defaultDate: LocalDate)
 
 @Composable
 private fun MeasurementEntryRow(
@@ -368,12 +355,7 @@ private fun MeasurementEntryRow(
     ListItem(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         headlineContent = { Text(formatChartDate(dateStringToEpochMillis(entry.date))) },
-        supportingContent =
-            if (value != null) {
-                { Text(formatMetricValue(metric, value, weightUnit, lengthUnit)) }
-            } else {
-                null
-            },
+        supportingContent = if (value != null) { { Text(formatMetricValue(metric, value, weightUnit, lengthUnit)) } } else null,
         trailingContent = {
             IconButton(onClick = onDelete) {
                 Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.action_delete), tint = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -383,71 +365,53 @@ private fun MeasurementEntryRow(
 }
 
 private fun dateStringToEpochMillis(date: String): Long =
-    LocalDate
-        .parse(date)
-        .atStartOfDay(java.time.ZoneOffset.UTC)
-        .toInstant()
-        .toEpochMilli()
+    LocalDate.parse(date).atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli()
 
 private fun formatChartDate(millis: Long): String =
-    java.time.Instant
-        .ofEpochMilli(millis)
-        .atZone(java.time.ZoneOffset.UTC)
-        .toLocalDate()
-        .format(DateTimeFormatter.ofPattern("d MMM"))
+    java.time.Instant.ofEpochMilli(millis).atZone(java.time.ZoneOffset.UTC).toLocalDate().format(DateTimeFormatter.ofPattern("d MMM"))
 
 /** [value] is always the canonical stored value (kg/cm) -- converted to the current display unit here, once. */
-private fun formatMetricValue(
-    metric: BodyMeasurementMetric,
-    value: Double,
-    weightUnit: WeightUnit,
-    lengthUnit: LengthUnit,
-): String =
-    when (metric.kind) {
-        MetricKind.WEIGHT -> WeightDisplay.format(WeightDisplay.toDisplay(value, weightUnit))
-        MetricKind.LENGTH -> LengthDisplay.format(LengthDisplay.toDisplay(value, lengthUnit))
-        MetricKind.PERCENT -> WeightDisplay.format(value)
-    }
+private fun formatMetricValue(metric: BodyMeasurementMetric, value: Double, weightUnit: WeightUnit, lengthUnit: LengthUnit): String = when (metric.kind) {
+    MetricKind.WEIGHT -> WeightDisplay.format(WeightDisplay.toDisplay(value, weightUnit))
+    MetricKind.LENGTH -> LengthDisplay.format(LengthDisplay.toDisplay(value, lengthUnit))
+    MetricKind.PERCENT -> WeightDisplay.format(value)
+}
 
 @Composable
-private fun trackingModeShortLabel(mode: MeasurementsTrackingMode): String =
-    when (mode) {
-        MeasurementsTrackingMode.SIMPLIFIED -> stringResource(R.string.measurements_tracking_mode_simplified_short)
-        MeasurementsTrackingMode.COMPLETE -> stringResource(R.string.measurements_tracking_mode_complete_short)
-    }
+private fun trackingModeShortLabel(mode: MeasurementsTrackingMode): String = when (mode) {
+    MeasurementsTrackingMode.SIMPLIFIED -> stringResource(R.string.measurements_tracking_mode_simplified_short)
+    MeasurementsTrackingMode.COMPLETE -> stringResource(R.string.measurements_tracking_mode_complete_short)
+}
 
 @Composable
-private fun trackingModeDescriptiveLabel(mode: MeasurementsTrackingMode): String =
-    when (mode) {
-        MeasurementsTrackingMode.SIMPLIFIED -> stringResource(R.string.measurements_tracking_mode_simplified)
-        MeasurementsTrackingMode.COMPLETE -> stringResource(R.string.measurements_tracking_mode_complete)
-    }
+private fun trackingModeDescriptiveLabel(mode: MeasurementsTrackingMode): String = when (mode) {
+    MeasurementsTrackingMode.SIMPLIFIED -> stringResource(R.string.measurements_tracking_mode_simplified)
+    MeasurementsTrackingMode.COMPLETE -> stringResource(R.string.measurements_tracking_mode_complete)
+}
 
-private fun ChartRange.labelRes(): Int =
-    when (this) {
-        ChartRange.LAST_30_DAYS -> R.string.chart_range_30d
-        ChartRange.LAST_3_MONTHS -> R.string.chart_range_3m
-        ChartRange.LAST_YEAR -> R.string.chart_range_1y
-        ChartRange.ALL_TIME -> R.string.chart_range_all
-    }
+private fun ChartRange.labelRes(): Int = when (this) {
+    ChartRange.LAST_30_DAYS -> R.string.chart_range_30d
+    ChartRange.LAST_3_MONTHS -> R.string.chart_range_3m
+    ChartRange.LAST_YEAR -> R.string.chart_range_1y
+    ChartRange.ALL_TIME -> R.string.chart_range_all
+}
 
-private fun BodyMeasurementMetric.labelRes(): Int =
-    when (this) {
-        BodyMeasurementMetric.WEIGHT -> R.string.measurements_metric_weight
-        BodyMeasurementMetric.LEAN_MASS -> R.string.measurements_metric_lean_mass
-        BodyMeasurementMetric.FAT_PERCENT -> R.string.measurements_metric_fat_percent
-        BodyMeasurementMetric.NECK -> R.string.measurements_metric_neck
-        BodyMeasurementMetric.SHOULDER -> R.string.measurements_metric_shoulder
-        BodyMeasurementMetric.CHEST -> R.string.measurements_metric_chest
-        BodyMeasurementMetric.LEFT_BICEP -> R.string.measurements_metric_left_bicep
-        BodyMeasurementMetric.RIGHT_BICEP -> R.string.measurements_metric_right_bicep
-        BodyMeasurementMetric.LEFT_FOREARM -> R.string.measurements_metric_left_forearm
-        BodyMeasurementMetric.RIGHT_FOREARM -> R.string.measurements_metric_right_forearm
-        BodyMeasurementMetric.ABDOMEN -> R.string.measurements_metric_abdomen
-        BodyMeasurementMetric.WAIST -> R.string.measurements_metric_waist
-        BodyMeasurementMetric.HIPS -> R.string.measurements_metric_hips
-        BodyMeasurementMetric.LEFT_THIGH -> R.string.measurements_metric_left_thigh
-        BodyMeasurementMetric.RIGHT_THIGH -> R.string.measurements_metric_right_thigh
-        BodyMeasurementMetric.LEFT_CALF -> R.string.measurements_metric_left_calf
-        BodyMeasurementMetric.RIGHT_CALF -> R.string.measurements_metric_right_calf
-    }
+private fun BodyMeasurementMetric.labelRes(): Int = when (this) {
+    BodyMeasurementMetric.WEIGHT -> R.string.measurements_metric_weight
+    BodyMeasurementMetric.LEAN_MASS -> R.string.measurements_metric_lean_mass
+    BodyMeasurementMetric.FAT_PERCENT -> R.string.measurements_metric_fat_percent
+    BodyMeasurementMetric.NECK -> R.string.measurements_metric_neck
+    BodyMeasurementMetric.SHOULDER -> R.string.measurements_metric_shoulder
+    BodyMeasurementMetric.CHEST -> R.string.measurements_metric_chest
+    BodyMeasurementMetric.LEFT_BICEP -> R.string.measurements_metric_left_bicep
+    BodyMeasurementMetric.RIGHT_BICEP -> R.string.measurements_metric_right_bicep
+    BodyMeasurementMetric.LEFT_FOREARM -> R.string.measurements_metric_left_forearm
+    BodyMeasurementMetric.RIGHT_FOREARM -> R.string.measurements_metric_right_forearm
+    BodyMeasurementMetric.ABDOMEN -> R.string.measurements_metric_abdomen
+    BodyMeasurementMetric.WAIST -> R.string.measurements_metric_waist
+    BodyMeasurementMetric.HIPS -> R.string.measurements_metric_hips
+    BodyMeasurementMetric.LEFT_THIGH -> R.string.measurements_metric_left_thigh
+    BodyMeasurementMetric.RIGHT_THIGH -> R.string.measurements_metric_right_thigh
+    BodyMeasurementMetric.LEFT_CALF -> R.string.measurements_metric_left_calf
+    BodyMeasurementMetric.RIGHT_CALF -> R.string.measurements_metric_right_calf
+}

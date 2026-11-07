@@ -12,8 +12,7 @@ import androidx.compose.runtime.Composable
  * that these two screens' cells match — a future border-color change only needs to happen once.
  */
 @Composable
-fun boxedFieldColors() =
-    OutlinedTextFieldDefaults.colors(
-        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-        disabledBorderColor = MaterialTheme.colorScheme.outlineVariant,
-    )
+fun boxedFieldColors() = OutlinedTextFieldDefaults.colors(
+    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+    disabledBorderColor = MaterialTheme.colorScheme.outlineVariant,
+)

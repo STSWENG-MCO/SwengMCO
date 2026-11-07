@@ -14,48 +14,28 @@ class RestTimerEngineTest {
 
     @Test
     fun `adjustDeadline plus15 extends with no floor`() {
-        val deadline =
-            RestTimerEngine.adjustDeadline(
-                deadlineElapsedRealtimeMillis = 10_000L,
-                deltaSeconds = 15,
-                nowElapsedRealtimeMillis = 5_000L,
-            )
+        val deadline = RestTimerEngine.adjustDeadline(deadlineElapsedRealtimeMillis = 10_000L, deltaSeconds = 15, nowElapsedRealtimeMillis = 5_000L)
         assertEquals(25_000L, deadline)
     }
 
     @Test
     fun `adjustDeadline minus15 shortens when well above the 0-15 floor`() {
         // 30s remaining -> minus 15 leaves 15s, still positive.
-        val deadline =
-            RestTimerEngine.adjustDeadline(
-                deadlineElapsedRealtimeMillis = 30_000L,
-                deltaSeconds = -15,
-                nowElapsedRealtimeMillis = 0L,
-            )
+        val deadline = RestTimerEngine.adjustDeadline(deadlineElapsedRealtimeMillis = 30_000L, deltaSeconds = -15, nowElapsedRealtimeMillis = 0L)
         assertEquals(15_000L, deadline)
     }
 
     @Test
     fun `adjustDeadline minus15 below the 0-15 floor ends the timer`() {
         // §5.1.4: "-15 below 0:15 ends the timer" -- 10s remaining, minus 15 would go negative.
-        val deadline =
-            RestTimerEngine.adjustDeadline(
-                deadlineElapsedRealtimeMillis = 10_000L,
-                deltaSeconds = -15,
-                nowElapsedRealtimeMillis = 0L,
-            )
+        val deadline = RestTimerEngine.adjustDeadline(deadlineElapsedRealtimeMillis = 10_000L, deltaSeconds = -15, nowElapsedRealtimeMillis = 0L)
         assertNull(deadline)
     }
 
     @Test
     fun `adjustDeadline minus15 exactly at the floor ends the timer`() {
         // Exactly 15s remaining minus 15 lands exactly on now -> ends (adjusted <= now).
-        val deadline =
-            RestTimerEngine.adjustDeadline(
-                deadlineElapsedRealtimeMillis = 15_000L,
-                deltaSeconds = -15,
-                nowElapsedRealtimeMillis = 0L,
-            )
+        val deadline = RestTimerEngine.adjustDeadline(deadlineElapsedRealtimeMillis = 15_000L, deltaSeconds = -15, nowElapsedRealtimeMillis = 0L)
         assertNull(deadline)
     }
 

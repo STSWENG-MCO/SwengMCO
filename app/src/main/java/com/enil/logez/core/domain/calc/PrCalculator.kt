@@ -15,27 +15,21 @@ import com.enil.logez.core.domain.model.SetType
 object PrCalculator {
     private val SESSION_SCOPED = setOf(PrType.BEST_SESSION_VOLUME, PrType.MOST_SESSION_REPS)
 
-    fun applicablePrTypes(type: ExerciseType): Set<PrType> =
-        when (type) {
-            ExerciseType.WEIGHT_REPS ->
-                setOf(PrType.HEAVIEST_WEIGHT, PrType.BEST_1RM, PrType.BEST_SET_VOLUME, PrType.BEST_SESSION_VOLUME)
-            ExerciseType.REPS_ONLY, ExerciseType.BODYWEIGHT_ASSISTED ->
-                setOf(PrType.MOST_REPS_SET, PrType.MOST_SESSION_REPS)
-            ExerciseType.BODYWEIGHT_WEIGHTED -> setOf(PrType.HEAVIEST_WEIGHT, PrType.BEST_SET_VOLUME)
-            ExerciseType.DURATION -> setOf(PrType.BEST_TIME)
-            ExerciseType.WEIGHT_DURATION -> setOf(PrType.HEAVIEST_WEIGHT, PrType.BEST_TIME)
-            ExerciseType.DISTANCE_DURATION -> setOf(PrType.LONGEST_DISTANCE, PrType.LONGEST_TIME)
-            ExerciseType.WEIGHT_DISTANCE -> setOf(PrType.HEAVIEST_WEIGHT, PrType.LONGEST_DISTANCE)
-            ExerciseType.FLOORS_DURATION, ExerciseType.STEPS_DURATION -> setOf(PrType.BEST_TIME)
-        }
+    fun applicablePrTypes(type: ExerciseType): Set<PrType> = when (type) {
+        ExerciseType.WEIGHT_REPS ->
+            setOf(PrType.HEAVIEST_WEIGHT, PrType.BEST_1RM, PrType.BEST_SET_VOLUME, PrType.BEST_SESSION_VOLUME)
+        ExerciseType.REPS_ONLY, ExerciseType.BODYWEIGHT_ASSISTED ->
+            setOf(PrType.MOST_REPS_SET, PrType.MOST_SESSION_REPS)
+        ExerciseType.BODYWEIGHT_WEIGHTED -> setOf(PrType.HEAVIEST_WEIGHT, PrType.BEST_SET_VOLUME)
+        ExerciseType.DURATION -> setOf(PrType.BEST_TIME)
+        ExerciseType.WEIGHT_DURATION -> setOf(PrType.HEAVIEST_WEIGHT, PrType.BEST_TIME)
+        ExerciseType.DISTANCE_DURATION -> setOf(PrType.LONGEST_DISTANCE, PrType.LONGEST_TIME)
+        ExerciseType.WEIGHT_DISTANCE -> setOf(PrType.HEAVIEST_WEIGHT, PrType.LONGEST_DISTANCE)
+        ExerciseType.FLOORS_DURATION, ExerciseType.STEPS_DURATION -> setOf(PrType.BEST_TIME)
+    }
 
     /** Per-set candidates only — HEAVIEST_WEIGHT, BEST_1RM, BEST_SET_VOLUME, MOST_REPS_SET, LONGEST_DISTANCE, BEST_TIME/LONGEST_TIME. */
-    fun setCandidates(
-        type: ExerciseType,
-        set: StatSet,
-        eligible: Boolean,
-        bodyweightKg: Double?,
-    ): Map<PrType, Double> =
+    fun setCandidates(type: ExerciseType, set: StatSet, eligible: Boolean, bodyweightKg: Double?): Map<PrType, Double> =
         (applicablePrTypes(type) - SESSION_SCOPED)
             .mapNotNull { pr -> setCandidateValue(pr, type, set, eligible, bodyweightKg)?.takeIf { it > 0.0 }?.let { pr to it } }
             .toMap()
@@ -82,7 +76,8 @@ object PrCalculator {
             .filter { (pr, value) ->
                 val priorBest = maxOf(cachedBests[pr] ?: Double.NEGATIVE_INFINITY, earlierSessionBests[pr] ?: Double.NEGATIVE_INFINITY)
                 value > priorBest
-            }.keys
+            }
+            .keys
             .toList()
     }
 
@@ -92,24 +87,20 @@ object PrCalculator {
         set: StatSet,
         eligible: Boolean,
         bodyweightKg: Double?,
-    ): Double? =
-        when (pr) {
-            PrType.HEAVIEST_WEIGHT -> set.weightKg
-            PrType.BEST_1RM -> {
-                val w = set.weightKg ?: return null
-                val r = set.reps ?: return null
-                OneRepMax.estimate(w, r)
-            }
-            PrType.BEST_SET_VOLUME -> {
-                if (set.weightKg == null || set.reps == null) {
-                    null
-                } else {
-                    VolumeCalculator.setVolume(type, eligible, set.weightKg, set.reps, bodyweightKg)
-                }
-            }
-            PrType.MOST_REPS_SET -> set.reps?.toDouble()
-            PrType.LONGEST_DISTANCE -> set.distanceMeters
-            PrType.BEST_TIME, PrType.LONGEST_TIME -> set.durationSeconds?.toDouble()
-            PrType.BEST_SESSION_VOLUME, PrType.MOST_SESSION_REPS -> null
+    ): Double? = when (pr) {
+        PrType.HEAVIEST_WEIGHT -> set.weightKg
+        PrType.BEST_1RM -> {
+            val w = set.weightKg ?: return null
+            val r = set.reps ?: return null
+            OneRepMax.estimate(w, r)
         }
+        PrType.BEST_SET_VOLUME -> {
+            if (set.weightKg == null || set.reps == null) null
+            else VolumeCalculator.setVolume(type, eligible, set.weightKg, set.reps, bodyweightKg)
+        }
+        PrType.MOST_REPS_SET -> set.reps?.toDouble()
+        PrType.LONGEST_DISTANCE -> set.distanceMeters
+        PrType.BEST_TIME, PrType.LONGEST_TIME -> set.durationSeconds?.toDouble()
+        PrType.BEST_SESSION_VOLUME, PrType.MOST_SESSION_REPS -> null
+    }
 }

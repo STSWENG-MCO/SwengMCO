@@ -10,23 +10,23 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import com.enil.logez.R
-import com.enil.logez.core.designsystem.rememberClockTimeFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import javax.inject.Inject
+import kotlinx.coroutines.launch
+import com.enil.logez.core.designsystem.currentLocale
+import com.enil.logez.core.designsystem.rememberClockTimeFormatter
 
 @HiltViewModel
-class InterruptedTrackingViewModel
-    @Inject
-    constructor(
-        private val recovery: InterruptedTrackingRecovery,
-    ) : ViewModel() {
-        suspend fun keepElapsedTime(workoutId: String): Boolean = recovery.keepElapsedTime(workoutId)
+class InterruptedTrackingViewModel @Inject constructor(
+    private val recovery: InterruptedTrackingRecovery,
+) : ViewModel() {
+    suspend fun keepElapsedTime(workoutId: String): Boolean = recovery.keepElapsedTime(workoutId)
 
-        suspend fun discard(workoutId: String) = recovery.discard(workoutId)
-    }
+    suspend fun discard(workoutId: String) = recovery.discard(workoutId)
+}
 
 /**
  * Shown when a GPS run's process died mid-track. Two real choices and no plain cancel, so this is

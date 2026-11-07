@@ -2,10 +2,10 @@ package com.enil.logez.core.domain.calc
 
 import com.enil.logez.core.domain.model.ExerciseType
 import java.time.DayOfWeek
-import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
+import java.time.Instant
 
 /**
  * PHASE2_PLAN.md §5.2 "Analytics dashboard" — workout-level aggregation for the Training charts
@@ -25,11 +25,7 @@ object DashboardAggregator {
     enum class TrainingMetric { VOLUME, REPS, DURATION, FREQUENCY }
 
     /** One completed workout, projected to what the dashboard needs. */
-    data class WorkoutInfo(
-        val id: String,
-        val startedAt: Long,
-        val durationSeconds: Int,
-    )
+    data class WorkoutInfo(val id: String, val startedAt: Long, val durationSeconds: Int)
 
     /** One set joined with the exercise facts volume math needs. */
     data class SetWithExercise(
@@ -40,33 +36,13 @@ object DashboardAggregator {
         val set: StatSet,
     )
 
-    data class WeeklyBar(
-        val weekStart: LocalDate,
-        val value: Double,
-    )
+    data class WeeklyBar(val weekStart: LocalDate, val value: Double)
+    data class PeriodTotals(val workouts: Int, val durationSeconds: Long, val volumeKg: Double, val sets: Int)
+    data class ExerciseFrequency(val exerciseId: String, val exerciseName: String, val workoutCount: Int)
+    data class MonthTotals(val month: YearMonth, val totals: PeriodTotals)
 
-    data class PeriodTotals(
-        val workouts: Int,
-        val durationSeconds: Long,
-        val volumeKg: Double,
-        val sets: Int,
-    )
-
-    data class ExerciseFrequency(
-        val exerciseId: String,
-        val exerciseName: String,
-        val workoutCount: Int,
-    )
-
-    data class MonthTotals(
-        val month: YearMonth,
-        val totals: PeriodTotals,
-    )
-
-    fun localDate(
-        startedAt: Long,
-        zone: ZoneId,
-    ): LocalDate = Instant.ofEpochMilli(startedAt).atZone(zone).toLocalDate()
+    fun localDate(startedAt: Long, zone: ZoneId): LocalDate =
+        Instant.ofEpochMilli(startedAt).atZone(zone).toLocalDate()
 
     /**
      * One bar per week from the window's first workout-holding week through today's week —
@@ -87,39 +63,28 @@ object DashboardAggregator {
         val inWindow = workouts.filter { window == null || localDate(it.startedAt, zone) in window }
         if (inWindow.isEmpty()) return emptyList()
 
-        val valueByWeek: Map<LocalDate, Double> =
-            when (metric) {
-                TrainingMetric.FREQUENCY ->
-                    inWindow
-                        .groupingBy { StreakCalculator.weekStart(localDate(it.startedAt, zone), firstDayOfWeek) }
-                        .eachCount()
-                        .mapValues { it.value.toDouble() }
-                TrainingMetric.DURATION ->
-                    inWindow
-                        .groupBy { StreakCalculator.weekStart(localDate(it.startedAt, zone), firstDayOfWeek) }
-                        .mapValues { (_, ws) -> ws.sumOf { it.durationSeconds.toDouble() } }
-                TrainingMetric.VOLUME, TrainingMetric.REPS -> {
-                    val workoutIds = inWindow.map { it.id }.toHashSet()
-                    sets
-                        .filter { it.set.workoutId in workoutIds && isIncluded(it.set, includeWarmupsInStats) }
-                        .groupBy { StreakCalculator.weekStart(localDate(it.set.workoutStartedAt, zone), firstDayOfWeek) }
-                        .mapValues { (_, weekSets) ->
-                            when (metric) {
-                                TrainingMetric.VOLUME ->
-                                    weekSets.sumOf {
-                                        VolumeCalculator.setVolume(
-                                            it.exerciseType,
-                                            it.isBodyweightVolumeEligible,
-                                            it.set.weightKg,
-                                            it.set.reps,
-                                            bodyweightKg = null,
-                                        )
-                                    }
-                                else -> weekSets.sumOf { (it.set.reps ?: 0).toDouble() }
+        val valueByWeek: Map<LocalDate, Double> = when (metric) {
+            TrainingMetric.FREQUENCY -> inWindow
+                .groupingBy { StreakCalculator.weekStart(localDate(it.startedAt, zone), firstDayOfWeek) }
+                .eachCount().mapValues { it.value.toDouble() }
+            TrainingMetric.DURATION -> inWindow
+                .groupBy { StreakCalculator.weekStart(localDate(it.startedAt, zone), firstDayOfWeek) }
+                .mapValues { (_, ws) -> ws.sumOf { it.durationSeconds.toDouble() } }
+            TrainingMetric.VOLUME, TrainingMetric.REPS -> {
+                val workoutIds = inWindow.map { it.id }.toHashSet()
+                sets
+                    .filter { it.set.workoutId in workoutIds && isIncluded(it.set, includeWarmupsInStats) }
+                    .groupBy { StreakCalculator.weekStart(localDate(it.set.workoutStartedAt, zone), firstDayOfWeek) }
+                    .mapValues { (_, weekSets) ->
+                        when (metric) {
+                            TrainingMetric.VOLUME -> weekSets.sumOf {
+                                VolumeCalculator.setVolume(it.exerciseType, it.isBodyweightVolumeEligible, it.set.weightKg, it.set.reps, bodyweightKg = null)
                             }
+                            else -> weekSets.sumOf { (it.set.reps ?: 0).toDouble() }
                         }
-                }
+                    }
             }
+        }
 
         val firstWeek = inWindow.minOf { StreakCalculator.weekStart(localDate(it.startedAt, zone), firstDayOfWeek) }
         val lastWeek = StreakCalculator.weekStart(today, firstDayOfWeek)
@@ -146,16 +111,9 @@ object DashboardAggregator {
         return PeriodTotals(
             workouts = inWindow.size,
             durationSeconds = inWindow.sumOf { it.durationSeconds.toLong() },
-            volumeKg =
-                includedSets.sumOf {
-                    VolumeCalculator.setVolume(
-                        it.exerciseType,
-                        it.isBodyweightVolumeEligible,
-                        it.set.weightKg,
-                        it.set.reps,
-                        bodyweightKg = null,
-                    )
-                },
+            volumeKg = includedSets.sumOf {
+                VolumeCalculator.setVolume(it.exerciseType, it.isBodyweightVolumeEligible, it.set.weightKg, it.set.reps, bodyweightKg = null)
+            },
             sets = includedSets.size,
         )
     }
@@ -177,7 +135,8 @@ object DashboardAggregator {
             .groupBy { it.exerciseId }
             .map { (exerciseId, exSets) ->
                 ExerciseFrequency(exerciseId, exSets.first().exerciseName, exSets.distinctBy { it.set.workoutId }.size)
-            }.sortedWith(compareByDescending<ExerciseFrequency> { it.workoutCount }.thenBy { it.exerciseName })
+            }
+            .sortedWith(compareByDescending<ExerciseFrequency> { it.workoutCount }.thenBy { it.exerciseName })
 
     /** Whole-month window for [month] — the Monthly Report's building block. */
     fun monthWindow(month: YearMonth): ClosedRange<LocalDate> = month.atDay(1)..month.atEndOfMonth()

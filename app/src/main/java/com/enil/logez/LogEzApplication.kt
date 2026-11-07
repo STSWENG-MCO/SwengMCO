@@ -6,20 +6,18 @@ import coil3.ImageLoader
 import coil3.SingletonImageLoader
 import coil3.memory.MemoryCache
 import com.enil.logez.core.data.backup.BackupRestorer
-import com.enil.logez.core.data.media.MediaFileJanitor
 import com.enil.logez.core.data.seed.SeedManager
 import com.enil.logez.feature.widget.MidnightWidgetWorker
 import dagger.hilt.android.HiltAndroidApp
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import javax.inject.Inject
+import com.enil.logez.core.data.media.MediaFileJanitor
 
 @HiltAndroidApp
-class LogEzApplication :
-    Application(),
-    SingletonImageLoader.Factory {
+class LogEzApplication : Application(), SingletonImageLoader.Factory {
     @Inject lateinit var seedManager: SeedManager
 
     @Inject lateinit var backupRestorer: BackupRestorer
@@ -52,8 +50,7 @@ class LogEzApplication :
      * loads render instantly with no crossfade (near-zero-motion rule).
      */
     override fun newImageLoader(context: Context): ImageLoader =
-        ImageLoader
-            .Builder(context)
+        ImageLoader.Builder(context)
             .memoryCache { MemoryCache.Builder().maxSizePercent(context, 0.15).build() }
             .build()
 }

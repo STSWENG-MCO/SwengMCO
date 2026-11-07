@@ -14,34 +14,32 @@ import javax.inject.Singleton
  * without a document provider — the Uri is resolved one layer up.
  */
 @Singleton
-class CsvExporter
-    @Inject
-    constructor(
-        private val workoutDao: WorkoutDao,
-        private val measurementDao: MeasurementDao,
-    ) {
-        suspend fun exportWorkouts(out: OutputStream): Int {
-            // Resolved per call, never cached: an export is a local-time artifact, and a zone read at
-            // construction would outlive a real zone change.
-            val zone = ZoneId.systemDefault()
-            val rows = workoutDao.getWorkoutCsvRows()
-            out.writer(Charsets.UTF_8).use { writer ->
-                writer.write(WorkoutCsvFormatter.header())
-                rows.forEach { writer.write(WorkoutCsvFormatter.row(it, zone)) }
-            }
-            return rows.size
+class CsvExporter @Inject constructor(
+    private val workoutDao: WorkoutDao,
+    private val measurementDao: MeasurementDao,
+) {
+    suspend fun exportWorkouts(out: OutputStream): Int {
+        // Resolved per call, never cached: an export is a local-time artifact, and a zone read at
+        // construction would outlive a real zone change.
+        val zone = ZoneId.systemDefault()
+        val rows = workoutDao.getWorkoutCsvRows()
+        out.writer(Charsets.UTF_8).use { writer ->
+            writer.write(WorkoutCsvFormatter.header())
+            rows.forEach { writer.write(WorkoutCsvFormatter.row(it, zone)) }
         }
-
-        suspend fun exportMeasurements(out: OutputStream): Int {
-            val rows = measurementDao.getAllForExport()
-            out.writer(Charsets.UTF_8).use { writer ->
-                writer.write(MeasurementCsvFormatter.header())
-                rows.forEach { writer.write(MeasurementCsvFormatter.row(it)) }
-            }
-            return rows.size
-        }
-
-        suspend fun workoutSetCount(): Int = workoutDao.getWorkoutCsvRows().size
-
-        suspend fun measurementCount(): Int = measurementDao.getAllForExport().size
+        return rows.size
     }
+
+    suspend fun exportMeasurements(out: OutputStream): Int {
+        val rows = measurementDao.getAllForExport()
+        out.writer(Charsets.UTF_8).use { writer ->
+            writer.write(MeasurementCsvFormatter.header())
+            rows.forEach { writer.write(MeasurementCsvFormatter.row(it)) }
+        }
+        return rows.size
+    }
+
+    suspend fun workoutSetCount(): Int = workoutDao.getWorkoutCsvRows().size
+
+    suspend fun measurementCount(): Int = measurementDao.getAllForExport().size
+}

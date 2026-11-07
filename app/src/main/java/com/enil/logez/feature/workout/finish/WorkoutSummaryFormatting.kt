@@ -10,18 +10,13 @@ import java.text.DecimalFormatSymbols
 import java.util.Locale
 
 /** Recap numbers: no trailing zeroes and never more than two fractional digits. */
-internal fun formatSummaryNumber(value: Double): String =
-    DecimalFormat(
-        "0.##",
-        DecimalFormatSymbols.getInstance(Locale.ROOT),
-    ).apply { roundingMode = RoundingMode.HALF_UP }.format(value)
+internal fun formatSummaryNumber(value: Double): String = DecimalFormat(
+    "0.##",
+    DecimalFormatSymbols.getInstance(Locale.ROOT),
+).apply { roundingMode = RoundingMode.HALF_UP }.format(value)
 
-internal fun formatSummaryVolume(
-    kg: Double,
-    unit: WeightUnit,
-): String = formatSummaryNumber(WeightDisplay.toDisplay(kg, unit)) + if (unit == WeightUnit.KG) "kg" else "lb"
+internal fun formatSummaryVolume(kg: Double, unit: WeightUnit): String =
+    formatSummaryNumber(WeightDisplay.toDisplay(kg, unit)) + if (unit == WeightUnit.KG) "kg" else "lb"
 
-internal fun formatSummaryDistance(
-    meters: Double,
-    unit: DistanceUnit,
-): String = formatSummaryNumber(DistanceDisplay.toDisplay(meters, unit)) + if (unit == DistanceUnit.KM) "km" else "mi"
+internal fun formatSummaryDistance(meters: Double, unit: DistanceUnit): String =
+    formatSummaryNumber(DistanceDisplay.toDisplay(meters, unit)) + if (unit == DistanceUnit.KM) "km" else "mi"

@@ -7,13 +7,13 @@ import com.enil.logez.core.domain.repository.WorkoutRepository
 import com.enil.logez.feature.activity.ActivityTrackingController
 import com.enil.logez.feature.workout.session.WorkoutSessionController
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 /**
  * Backs the mini-bar docked above the bottom tab bar, showing a summary of an in-progress workout
@@ -28,42 +28,39 @@ import javax.inject.Inject
  * second instead of just its digits.
  */
 @HiltViewModel
-class MiniBarViewModel
-    @Inject
-    constructor(
-        workoutRepository: WorkoutRepository,
-        activityTrackingController: ActivityTrackingController,
-        private val sessionController: WorkoutSessionController,
-    ) : ViewModel() {
-        init {
-            // §9.5 cold-start recovery safety net: if nothing else has rehydrated the controller yet
-            // (the Logger/Service may not have run this app process), the elapsed/rest flows would
-            // otherwise silently show nothing for an IN_PROGRESS workout.
-            viewModelScope.launch { sessionController.rehydrate() }
-        }
-
-        val elapsedSecondsFlow: Flow<Long> = sessionController.elapsedSecondsFlow
-        val restRemainingMillisFlow: Flow<Long?> = sessionController.restRemainingMillisFlow
-
-        val uiState: StateFlow<MiniBarUiState> =
-            combine(
-                workoutRepository.observeInProgress(),
-                activityTrackingController.state,
-            ) { workout, tracking ->
-                if (workout == null) {
-                    MiniBarUiState()
-                } else {
-                    MiniBarUiState(
-                        visible = true,
-                        workoutId = workout.id,
-                        title = workout.title,
-                        startedAt = workout.startedAt,
-                        kind = workout.kind,
-                        gpsSessionAlive = tracking.workoutId == workout.id,
-                    )
-                }
-            }.stateIn(viewModelScope, SharingStarted.Eagerly, MiniBarUiState())
+class MiniBarViewModel @Inject constructor(
+    workoutRepository: WorkoutRepository,
+    activityTrackingController: ActivityTrackingController,
+    private val sessionController: WorkoutSessionController,
+) : ViewModel() {
+    init {
+        // §9.5 cold-start recovery safety net: if nothing else has rehydrated the controller yet
+        // (the Logger/Service may not have run this app process), the elapsed/rest flows would
+        // otherwise silently show nothing for an IN_PROGRESS workout.
+        viewModelScope.launch { sessionController.rehydrate() }
     }
+
+    val elapsedSecondsFlow: Flow<Long> = sessionController.elapsedSecondsFlow
+    val restRemainingMillisFlow: Flow<Long?> = sessionController.restRemainingMillisFlow
+
+    val uiState: StateFlow<MiniBarUiState> = combine(
+        workoutRepository.observeInProgress(),
+        activityTrackingController.state,
+    ) { workout, tracking ->
+        if (workout == null) {
+            MiniBarUiState()
+        } else {
+            MiniBarUiState(
+                visible = true,
+                workoutId = workout.id,
+                title = workout.title,
+                startedAt = workout.startedAt,
+                kind = workout.kind,
+                gpsSessionAlive = tracking.workoutId == workout.id,
+            )
+        }
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, MiniBarUiState())
+}
 
 data class MiniBarUiState(
     val visible: Boolean = false,

@@ -34,30 +34,21 @@ fun RestTimerPickerSheet(
                 RestTimerOptionRow(
                     label = stringResource(R.string.rest_timer_default_option, formatMmSs(defaultSeconds)),
                     selected = currentSeconds == null,
-                    onClick = {
-                        onSelect(null)
-                        onDismiss()
-                    },
+                    onClick = { onSelect(null); onDismiss() },
                 )
             }
             item {
                 RestTimerOptionRow(
                     label = stringResource(R.string.rest_timer_off_option),
                     selected = currentSeconds == 0,
-                    onClick = {
-                        onSelect(0)
-                        onDismiss()
-                    },
+                    onClick = { onSelect(0); onDismiss() },
                 )
             }
             items((5..300 step 5).toList()) { seconds ->
                 RestTimerOptionRow(
                     label = formatMmSs(seconds),
                     selected = currentSeconds == seconds,
-                    onClick = {
-                        onSelect(seconds)
-                        onDismiss()
-                    },
+                    onClick = { onSelect(seconds); onDismiss() },
                 )
             }
         }
@@ -65,23 +56,16 @@ fun RestTimerPickerSheet(
 }
 
 @Composable
-private fun RestTimerOptionRow(
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
+private fun RestTimerOptionRow(label: String, selected: Boolean, onClick: () -> Unit) {
     ListItem(
         modifier = Modifier.clickable(onClick = onClick),
         headlineContent = { Text(label) },
-        trailingContent =
-            if (selected) {
-                { Icon(Icons.Outlined.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
-            } else {
-                null
-            },
+        trailingContent = if (selected) {
+            { Icon(Icons.Outlined.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
+        } else {
+            null
+        },
     )
 }
 
-internal fun formatMmSs(totalSeconds: Int): String =
-    com.enil.logez.core.designsystem
-        .formatMmSs(totalSeconds)
+internal fun formatMmSs(totalSeconds: Int): String = com.enil.logez.core.designsystem.formatMmSs(totalSeconds)

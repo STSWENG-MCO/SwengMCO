@@ -27,14 +27,12 @@ import com.enil.logez.core.domain.model.WarmupStep
  * Plate Calculator — no Double error can make a warm-up weight unloadable.
  */
 object WarmupCalculator {
+
     /** §5.1.6 default dumbbell/other rounding increment. */
     const val NON_BARBELL_INCREMENT_KG = 2.5
 
     /** One generated warm-up row: the rounded weight plus the method step's reps. */
-    data class WarmupSetPlan(
-        val weightKg: Double,
-        val reps: Int,
-    )
+    data class WarmupSetPlan(val weightKg: Double, val reps: Int)
 
     /**
      * @param workingWeightKg the first working (non-WARMUP) set's weight; non-positive → empty.
@@ -52,12 +50,11 @@ object WarmupCalculator {
         if (workingWeightKg <= 0.0 || workingWeightKg.isNaN()) return emptyList()
         return method.map { step ->
             val raw = workingWeightKg * step.percent
-            val rounded =
-                if (barbell && equipment != null) {
-                    roundToLoadable(raw, equipment)
-                } else {
-                    roundToIncrement(raw)
-                }
+            val rounded = if (barbell && equipment != null) {
+                roundToLoadable(raw, equipment)
+            } else {
+                roundToIncrement(raw)
+            }
             WarmupSetPlan(weightKg = rounded, reps = step.reps)
         }
     }
@@ -67,10 +64,7 @@ object WarmupCalculator {
      * below-bar target it reports the bar alone (the clamp), otherwise the closest achievable
      * total at or around the target — DP-optimal, not greedy.
      */
-    private fun roundToLoadable(
-        rawKg: Double,
-        equipment: PlateEquipment,
-    ): Double {
+    private fun roundToLoadable(rawKg: Double, equipment: PlateEquipment): Double {
         val bar = equipment.barsKg.firstOrNull() ?: return roundToIncrement(rawKg)
         return PlateCalculator.solve(rawKg, bar, equipment.platesKg).achievedKg
     }

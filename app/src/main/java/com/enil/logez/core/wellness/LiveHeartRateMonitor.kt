@@ -2,12 +2,12 @@ package com.enil.logez.core.wellness
 
 import com.enil.logez.core.common.AppLogger
 import com.enil.logez.core.common.Clock
+import java.time.Instant
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
-import java.time.Instant
 
 /** M21f default poll cadence for [liveHeartRateFlow]. */
 private const val DEFAULT_POLL_INTERVAL_MS = 10_000L
@@ -37,30 +37,28 @@ fun liveHeartRateFlow(
     healthMetricsSource: HealthMetricsSource,
     pollIntervalMs: Long = DEFAULT_POLL_INTERVAL_MS,
     logger: AppLogger = AppLogger.NoOp,
-): Flow<HeartRateSample?> =
-    flow {
-        while (true) {
-            val sample =
-                try {
-                    if (healthMetricsSource.canRead(HealthDataType.HEART_RATE)) {
-                        healthMetricsSource.readLatestHeartRate()
-                    } else {
-                        null
-                    }
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    // The doc comment above promises this flow "never crashes, never nags" -- that promise
-                    // was only actually enforced by the availability/permission check, not by anything
-                    // guarding the read itself. A transient Health Connect IPC failure degrades to this
-                    // tick emitting null, same as "not granted," instead of terminating the flow.
-                    logger.e("LiveHeartRateMonitor", "readLatestHeartRate failed; emitting null for this tick", e)
-                    null
-                }
-            emit(sample)
-            delay(pollIntervalMs)
+): Flow<HeartRateSample?> = flow {
+    while (true) {
+        val sample = try {
+            if (healthMetricsSource.canRead(HealthDataType.HEART_RATE)) {
+                healthMetricsSource.readLatestHeartRate()
+            } else {
+                null
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // The doc comment above promises this flow "never crashes, never nags" -- that promise
+            // was only actually enforced by the availability/permission check, not by anything
+            // guarding the read itself. A transient Health Connect IPC failure degrades to this
+            // tick emitting null, same as "not granted," instead of terminating the flow.
+            logger.e("LiveHeartRateMonitor", "readLatestHeartRate failed; emitting null for this tick", e)
+            null
         }
+        emit(sample)
+        delay(pollIntervalMs)
     }
+}
 
 /**
  * The live-tracking screen's historical heart-rate chart: every sample Health Connect has
@@ -76,29 +74,27 @@ fun liveHeartRateHistoryFlow(
     clock: Clock,
     pollIntervalMs: Long = DEFAULT_POLL_INTERVAL_MS,
     logger: AppLogger = AppLogger.NoOp,
-): Flow<List<HeartRateSample>> =
-    flow {
-        while (true) {
-            val samples =
-                try {
-                    if (healthMetricsSource.canRead(HealthDataType.HEART_RATE)) {
-                        healthMetricsSource.readHeartRateSamples(
-                            Instant.ofEpochMilli(startedAtMillis),
-                            Instant.ofEpochMilli(clock.now().toEpochMilliseconds()),
-                        )
-                    } else {
-                        emptyList()
-                    }
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    logger.e("LiveHeartRateMonitor", "readHeartRateSamples failed; emitting empty history for this tick", e)
-                    emptyList()
-                }
-            emit(samples)
-            delay(pollIntervalMs)
+): Flow<List<HeartRateSample>> = flow {
+    while (true) {
+        val samples = try {
+            if (healthMetricsSource.canRead(HealthDataType.HEART_RATE)) {
+                healthMetricsSource.readHeartRateSamples(
+                    Instant.ofEpochMilli(startedAtMillis),
+                    Instant.ofEpochMilli(clock.now().toEpochMilliseconds()),
+                )
+            } else {
+                emptyList()
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            logger.e("LiveHeartRateMonitor", "readHeartRateSamples failed; emitting empty history for this tick", e)
+            emptyList()
         }
+        emit(samples)
+        delay(pollIntervalMs)
     }
+}
 
 /** Whether heart rate can be read at all, so the tracking screen can say why it has none. */
 enum class HeartRateAccess {
@@ -125,20 +121,18 @@ enum class HeartRateAccess {
 fun heartRateAccessFlow(
     healthMetricsSource: HealthMetricsSource,
     pollIntervalMs: Long = ACCESS_POLL_INTERVAL_MS,
-): Flow<HeartRateAccess> =
-    flow {
-        while (true) {
-            val availability = healthMetricsSource.availability()
-            val access =
-                when {
-                    availability != HealthConnectAvailability.Available && availability.canInstallOrUpdate() -> HeartRateAccess.NEEDS_INSTALL_OR_UPDATE
-                    availability != HealthConnectAvailability.Available -> HeartRateAccess.UNAVAILABLE
-                    HealthDataType.HEART_RATE in healthMetricsSource.grantedTypes() -> HeartRateAccess.GRANTED
-                    else -> HeartRateAccess.NOT_GRANTED
-                }
-            emit(access)
-            delay(pollIntervalMs)
+): Flow<HeartRateAccess> = flow {
+    while (true) {
+        val availability = healthMetricsSource.availability()
+        val access = when {
+            availability != HealthConnectAvailability.Available && availability.canInstallOrUpdate() -> HeartRateAccess.NEEDS_INSTALL_OR_UPDATE
+            availability != HealthConnectAvailability.Available -> HeartRateAccess.UNAVAILABLE
+            HealthDataType.HEART_RATE in healthMetricsSource.grantedTypes() -> HeartRateAccess.GRANTED
+            else -> HeartRateAccess.NOT_GRANTED
         }
-    }.distinctUntilChanged()
+        emit(access)
+        delay(pollIntervalMs)
+    }
+}.distinctUntilChanged()
 
 private const val ACCESS_POLL_INTERVAL_MS = 15_000L

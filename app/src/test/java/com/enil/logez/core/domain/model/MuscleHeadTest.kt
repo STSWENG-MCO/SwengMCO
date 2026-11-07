@@ -20,15 +20,7 @@ class MuscleHeadTest {
 
     @Test
     fun `every other group has no tracked heads`() {
-        val withHeads =
-            setOf(
-                MuscleGroup.SHOULDERS,
-                MuscleGroup.CHEST,
-                MuscleGroup.TRICEPS,
-                MuscleGroup.CALVES,
-                MuscleGroup.LATS,
-                MuscleGroup.HAMSTRINGS,
-            )
+        val withHeads = setOf(MuscleGroup.SHOULDERS, MuscleGroup.CHEST, MuscleGroup.TRICEPS, MuscleGroup.CALVES, MuscleGroup.LATS, MuscleGroup.HAMSTRINGS)
         MuscleGroup.entries.filterNot { it in withHeads }.forEach { group ->
             assertTrue("expected no heads for $group, got ${group.availableHeads}", group.availableHeads.isEmpty())
         }

@@ -37,15 +37,13 @@ import com.enil.logez.core.data.entity.WorkoutSetEntity
  */
 @Dao
 interface BackupDao {
+
     // ---- exercises ----
     // Unlike getAllActive(), this includes soft-deleted rows. They have to be exported: a workout
     // that used a since-retired exercise still references it, and leaving them out would fail the
     // restore on a foreign key.
     @Query("SELECT * FROM exercises WHERE id > :after ORDER BY id ASC LIMIT :limit")
-    suspend fun pageExercises(
-        after: String,
-        limit: Int,
-    ): List<ExerciseEntity>
+    suspend fun pageExercises(after: String, limit: Int): List<ExerciseEntity>
 
     @Query("SELECT COUNT(*) FROM exercises")
     suspend fun countExercises(): Int
@@ -65,10 +63,7 @@ interface BackupDao {
 
     // ---- routine_folders ----
     @Query("SELECT * FROM routine_folders WHERE id > :after ORDER BY id ASC LIMIT :limit")
-    suspend fun pageRoutineFolders(
-        after: String,
-        limit: Int,
-    ): List<RoutineFolderEntity>
+    suspend fun pageRoutineFolders(after: String, limit: Int): List<RoutineFolderEntity>
 
     @Query("SELECT COUNT(*) FROM routine_folders")
     suspend fun countRoutineFolders(): Int
@@ -81,10 +76,7 @@ interface BackupDao {
 
     // ---- routines ----
     @Query("SELECT * FROM routines WHERE id > :after ORDER BY id ASC LIMIT :limit")
-    suspend fun pageRoutines(
-        after: String,
-        limit: Int,
-    ): List<RoutineEntity>
+    suspend fun pageRoutines(after: String, limit: Int): List<RoutineEntity>
 
     @Query("SELECT COUNT(*) FROM routines")
     suspend fun countRoutines(): Int
@@ -97,10 +89,7 @@ interface BackupDao {
 
     // ---- routine_exercises ----
     @Query("SELECT * FROM routine_exercises WHERE id > :after ORDER BY id ASC LIMIT :limit")
-    suspend fun pageRoutineExercises(
-        after: String,
-        limit: Int,
-    ): List<RoutineExerciseEntity>
+    suspend fun pageRoutineExercises(after: String, limit: Int): List<RoutineExerciseEntity>
 
     @Query("SELECT COUNT(*) FROM routine_exercises")
     suspend fun countRoutineExercises(): Int
@@ -113,10 +102,7 @@ interface BackupDao {
 
     // ---- routine_sets ----
     @Query("SELECT * FROM routine_sets WHERE id > :after ORDER BY id ASC LIMIT :limit")
-    suspend fun pageRoutineSets(
-        after: String,
-        limit: Int,
-    ): List<RoutineSetEntity>
+    suspend fun pageRoutineSets(after: String, limit: Int): List<RoutineSetEntity>
 
     @Query("SELECT COUNT(*) FROM routine_sets")
     suspend fun countRoutineSets(): Int
@@ -131,10 +117,7 @@ interface BackupDao {
     // Includes IN_PROGRESS rows, unlike getCompletedWorkouts(): a backup is a snapshot of
     // everything, and a restore is blocked while a session is live anyway.
     @Query("SELECT * FROM workouts WHERE id > :after ORDER BY id ASC LIMIT :limit")
-    suspend fun pageWorkouts(
-        after: String,
-        limit: Int,
-    ): List<WorkoutEntity>
+    suspend fun pageWorkouts(after: String, limit: Int): List<WorkoutEntity>
 
     @Query("SELECT COUNT(*) FROM workouts")
     suspend fun countWorkouts(): Int
@@ -147,10 +130,7 @@ interface BackupDao {
 
     // ---- workout_exercises ----
     @Query("SELECT * FROM workout_exercises WHERE id > :after ORDER BY id ASC LIMIT :limit")
-    suspend fun pageWorkoutExercises(
-        after: String,
-        limit: Int,
-    ): List<WorkoutExerciseEntity>
+    suspend fun pageWorkoutExercises(after: String, limit: Int): List<WorkoutExerciseEntity>
 
     @Query("SELECT COUNT(*) FROM workout_exercises")
     suspend fun countWorkoutExercises(): Int
@@ -163,10 +143,7 @@ interface BackupDao {
 
     // ---- workout_sets ----
     @Query("SELECT * FROM workout_sets WHERE id > :after ORDER BY id ASC LIMIT :limit")
-    suspend fun pageWorkoutSets(
-        after: String,
-        limit: Int,
-    ): List<WorkoutSetEntity>
+    suspend fun pageWorkoutSets(after: String, limit: Int): List<WorkoutSetEntity>
 
     @Query("SELECT COUNT(*) FROM workout_sets")
     suspend fun countWorkoutSets(): Int
@@ -179,10 +156,7 @@ interface BackupDao {
 
     // ---- activity_tracks ----
     @Query("SELECT * FROM activity_tracks WHERE id > :after ORDER BY id ASC LIMIT :limit")
-    suspend fun pageActivityTracks(
-        after: String,
-        limit: Int,
-    ): List<ActivityTrackEntity>
+    suspend fun pageActivityTracks(after: String, limit: Int): List<ActivityTrackEntity>
 
     @Query("SELECT COUNT(*) FROM activity_tracks")
     suspend fun countActivityTracks(): Int
@@ -195,10 +169,7 @@ interface BackupDao {
 
     // ---- workout_heart_rate_samples ----
     @Query("SELECT * FROM workout_heart_rate_samples WHERE id > :after ORDER BY id ASC LIMIT :limit")
-    suspend fun pageHeartRateSamples(
-        after: String,
-        limit: Int,
-    ): List<WorkoutHeartRateSampleEntity>
+    suspend fun pageHeartRateSamples(after: String, limit: Int): List<WorkoutHeartRateSampleEntity>
 
     @Query("SELECT COUNT(*) FROM workout_heart_rate_samples")
     suspend fun countHeartRateSamples(): Int
@@ -211,10 +182,7 @@ interface BackupDao {
 
     // ---- body_measurements (keyed by date, not id) ----
     @Query("SELECT * FROM body_measurements WHERE date > :after ORDER BY date ASC LIMIT :limit")
-    suspend fun pageBodyMeasurements(
-        after: String,
-        limit: Int,
-    ): List<BodyMeasurementEntity>
+    suspend fun pageBodyMeasurements(after: String, limit: Int): List<BodyMeasurementEntity>
 
     @Query("SELECT COUNT(*) FROM body_measurements")
     suspend fun countBodyMeasurements(): Int
@@ -227,10 +195,7 @@ interface BackupDao {
 
     // ---- progress_photos ----
     @Query("SELECT * FROM progress_photos WHERE id > :after ORDER BY id ASC LIMIT :limit")
-    suspend fun pageProgressPhotos(
-        after: String,
-        limit: Int,
-    ): List<ProgressPhotoEntity>
+    suspend fun pageProgressPhotos(after: String, limit: Int): List<ProgressPhotoEntity>
 
     @Query("SELECT COUNT(*) FROM progress_photos")
     suspend fun countProgressPhotos(): Int
@@ -243,10 +208,7 @@ interface BackupDao {
 
     // ---- goal_definitions ----
     @Query("SELECT * FROM goal_definitions WHERE id > :after ORDER BY id ASC LIMIT :limit")
-    suspend fun pageGoals(
-        after: String,
-        limit: Int,
-    ): List<GoalDefinitionEntity>
+    suspend fun pageGoals(after: String, limit: Int): List<GoalDefinitionEntity>
 
     @Query("SELECT COUNT(*) FROM goal_definitions")
     suspend fun countGoals(): Int
@@ -259,10 +221,7 @@ interface BackupDao {
 
     // ---- daily_wellness_totals (keyed by date) ----
     @Query("SELECT * FROM daily_wellness_totals WHERE date > :after ORDER BY date ASC LIMIT :limit")
-    suspend fun pageWellnessTotals(
-        after: String,
-        limit: Int,
-    ): List<DailyWellnessTotalEntity>
+    suspend fun pageWellnessTotals(after: String, limit: Int): List<DailyWellnessTotalEntity>
 
     @Query("SELECT COUNT(*) FROM daily_wellness_totals")
     suspend fun countWellnessTotals(): Int

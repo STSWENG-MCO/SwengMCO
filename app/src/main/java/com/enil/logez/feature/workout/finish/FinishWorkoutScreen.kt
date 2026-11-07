@@ -50,12 +50,12 @@ import com.enil.logez.core.designsystem.ConfirmDialog
 import com.enil.logez.core.designsystem.LogEzMono
 import com.enil.logez.core.designsystem.Spacing
 import com.enil.logez.core.designsystem.logEzTopAppBarColors
-import com.enil.logez.core.designsystem.rememberClockTimeFormatter
-import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.launch
+import com.enil.logez.core.designsystem.rememberClockTimeFormatter
 
 /** PHASE2_PLAN.md §5.1.8(a) Save Workout screen, plus (b)'s conditional Update-Routine prompt. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -127,12 +127,7 @@ fun FinishWorkoutScreen(
         }
 
         Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .verticalScroll(rememberScrollState())
-                    .padding(Spacing.md),
+            modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(Spacing.md),
         ) {
             OutlinedTextField(
                 value = uiState.title,
@@ -202,10 +197,9 @@ fun FinishWorkoutScreen(
         // (`% DAY_MILLIS`) silently mixed the two and landed the save on the wrong local date.
         val zone = remember { ZoneId.systemDefault() }
         val startedAt = uiState.startedAtMillis
-        val pickerState =
-            rememberDatePickerState(
-                initialSelectedDateMillis = toDatePickerMillis(startedAt, zone),
-            )
+        val pickerState = rememberDatePickerState(
+            initialSelectedDateMillis = toDatePickerMillis(startedAt, zone),
+        )
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
@@ -239,12 +233,11 @@ fun FinishWorkoutScreen(
     if (showIncompleteConfirm) {
         ConfirmDialog(
             onDismissRequest = { showIncompleteConfirm = false },
-            title =
-                pluralStringResource(
-                    R.plurals.finish_incomplete_title,
-                    uiState.incompleteSetCount,
-                    uiState.incompleteSetCount,
-                ),
+            title = pluralStringResource(
+                R.plurals.finish_incomplete_title,
+                uiState.incompleteSetCount,
+                uiState.incompleteSetCount,
+            ),
             body = stringResource(R.string.finish_incomplete_body),
             confirmLabel = stringResource(R.string.finish_incomplete_confirm),
             onConfirm = { scope.launch { if (viewModel.needsStructurePrompt()) showStructurePrompt = true else viewModel.save(null) } },
@@ -258,18 +251,12 @@ fun FinishWorkoutScreen(
             title = { Text(stringResource(R.string.finish_structure_title)) },
             text = { Text(stringResource(R.string.finish_structure_body)) },
             confirmButton = {
-                TextButton(onClick = {
-                    showStructurePrompt = false
-                    viewModel.save(RoutineStructureChoice.UPDATE_ROUTINE)
-                }) {
+                TextButton(onClick = { showStructurePrompt = false; viewModel.save(RoutineStructureChoice.UPDATE_ROUTINE) }) {
                     Text(stringResource(R.string.finish_structure_update))
                 }
             },
             dismissButton = {
-                TextButton(onClick = {
-                    showStructurePrompt = false
-                    viewModel.save(RoutineStructureChoice.KEEP_ORIGINAL)
-                }) {
+                TextButton(onClick = { showStructurePrompt = false; viewModel.save(RoutineStructureChoice.KEEP_ORIGINAL) }) {
                     Text(stringResource(R.string.finish_structure_keep))
                 }
             },
@@ -289,11 +276,9 @@ private fun LabeledRow(
     onClick: (() -> Unit)? = null,
 ) {
     Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-                .padding(vertical = Spacing.md),
+        modifier = Modifier.fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(vertical = Spacing.md),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(label, modifier = Modifier.weight(1f))
@@ -319,37 +304,18 @@ private fun formatFinishDuration(totalSeconds: Int): String {
  * raw millis arithmetic instead put the highlighted day and the displayed day on different dates
  * for every user east or west of UTC.
  */
-internal fun toDatePickerMillis(
-    millis: Long,
-    zone: ZoneId,
-): Long =
-    Instant
-        .ofEpochMilli(millis)
-        .atZone(zone)
-        .toLocalDate()
-        .atStartOfDay(ZoneOffset.UTC)
-        .toInstant()
-        .toEpochMilli()
+internal fun toDatePickerMillis(millis: Long, zone: ZoneId): Long =
+    Instant.ofEpochMilli(millis).atZone(zone).toLocalDate()
+        .atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
 
 /** Moves [originalMillis] onto the calendar day the picker returned, keeping its local time-of-day. */
-internal fun fromDatePickerMillis(
-    pickedUtcMillis: Long,
-    originalMillis: Long,
-    zone: ZoneId,
-): Long {
+internal fun fromDatePickerMillis(pickedUtcMillis: Long, originalMillis: Long, zone: ZoneId): Long {
     val localTime = Instant.ofEpochMilli(originalMillis).atZone(zone).toLocalTime()
     val pickedDate = Instant.ofEpochMilli(pickedUtcMillis).atZone(ZoneOffset.UTC).toLocalDate()
-    return pickedDate
-        .atTime(localTime)
-        .atZone(zone)
-        .toInstant()
-        .toEpochMilli()
+    return pickedDate.atTime(localTime).atZone(zone).toInstant().toEpochMilli()
 }
 
-private fun formatDateTime(
-    millis: Long,
-    clock: DateTimeFormatter,
-): String {
+private fun formatDateTime(millis: Long, clock: DateTimeFormatter): String {
     val zoned = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
     return zoned.format(DateTimeFormatter.ofPattern("d MMM yyyy")) + ", " + zoned.format(clock)
 }

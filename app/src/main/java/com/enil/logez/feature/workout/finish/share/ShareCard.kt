@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -27,29 +25,31 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.EmojiEvents
 import com.enil.logez.R
+import com.enil.logez.core.designsystem.MuscleBalanceRadar
+import com.enil.logez.core.domain.calc.RegionShare
 import com.enil.logez.core.designsystem.BodyDiagram
 import com.enil.logez.core.designsystem.BodyDiagramRegions
 import com.enil.logez.core.designsystem.Gold500
 import com.enil.logez.core.designsystem.LogEzMono
 import com.enil.logez.core.designsystem.LogEzTheme
-import com.enil.logez.core.designsystem.MuscleBalanceRadar
 import com.enil.logez.core.designsystem.Spacing
 import com.enil.logez.core.designsystem.StatCell
 import com.enil.logez.core.designsystem.currentLocale
-import com.enil.logez.core.domain.calc.RegionShare
+import com.enil.logez.core.domain.model.WorkoutStructure
 import com.enil.logez.core.domain.model.MuscleDiagramVariant
 import com.enil.logez.core.domain.model.MuscleGroup
-import com.enil.logez.core.domain.model.WorkoutStructure
 import com.enil.logez.feature.workout.finish.PrMedal
 import com.enil.logez.feature.workout.finish.labelRes
 
@@ -112,11 +112,7 @@ data class GpsShareCardData(
  * pushing the wordmark off-canvas.
  */
 @Composable
-fun ShareCard(
-    data: ShareCardData,
-    format: ShareCardFormat,
-    modifier: Modifier = Modifier,
-) {
+fun ShareCard(data: ShareCardData, format: ShareCardFormat, modifier: Modifier = Modifier) {
     data.gps?.let { gps ->
         GpsShareCard(data, gps, format, modifier)
         return
@@ -124,11 +120,10 @@ fun ShareCard(
     LogEzTheme {
         val sectionGap = Spacing.md
         Column(
-            modifier =
-                modifier
-                    .requiredSize(format.width, format.height)
-                    .background(MaterialTheme.colorScheme.background)
-                    .padding(Spacing.lg),
+            modifier = modifier
+                .requiredSize(format.width, format.height)
+                .background(MaterialTheme.colorScheme.background)
+                .padding(Spacing.lg),
         ) {
             Text(
                 stringResource(R.string.summary_title).uppercase(currentLocale()),
@@ -156,7 +151,7 @@ fun ShareCard(
                     (
                         stringResource(R.string.routine_structure_chip_circuit) + " · " +
                             pluralStringResource(R.plurals.routine_rounds_count, data.rounds, data.rounds)
-                    ).uppercase(currentLocale()),
+                        ).uppercase(currentLocale()),
                     style = LogEzMono.dataSmall.copy(letterSpacing = 0.08.em),
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(top = Spacing.xxs),
@@ -235,19 +230,13 @@ fun ShareCard(
  * layer, which cannot reliably capture a live MapView, and a card with no tiles needs no network.
  */
 @Composable
-private fun GpsShareCard(
-    data: ShareCardData,
-    gps: GpsShareCardData,
-    format: ShareCardFormat,
-    modifier: Modifier,
-) {
+private fun GpsShareCard(data: ShareCardData, gps: GpsShareCardData, format: ShareCardFormat, modifier: Modifier) {
     LogEzTheme {
         Column(
-            modifier =
-                modifier
-                    .requiredSize(format.width, format.height)
-                    .background(MaterialTheme.colorScheme.background)
-                    .padding(Spacing.lg),
+            modifier = modifier
+                .requiredSize(format.width, format.height)
+                .background(MaterialTheme.colorScheme.background)
+                .padding(Spacing.lg),
         ) {
             Text(
                 gps.eyebrow.uppercase(currentLocale()),
@@ -326,11 +315,7 @@ private fun GpsShareCard(
 }
 
 @Composable
-private fun GpsCardStat(
-    value: String,
-    label: String,
-    modifier: Modifier = Modifier,
-) {
+private fun GpsCardStat(value: String, label: String, modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
         Text(value, style = LogEzMono.dataLarge, color = MaterialTheme.colorScheme.onBackground, maxLines = 1)
         Text(
@@ -348,10 +333,7 @@ private fun GpsCardStat(
  * matching the map's route styling.
  */
 @Composable
-private fun RouteDrawing(
-    points: List<Pair<Double, Double>>,
-    modifier: Modifier = Modifier,
-) {
+private fun RouteDrawing(points: List<Pair<Double, Double>>, modifier: Modifier = Modifier) {
     val line = MaterialTheme.colorScheme.primary
     val finish = MaterialTheme.colorScheme.onSurface
     val ring = MaterialTheme.colorScheme.background
@@ -367,13 +349,11 @@ private fun RouteDrawing(
         val scale = minOf((size.width - 2 * pad) / spanX, (size.height - 2 * pad) / spanY)
         val offsetX = (size.width - spanX * scale) / 2
         val offsetY = (size.height - spanY * scale) / 2
-
         fun at(i: Int) = Offset((offsetX + (xs[i] - minX) * scale).toFloat(), (offsetY + (ys[i] - minY) * scale).toFloat())
-        val path =
-            Path().apply {
-                moveTo(at(0).x, at(0).y)
-                for (i in 1 until points.size) lineTo(at(i).x, at(i).y)
-            }
+        val path = Path().apply {
+            moveTo(at(0).x, at(0).y)
+            for (i in 1 until points.size) lineTo(at(i).x, at(i).y)
+        }
         drawPath(path, line.copy(alpha = 0.14f), style = Stroke(width = 10.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
         drawPath(path, line, style = Stroke(width = 3.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
         val dot = 5.5.dp.toPx()
@@ -391,11 +371,7 @@ private fun Hairline(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun CardStat(
-    @StringRes labelRes: Int,
-    value: String,
-    modifier: Modifier = Modifier,
-) {
+private fun CardStat(@StringRes labelRes: Int, value: String, modifier: Modifier = Modifier) {
     StatCell(
         value = value,
         label = stringResource(labelRes).uppercase(currentLocale()),
@@ -411,10 +387,7 @@ private fun CardStat(
 }
 
 @Composable
-private fun SectionHeader(
-    text: String,
-    modifier: Modifier = Modifier,
-) {
+private fun SectionHeader(text: String, modifier: Modifier = Modifier) {
     Text(
         text.uppercase(currentLocale()),
         style = LogEzMono.dataSmall.copy(letterSpacing = 0.08.em),
@@ -424,10 +397,7 @@ private fun SectionHeader(
 }
 
 @Composable
-private fun PrLine(
-    pr: PrMedal,
-    style: TextStyle,
-) {
+private fun PrLine(pr: PrMedal, style: TextStyle) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = Spacing.xxs),
         verticalAlignment = Alignment.CenterVertically,

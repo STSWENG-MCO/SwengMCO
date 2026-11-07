@@ -2,14 +2,14 @@ package com.enil.logez.core.data.di
 
 import android.content.Context
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
 import com.enil.logez.core.data.LogEzDatabase
 import com.enil.logez.core.data.dao.ActivityTrackDao
-import com.enil.logez.core.data.dao.AnalyticsDao
 import com.enil.logez.core.data.dao.BackupDao
+import com.enil.logez.core.data.dao.AnalyticsDao
 import com.enil.logez.core.data.dao.ExerciseDao
 import com.enil.logez.core.data.dao.GoalDao
 import com.enil.logez.core.data.dao.MeasurementDao
@@ -31,22 +31,15 @@ import javax.inject.Singleton
 object DataModule {
     @Provides
     @Singleton
-    fun provideDatabase(
-        @ApplicationContext context: Context,
-    ): LogEzDatabase =
-        Room
-            .databaseBuilder(context, LogEzDatabase::class.java, LogEzDatabase.DATABASE_NAME)
+    fun provideDatabase(@ApplicationContext context: Context): LogEzDatabase =
+        Room.databaseBuilder(context, LogEzDatabase::class.java, LogEzDatabase.DATABASE_NAME)
             .addMigrations(
-                LogEzDatabase.MIGRATION_1_2,
-                LogEzDatabase.MIGRATION_2_3,
-                LogEzDatabase.MIGRATION_3_4,
-                LogEzDatabase.MIGRATION_4_5,
-                LogEzDatabase.MIGRATION_5_6,
-                LogEzDatabase.MIGRATION_6_7,
-                LogEzDatabase.MIGRATION_7_8,
-                LogEzDatabase.MIGRATION_8_9,
+                LogEzDatabase.MIGRATION_1_2, LogEzDatabase.MIGRATION_2_3, LogEzDatabase.MIGRATION_3_4,
+                LogEzDatabase.MIGRATION_4_5, LogEzDatabase.MIGRATION_5_6, LogEzDatabase.MIGRATION_6_7,
+                LogEzDatabase.MIGRATION_7_8, LogEzDatabase.MIGRATION_8_9,
                 LogEzDatabase.MIGRATION_9_10,
-            ).build()
+            )
+            .build()
 
     @Provides
     fun provideBackupDao(db: LogEzDatabase): BackupDao = db.backupDao()
@@ -83,9 +76,7 @@ object DataModule {
 
     @Provides
     @Singleton
-    fun provideDataStore(
-        @ApplicationContext context: Context,
-    ): DataStore<Preferences> =
+    fun provideDataStore(@ApplicationContext context: Context): DataStore<Preferences> =
         PreferenceDataStoreFactory.create(
             produceFile = { context.preferencesDataStoreFile("logez_settings") },
         )
@@ -94,9 +85,7 @@ object DataModule {
     @Provides
     @Singleton
     @ActiveSessionDataStore
-    fun provideActiveSessionDataStore(
-        @ApplicationContext context: Context,
-    ): DataStore<Preferences> =
+    fun provideActiveSessionDataStore(@ApplicationContext context: Context): DataStore<Preferences> =
         PreferenceDataStoreFactory.create(
             produceFile = { context.preferencesDataStoreFile("logez_active_session") },
         )

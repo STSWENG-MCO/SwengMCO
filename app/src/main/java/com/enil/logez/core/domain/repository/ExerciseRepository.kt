@@ -9,11 +9,8 @@ import kotlinx.coroutines.flow.Flow
 /** The exercise library: seeded exercises plus any user-created custom exercises. */
 interface ExerciseRepository {
     fun observeActive(): Flow<List<Exercise>>
-
     fun observeById(id: String): Flow<Exercise?>
-
     suspend fun getById(id: String): Exercise?
-
     suspend fun getAllActive(): List<Exercise>
 
     /**

@@ -24,8 +24,7 @@ abstract class ActivityTrackingModule {
     companion object {
         @Provides
         @Singleton
-        fun provideFusedLocationProviderClient(
-            @ApplicationContext context: Context,
-        ): FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
+        fun provideFusedLocationProviderClient(@ApplicationContext context: Context): FusedLocationProviderClient =
+            LocationServices.getFusedLocationProviderClient(context)
     }
 }

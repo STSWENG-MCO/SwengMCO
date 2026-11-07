@@ -56,12 +56,10 @@ class RouteSplitsCalculatorTest {
     fun `each split's heart rate averages only the samples inside it`() {
         val points = northbound(21)
         val times = points.indices.map { it * 30 } // 300 s per km
-        val heartRate =
-            listOf(
-                (startedAt + 100_000) to 140L,
-                (startedAt + 200_000) to 150L, // first km
-                (startedAt + 400_000) to 170L, // second km
-            )
+        val heartRate = listOf(
+            (startedAt + 100_000) to 140L, (startedAt + 200_000) to 150L, // first km
+            (startedAt + 400_000) to 170L, // second km
+        )
         val splits = RouteSplitsCalculator.splits(points, times, DistanceUnit.KM, startedAt, heartRate)
         assertEquals(145L, splits[0].averageBpm)
         assertEquals(170L, splits[1].averageBpm)

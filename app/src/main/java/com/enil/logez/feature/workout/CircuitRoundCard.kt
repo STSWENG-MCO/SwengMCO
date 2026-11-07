@@ -26,12 +26,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import com.enil.logez.R
 import com.enil.logez.core.designsystem.LogEzCard
 import com.enil.logez.core.designsystem.LogEzMono
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
 import com.enil.logez.core.designsystem.SetTable
 import com.enil.logez.core.designsystem.Spacing
 import com.enil.logez.core.designsystem.currentLocale
@@ -89,10 +90,7 @@ internal fun CircuitRoundCard(
                         DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.workout_remove_round)) },
-                                onClick = {
-                                    menuExpanded = false
-                                    onRemoveRound()
-                                },
+                                onClick = { menuExpanded = false; onRemoveRound() },
                             )
                         }
                     }
@@ -102,12 +100,11 @@ internal fun CircuitRoundCard(
             // When every exercise in the round shares one column set (the common case), a single
             // header row under the ROUND title covers all of them; per-entry headers only return
             // when a mixed-type circuit genuinely needs different columns per entry.
-            val uniformColumns =
-                round.entries
-                    .filter { it.set != null }
-                    .map { columnSignature(it.exercise, config.plateCalculator.enabled) }
-                    .distinct()
-                    .singleOrNull()
+            val uniformColumns = round.entries
+                .filter { it.set != null }
+                .map { columnSignature(it.exercise, config.plateCalculator.enabled) }
+                .distinct()
+                .singleOrNull()
             if (uniformColumns != null) {
                 CircuitColumnsHeader(
                     fields = uniformColumns.fields,
@@ -169,14 +166,8 @@ private fun CircuitEntry(
                 DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                     // M11: replace/remove only — no superset (the circuit IS the sequence) and no
                     // per-exercise reorder affordance in the round-grouped view.
-                    DropdownMenuItem(text = { Text(stringResource(R.string.routine_builder_menu_replace)) }, onClick = {
-                        menuExpanded = false
-                        onOpenReplacePicker()
-                    })
-                    DropdownMenuItem(text = { Text(stringResource(R.string.routine_builder_menu_remove_exercise)) }, onClick = {
-                        menuExpanded = false
-                        callbacks.onRemoveExercise(exercise.id)
-                    })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.routine_builder_menu_replace)) }, onClick = { menuExpanded = false; onOpenReplacePicker() })
+                    DropdownMenuItem(text = { Text(stringResource(R.string.routine_builder_menu_remove_exercise)) }, onClick = { menuExpanded = false; callbacks.onRemoveExercise(exercise.id) })
                 }
             }
         }
@@ -242,16 +233,9 @@ private fun CircuitEntry(
 /** The column set a circuit entry's table needs — entries sharing one signature share one header.
  * M17: the plate-calculator affordance is part of the signature (it adds a fixed-width slot), so a
  * mixed barbell/non-barbell circuit correctly falls back to per-entry headers. */
-private data class CircuitColumns(
-    val fields: Set<TargetField>,
-    val customMetric: Boolean,
-    val plateCalculator: Boolean,
-)
+private data class CircuitColumns(val fields: Set<TargetField>, val customMetric: Boolean, val plateCalculator: Boolean)
 
-private fun columnSignature(
-    exercise: WorkoutExerciseUiModel,
-    plateCalculatorEnabled: Boolean,
-): CircuitColumns {
+private fun columnSignature(exercise: WorkoutExerciseUiModel, plateCalculatorEnabled: Boolean): CircuitColumns {
     val type = exercise.exerciseType
     val fields = type.targetFields()
     return CircuitColumns(

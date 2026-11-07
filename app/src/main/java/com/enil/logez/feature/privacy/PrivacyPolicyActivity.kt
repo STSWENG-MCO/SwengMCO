@@ -1,13 +1,12 @@
 package com.enil.logez.feature.privacy
 
+import androidx.activity.SystemBarStyle
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -24,21 +23,22 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import com.enil.logez.R
+import com.enil.logez.core.designsystem.LogEzTheme
+import com.enil.logez.core.designsystem.ScreenTitle
+import com.enil.logez.core.designsystem.logEzTopAppBarColors
+import com.enil.logez.core.designsystem.Spacing
+import androidx.compose.foundation.layout.Row
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import com.enil.logez.BuildConfig
-import com.enil.logez.R
-import com.enil.logez.core.designsystem.LogEzTheme
-import com.enil.logez.core.designsystem.ScreenTitle
-import com.enil.logez.core.designsystem.Spacing
-import com.enil.logez.core.designsystem.logEzTopAppBarColors
 
 /**
  * A deliberate, narrow exception to this app's single-Activity architecture (`MainActivity` hosts
@@ -103,12 +103,11 @@ private fun PrivacyPolicyScreen(onBack: () -> Unit) {
     ) { padding ->
         val document = PrivacyPolicyContent.document(BuildConfig.CONTACT_EMAIL)
         Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .verticalScroll(rememberScrollState())
-                    .padding(Spacing.lg),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .verticalScroll(rememberScrollState())
+                .padding(Spacing.lg),
             verticalArrangement = Arrangement.spacedBy(Spacing.sm),
         ) {
             Text(
@@ -126,13 +125,12 @@ private fun PrivacyPolicyScreen(onBack: () -> Unit) {
                 section.blocks.forEach { block ->
                     when (block) {
                         is PolicyBlock.Paragraph -> PolicyText(block.text)
-                        is PolicyBlock.Bullets ->
-                            block.items.forEach { item ->
-                                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                                    Text("•", style = MaterialTheme.typography.bodyMedium)
-                                    PolicyText(item, modifier = Modifier.weight(1f))
-                                }
+                        is PolicyBlock.Bullets -> block.items.forEach { item ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                                Text("•", style = MaterialTheme.typography.bodyMedium)
+                                PolicyText(item, modifier = Modifier.weight(1f))
                             }
+                        }
                     }
                 }
             }
@@ -142,24 +140,19 @@ private fun PrivacyPolicyScreen(onBack: () -> Unit) {
 
 /** Body text with its https URLs and email address made tappable, like the hosted page's links. */
 @Composable
-private fun PolicyText(
-    text: String,
-    modifier: Modifier = Modifier,
-) {
-    val linkStyles =
-        TextLinkStyles(
-            style = SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline),
-        )
-    val annotated =
-        buildAnnotatedString {
-            var last = 0
-            PrivacyPolicyHtml.LINK.findAll(text).forEach { match ->
-                append(text.substring(last, match.range.first))
-                val url = if (match.value.startsWith("https://")) match.value else "mailto:${match.value}"
-                withLink(LinkAnnotation.Url(url, linkStyles)) { append(match.value) }
-                last = match.range.last + 1
-            }
-            append(text.substring(last))
+private fun PolicyText(text: String, modifier: Modifier = Modifier) {
+    val linkStyles = TextLinkStyles(
+        style = SpanStyle(color = MaterialTheme.colorScheme.primary, textDecoration = TextDecoration.Underline),
+    )
+    val annotated = buildAnnotatedString {
+        var last = 0
+        PrivacyPolicyHtml.LINK.findAll(text).forEach { match ->
+            append(text.substring(last, match.range.first))
+            val url = if (match.value.startsWith("https://")) match.value else "mailto:${match.value}"
+            withLink(LinkAnnotation.Url(url, linkStyles)) { append(match.value) }
+            last = match.range.last + 1
         }
+        append(text.substring(last))
+    }
     Text(annotated, style = MaterialTheme.typography.bodyMedium, modifier = modifier)
 }

@@ -11,45 +11,23 @@ import kotlinx.coroutines.flow.Flow
 /** Routines and the folders that organize them. */
 interface RoutineRepository {
     fun observeFolders(): Flow<List<RoutineFolderEntity>>
-
     suspend fun getFolderById(id: String): RoutineFolderEntity?
-
     suspend fun createFolderAtTop(folder: RoutineFolderEntity)
-
-    suspend fun renameFolder(
-        id: String,
-        name: String,
-        updatedAt: Long,
-    )
-
+    suspend fun renameFolder(id: String, name: String, updatedAt: Long)
     suspend fun deleteFolder(folder: RoutineFolderEntity)
-
     suspend fun reorderFolders(orderedIds: List<String>)
 
     fun observeAllRoutines(): Flow<List<RoutineEntity>>
-
     fun observeRoutinesInFolder(folderId: String?): Flow<List<RoutineEntity>>
-
     fun observeRoutineById(id: String): Flow<RoutineEntity?>
-
     suspend fun getRoutineById(id: String): RoutineEntity?
-
     suspend fun deleteRoutineById(id: String)
-
     suspend fun reorderRoutines(orderedIds: List<String>)
-
-    suspend fun moveRoutineToFolder(
-        id: String,
-        folderId: String?,
-        updatedAt: Long,
-    )
+    suspend fun moveRoutineToFolder(id: String, folderId: String?, updatedAt: Long)
 
     fun observeExercisesForRoutine(routineId: String): Flow<List<RoutineExerciseEntity>>
-
     suspend fun getExercisesForRoutine(routineId: String): List<RoutineExerciseEntity>
-
     suspend fun getSetsForRoutineExercise(routineExerciseId: String): List<RoutineSetEntity>
-
     fun observeRoutineExercisePreviews(): Flow<List<RoutineExercisePreviewRow>>
 
     /** M11: routineId -> round count (largest per-exercise set count) for circuit card previews. */

@@ -34,7 +34,5 @@ data class StatSet(
  * through this and only this, so warm-up-inclusion semantics can never drift between screens
  * (§8.6). FAILURE and DROPSET sets always count as normal; only completed sets ever count.
  */
-fun isIncluded(
-    set: StatSet,
-    includeWarmupsInStats: Boolean,
-): Boolean = set.isCompleted && (set.setType != SetType.WARMUP || includeWarmupsInStats)
+fun isIncluded(set: StatSet, includeWarmupsInStats: Boolean): Boolean =
+    set.isCompleted && (set.setType != SetType.WARMUP || includeWarmupsInStats)

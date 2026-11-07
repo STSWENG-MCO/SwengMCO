@@ -30,22 +30,13 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
  * calling this, so the first frame is never empty.
  */
 @Composable
-fun <T> SyncOptimisticList(
-    local: SnapshotStateList<T>,
-    source: List<T>,
-    isDragging: Boolean,
-) {
+fun <T> SyncOptimisticList(local: SnapshotStateList<T>, source: List<T>, isDragging: Boolean) {
     var parked by remember { mutableStateOf<List<T>?>(null) }
     LaunchedEffect(source) {
         if (isDragging) parked = source else local.replaceWith(source)
     }
     LaunchedEffect(isDragging) {
-        if (!isDragging) {
-            parked?.let {
-                local.replaceWith(it)
-                parked = null
-            }
-        }
+        if (!isDragging) parked?.let { local.replaceWith(it); parked = null }
     }
 }
 

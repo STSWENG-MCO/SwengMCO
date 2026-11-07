@@ -9,9 +9,7 @@ import java.io.File
  * would otherwise leave restored rows pointing at files that were never replaced — with nothing
  * to say so. The marker turns that into something the next launch can finish.
  */
-class RestoreMarker(
-    filesDir: File,
-) {
+class RestoreMarker(filesDir: File) {
     private val file = File(filesDir, FILE_NAME)
 
     enum class Phase {
@@ -22,10 +20,7 @@ class RestoreMarker(
         MEDIA,
     }
 
-    fun write(
-        phase: Phase,
-        stagingDir: File,
-    ) {
+    fun write(phase: Phase, stagingDir: File) {
         file.writeText("${phase.name}\n${stagingDir.absolutePath}")
     }
 
@@ -37,12 +32,7 @@ class RestoreMarker(
 
     fun stagingDir(): File? {
         if (!file.isFile) return null
-        return file
-            .readLines()
-            .getOrNull(1)
-            ?.trim()
-            ?.takeIf { it.isNotEmpty() }
-            ?.let(::File)
+        return file.readLines().getOrNull(1)?.trim()?.takeIf { it.isNotEmpty() }?.let(::File)
     }
 
     fun clear() {

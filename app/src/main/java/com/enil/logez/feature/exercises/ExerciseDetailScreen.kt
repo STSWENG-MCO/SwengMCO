@@ -1,8 +1,8 @@
 package com.enil.logez.feature.exercises
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -17,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.BarChart
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.MoreVert
@@ -51,7 +52,6 @@ import com.enil.logez.core.designsystem.BodyDiagram
 import com.enil.logez.core.designsystem.BodyDiagramRegions
 import com.enil.logez.core.designsystem.ConfirmDialog
 import com.enil.logez.core.designsystem.EmptyState
-import com.enil.logez.core.designsystem.InlineMarkdown
 import com.enil.logez.core.designsystem.LineChart
 import com.enil.logez.core.designsystem.LineChartPoint
 import com.enil.logez.core.designsystem.LogEzCard
@@ -70,14 +70,13 @@ import com.enil.logez.core.domain.model.PrType
 import com.enil.logez.core.domain.model.WeightUnit
 import com.enil.logez.core.domain.repository.Exercise
 import com.enil.logez.feature.workout.finish.labelRes
-import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.launch
+import com.enil.logez.core.designsystem.InlineMarkdown
 
-internal enum class DetailTab(
-    @StringRes val labelRes: Int,
-) {
+internal enum class DetailTab(@StringRes val labelRes: Int) {
     SUMMARY(R.string.exercise_detail_tab_summary),
     HISTORY(R.string.exercise_detail_tab_history),
     HOW_TO(R.string.exercise_detail_tab_how_to),
@@ -92,31 +91,21 @@ internal enum class DetailTab(
  * Empty while loading, deliberately: the exercise is null before the first load lands, and reading
  * that as "no instructions" would build a two-tab row and then pop a third tab in a frame later.
  */
-internal fun detailTabsFor(
-    isLoading: Boolean,
-    instructions: String?,
-): List<DetailTab> =
-    when {
-        isLoading -> emptyList()
-        instructions.isNullOrBlank() -> listOf(DetailTab.SUMMARY, DetailTab.HISTORY)
-        else -> DetailTab.entries
-    }
+internal fun detailTabsFor(isLoading: Boolean, instructions: String?): List<DetailTab> = when {
+    isLoading -> emptyList()
+    instructions.isNullOrBlank() -> listOf(DetailTab.SUMMARY, DetailTab.HISTORY)
+    else -> DetailTab.entries
+}
 
 /**
  * Derived rather than corrected after the fact: clearing an exercise's instructions elsewhere
  * shrinks the tab list under a HOW_TO selection on the next resume. Falling back here means there
  * is never a frame where TabRow is handed the -1 that indexOf returns for an absent tab.
  */
-internal fun selectedDetailTab(
-    requested: DetailTab,
-    tabs: List<DetailTab>,
-): DetailTab = if (requested in tabs) requested else DetailTab.SUMMARY
+internal fun selectedDetailTab(requested: DetailTab, tabs: List<DetailTab>): DetailTab =
+    if (requested in tabs) requested else DetailTab.SUMMARY
 
-private data class HistorySession(
-    val workoutId: String,
-    val workoutTitle: String,
-    val sets: List<ExerciseHistoryEntry>,
-)
+private data class HistorySession(val workoutId: String, val workoutTitle: String, val sets: List<ExerciseHistoryEntry>)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -160,10 +149,7 @@ fun ExerciseDetailScreen(
                         DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.action_edit)) },
-                                onClick = {
-                                    menuExpanded = false
-                                    onEdit(exercise.id)
-                                },
+                                onClick = { menuExpanded = false; onEdit(exercise.id) },
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.action_duplicate)) },
@@ -174,10 +160,7 @@ fun ExerciseDetailScreen(
                             )
                             DropdownMenuItem(
                                 text = { Text(stringResource(R.string.action_delete)) },
-                                onClick = {
-                                    menuExpanded = false
-                                    showDeleteConfirm = true
-                                },
+                                onClick = { menuExpanded = false; showDeleteConfirm = true },
                             )
                         }
                     }
@@ -203,16 +186,15 @@ fun ExerciseDetailScreen(
                 }
 
                 when (selectedTab) {
-                    DetailTab.SUMMARY ->
-                        SummaryTab(
-                            isLoading = uiState.isLoading,
-                            exercise = uiState.exercise,
-                            muscleIntensity = uiState.muscleIntensity,
-                            muscleDiagramVariant = uiState.muscleDiagramVariant,
-                            summary = uiState.summary,
-                            onRangeSelected = viewModel::selectRange,
-                            onMetricSelected = viewModel::selectMetric,
-                        )
+                    DetailTab.SUMMARY -> SummaryTab(
+                        isLoading = uiState.isLoading,
+                        exercise = uiState.exercise,
+                        muscleIntensity = uiState.muscleIntensity,
+                        muscleDiagramVariant = uiState.muscleDiagramVariant,
+                        summary = uiState.summary,
+                        onRangeSelected = viewModel::selectRange,
+                        onMetricSelected = viewModel::selectMetric,
+                    )
                     DetailTab.HISTORY -> HistoryTab(entries = uiState.history, weightUnit = uiState.summary.weightUnit)
                     DetailTab.HOW_TO -> HowToTab(instructions = uiState.exercise?.instructions.orEmpty())
                 }
@@ -260,13 +242,8 @@ private fun SummaryTab(
     var selectedPointIndex by remember(summary.points) { mutableStateOf<Int?>(summary.points.lastIndex.takeIf { it >= 0 }) }
     var setRecordsExpanded by remember { mutableStateOf(false) }
     val dateFormatter = remember { DateTimeFormatter.ofPattern("d MMM yyyy") }
-
     fun dateOf(millis: Long): String =
-        Instant
-            .ofEpochMilli(millis)
-            .atZone(ZoneId.systemDefault())
-            .toLocalDate()
-            .format(dateFormatter)
+        Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate().format(dateFormatter)
 
     // Which muscles this exercise targets — static metadata, not a stat, so it can render above
     // the never-logged gate below: an exercise the user has never done is exactly when knowing
@@ -318,11 +295,10 @@ private fun SummaryTab(
                             selected = summary.selectedRange == range,
                             onClick = { onRangeSelected(range) },
                             label = { Text(stringResource(range.labelRes())) },
-                            colors =
-                                FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = MaterialTheme.colorScheme.primary,
-                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-                                ),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                            ),
                         )
                     }
                 }
@@ -372,11 +348,10 @@ private fun SummaryTab(
                             selected = summary.selectedMetric == metric,
                             onClick = { onMetricSelected(metric) },
                             label = { Text(stringResource(metric.labelRes())) },
-                            colors =
-                                FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = MaterialTheme.colorScheme.primary,
-                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-                                ),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                            ),
                         )
                     }
                 }
@@ -414,11 +389,10 @@ private fun SummaryTab(
             if (summary.setRecords.isNotEmpty()) {
                 item(key = "set-records-header") {
                     Row(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .clickable { setRecordsExpanded = !setRecordsExpanded }
-                                .padding(top = Spacing.lg, bottom = Spacing.xs),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { setRecordsExpanded = !setRecordsExpanded }
+                            .padding(top = Spacing.lg, bottom = Spacing.xs),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
@@ -471,34 +445,29 @@ private fun MuscleDiagramSection(
     }
 }
 
-private fun ChartRange.labelRes(): Int =
-    when (this) {
-        ChartRange.LAST_30_DAYS -> R.string.chart_range_30d
-        ChartRange.LAST_3_MONTHS -> R.string.chart_range_3m
-        ChartRange.LAST_YEAR -> R.string.chart_range_1y
-        ChartRange.ALL_TIME -> R.string.chart_range_all
-    }
+private fun ChartRange.labelRes(): Int = when (this) {
+    ChartRange.LAST_30_DAYS -> R.string.chart_range_30d
+    ChartRange.LAST_3_MONTHS -> R.string.chart_range_3m
+    ChartRange.LAST_YEAR -> R.string.chart_range_1y
+    ChartRange.ALL_TIME -> R.string.chart_range_all
+}
 
-private fun ChartMetric.labelRes(): Int =
-    when (this) {
-        ChartMetric.HEAVIEST_WEIGHT -> R.string.chart_metric_heaviest_weight
-        ChartMetric.ONE_REP_MAX -> R.string.chart_metric_one_rep_max
-        ChartMetric.BEST_SET_VOLUME -> R.string.chart_metric_best_set_volume
-        ChartMetric.SESSION_VOLUME -> R.string.chart_metric_session_volume
-        ChartMetric.TOTAL_REPS -> R.string.chart_metric_total_reps
-        ChartMetric.MOST_REPS_SET -> R.string.chart_metric_most_reps_set
-        ChartMetric.SESSION_REPS -> R.string.chart_metric_session_reps
-        ChartMetric.BEST_TIME -> R.string.chart_metric_best_time
-        ChartMetric.LONGEST_TIME -> R.string.chart_metric_longest_time
-        ChartMetric.LONGEST_DISTANCE -> R.string.chart_metric_longest_distance
-        ChartMetric.BEST_PACE -> R.string.chart_metric_best_pace
-    }
+private fun ChartMetric.labelRes(): Int = when (this) {
+    ChartMetric.HEAVIEST_WEIGHT -> R.string.chart_metric_heaviest_weight
+    ChartMetric.ONE_REP_MAX -> R.string.chart_metric_one_rep_max
+    ChartMetric.BEST_SET_VOLUME -> R.string.chart_metric_best_set_volume
+    ChartMetric.SESSION_VOLUME -> R.string.chart_metric_session_volume
+    ChartMetric.TOTAL_REPS -> R.string.chart_metric_total_reps
+    ChartMetric.MOST_REPS_SET -> R.string.chart_metric_most_reps_set
+    ChartMetric.SESSION_REPS -> R.string.chart_metric_session_reps
+    ChartMetric.BEST_TIME -> R.string.chart_metric_best_time
+    ChartMetric.LONGEST_TIME -> R.string.chart_metric_longest_time
+    ChartMetric.LONGEST_DISTANCE -> R.string.chart_metric_longest_distance
+    ChartMetric.BEST_PACE -> R.string.chart_metric_best_pace
+}
 
 @Composable
-private fun HistoryTab(
-    entries: List<ExerciseHistoryEntry>,
-    weightUnit: WeightUnit,
-) {
+private fun HistoryTab(entries: List<ExerciseHistoryEntry>, weightUnit: WeightUnit) {
     if (entries.isEmpty()) {
         EmptyState(
             icon = Icons.Outlined.BarChart,
@@ -507,11 +476,10 @@ private fun HistoryTab(
         )
         return
     }
-    val sessions =
-        entries
-            .groupBy { it.workoutId }
-            .map { (workoutId, sets) -> HistorySession(workoutId, sets.first().workoutTitle, sets.sortedBy { it.setOrderIndex }) }
-            .sortedByDescending { it.sets.first().workoutStartedAt }
+    val sessions = entries
+        .groupBy { it.workoutId }
+        .map { (workoutId, sets) -> HistorySession(workoutId, sets.first().workoutTitle, sets.sortedBy { it.setOrderIndex }) }
+        .sortedByDescending { it.sets.first().workoutStartedAt }
 
     LazyColumn(modifier = Modifier.fillMaxSize().padding(Spacing.md)) {
         items(items = sessions, key = { it.workoutId }) { session ->
@@ -538,13 +506,10 @@ private fun HistoryTab(
     }
 }
 
-private fun formatHistorySet(
-    entry: ExerciseHistoryEntry,
-    weightUnit: WeightUnit,
-): String {
+private fun formatHistorySet(entry: ExerciseHistoryEntry, weightUnit: WeightUnit): String {
     val parts = mutableListOf<String>()
     entry.weightKg?.let { parts.add(formatWeight(it, weightUnit)) }
-    entry.reps?.let { parts.add("$it reps") }
+    entry.reps?.let { parts.add("${it} reps") }
     entry.durationSeconds?.let { parts.add("${it}s") }
     // This literal-interpolated the raw Double with zero formatting -- a GPS-accumulated
     // distance routinely carries a long floating-point tail (e.g. "3247.8921336m"). Capped at

@@ -3,6 +3,7 @@ package com.enil.logez.feature.exercises
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,10 +19,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.AddAPhoto
 import androidx.compose.material.icons.outlined.FormatBold
 import androidx.compose.material.icons.outlined.FormatItalic
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -44,7 +45,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -53,7 +53,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -62,7 +64,6 @@ import com.enil.logez.core.common.equipmentLabel
 import com.enil.logez.core.common.exerciseTypeLabel
 import com.enil.logez.core.common.muscleGroupLabel
 import com.enil.logez.core.common.muscleHeadLabel
-import com.enil.logez.core.designsystem.InlineMarkdown
 import com.enil.logez.core.designsystem.LocalImage
 import com.enil.logez.core.designsystem.Radius
 import com.enil.logez.core.designsystem.Spacing
@@ -72,8 +73,12 @@ import com.enil.logez.core.domain.model.ExerciseType
 import com.enil.logez.core.domain.model.MuscleGroup
 import com.enil.logez.core.domain.model.availableHeads
 import com.enil.logez.core.domain.model.userSelectable
-import kotlinx.coroutines.flow.first
 import java.io.File
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.first
+import com.enil.logez.core.designsystem.InlineMarkdown
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.runtime.saveable.rememberSaveable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,10 +90,9 @@ fun CustomExerciseEditorScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    val imagePicker =
-        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-            if (uri != null) viewModel.onImagePicked(uri)
-        }
+    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) viewModel.onImagePicked(uri)
+    }
 
     // M20g: storage stays "one step per line" -- but NOT plain text: a step can carry inline
     // **bold**/*italic* markers on disk, and ExerciseDetailScreen's HowToTab parses them back out.
@@ -107,17 +111,12 @@ fun CustomExerciseEditorScreen(
             viewModel.onInstructionsChange(instructions.text)
         } else {
             // Drops the old rich-text editor's "<br>" filler lines from instructions it wrote.
-            val seeded =
-                uiState.instructions
-                    .lines()
-                    .filterNot(InlineMarkdown::isFillerLine)
-                    .joinToString("\n")
+            val seeded = uiState.instructions.lines().filterNot(InlineMarkdown::isFillerLine).joinToString("\n")
             instructions = TextFieldValue(seeded)
             if (seeded != uiState.instructions) viewModel.onInstructionsChange(seeded)
             instructionsSeeded = true
         }
     }
-
     fun updateInstructions(value: TextFieldValue) {
         instructions = value
         viewModel.onInstructionsChange(value.text)
@@ -150,20 +149,18 @@ fun CustomExerciseEditorScreen(
         },
     ) { padding ->
         Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .verticalScroll(rememberScrollState())
-                    .padding(Spacing.md),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .verticalScroll(rememberScrollState())
+                .padding(Spacing.md),
         ) {
             Surface(
                 shape = RoundedCornerShape(Radius.md),
                 color = MaterialTheme.colorScheme.surfaceVariant,
-                modifier =
-                    Modifier
-                        .size(96.dp)
-                        .clickable { imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+                modifier = Modifier
+                    .size(96.dp)
+                    .clickable { imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
             ) {
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                     val mediaPath = uiState.mediaPath
@@ -184,12 +181,11 @@ fun CustomExerciseEditorScreen(
                 onValueChange = viewModel::onNameChange,
                 label = { Text(stringResource(R.string.exercise_editor_name)) },
                 isError = uiState.nameError,
-                supportingText =
-                    if (uiState.nameError) {
-                        { Text(stringResource(R.string.exercise_editor_name_required)) }
-                    } else {
-                        null
-                    },
+                supportingText = if (uiState.nameError) {
+                    { Text(stringResource(R.string.exercise_editor_name_required)) }
+                } else {
+                    null
+                },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth().padding(top = Spacing.md),
             )
@@ -244,10 +240,9 @@ fun CustomExerciseEditorScreen(
                 Column {
                     headOptions.forEach { head ->
                         Row(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .clickable { viewModel.onMuscleHeadToggle(head) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { viewModel.onMuscleHeadToggle(head) },
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Checkbox(checked = head in uiState.muscleHeads, onCheckedChange = { viewModel.onMuscleHeadToggle(head) })
@@ -265,10 +260,9 @@ fun CustomExerciseEditorScreen(
             Column {
                 MuscleGroup.entries.filter { it != uiState.primaryMuscleGroup }.forEach { m ->
                     Row(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .clickable { viewModel.onSecondaryMuscleToggle(m) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { viewModel.onSecondaryMuscleToggle(m) },
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Checkbox(checked = m in uiState.secondaryMuscleGroups, onCheckedChange = { viewModel.onSecondaryMuscleToggle(m) })
@@ -316,12 +310,7 @@ fun CustomExerciseEditorScreen(
  * so the value half of name/role/value is never missing.
  */
 @Composable
-private fun StyleToggle(
-    checked: () -> Boolean,
-    onToggle: () -> Unit,
-    icon: ImageVector,
-    contentDescription: String,
-) {
+private fun StyleToggle(checked: () -> Boolean, onToggle: () -> Unit, icon: ImageVector, contentDescription: String) {
     IconToggleButton(checked = checked(), onCheckedChange = { onToggle() }) {
         Icon(icon, contentDescription = contentDescription)
     }
@@ -351,10 +340,7 @@ private fun <T> EnumDropdown(
         )
         DropdownMenu(expanded = expanded && enabled, onDismissRequest = { expanded = false }) {
             options.forEach { option ->
-                DropdownMenuItem(text = { Text(optionLabel(option)) }, onClick = {
-                    expanded = false
-                    onSelect(option)
-                })
+                DropdownMenuItem(text = { Text(optionLabel(option)) }, onClick = { expanded = false; onSelect(option) })
             }
         }
     }

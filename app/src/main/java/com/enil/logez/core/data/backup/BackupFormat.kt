@@ -25,21 +25,19 @@ object BackupFormat {
     const val PAGE_SIZE = 1000
 
     /** Nothing omitted: the archive is meant to be readable and diffable on its own. */
-    val jsonWrite =
-        Json {
-            prettyPrint = false
-            explicitNulls = true
-            encodeDefaults = true
-        }
+    val jsonWrite = Json {
+        prettyPrint = false
+        explicitNulls = true
+        encodeDefaults = true
+    }
 
     /**
      * Tolerant on purpose. A backup written by a newer app may carry columns this one has never
      * heard of, and one written by an older app will be missing columns it has — the DTO defaults
      * cover the second case and [Json.ignoreUnknownKeys] the first.
      */
-    val jsonRead =
-        Json {
-            ignoreUnknownKeys = true
-            explicitNulls = true
-        }
+    val jsonRead = Json {
+        ignoreUnknownKeys = true
+        explicitNulls = true
+    }
 }

@@ -10,6 +10,7 @@ import org.junit.Test
  * instead of shipping unnoticed.
  */
 class TokensTest {
+
     @Test
     fun `spacing scale matches the design system's declared step values`() {
         assertEquals(4.dp, Spacing.xxs)
@@ -24,17 +25,10 @@ class TokensTest {
 
     @Test
     fun `each spacing step is at least 25 percent larger than the previous step`() {
-        val scale =
-            listOf(
-                Spacing.xxs,
-                Spacing.xs,
-                Spacing.sm,
-                Spacing.md,
-                Spacing.lg,
-                Spacing.xl,
-                Spacing.xxl,
-                Spacing.xxxl,
-            )
+        val scale = listOf(
+            Spacing.xxs, Spacing.xs, Spacing.sm, Spacing.md,
+            Spacing.lg, Spacing.xl, Spacing.xxl, Spacing.xxxl,
+        )
         for (i in 1 until scale.size) {
             val growth = scale[i].value / scale[i - 1].value
             assert(growth >= 1.25f) {
