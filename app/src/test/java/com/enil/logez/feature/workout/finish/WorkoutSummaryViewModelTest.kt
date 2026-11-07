@@ -61,11 +61,7 @@ class WorkoutSummaryViewModelTest {
         runTest {
             val vm =
                 viewModel(
-                    FakeWorkoutRepository(
-                        workouts = listOf(workout("w1")),
-                        exercises = listOf(workoutExercise("we1", "w1")),
-                        sets = listOf(aSet("s1", "we1", 0, reps = 8)),
-                    ),
+                    FakeWorkoutRepository(workouts = listOf(workout("w1")), exercises = listOf(workoutExercise("we1", "w1")), sets = listOf(aSet("s1", "we1", 0, reps = 8))),
                     settingsRepo = FakeSettingsRepository(UserSettings(muscleDiagramVariant = MuscleDiagramVariant.FEMALE)),
                 )
             assertEquals(MuscleDiagramVariant.FEMALE, vm.uiState.value.muscleDiagramVariant)
@@ -372,12 +368,7 @@ class WorkoutSummaryViewModelTest {
             assertEquals(363.2, km.averagePaceSecondsPerUnit!!, 0.1) // 6:03 /km
             assertEquals(9.91, km.averageSpeedPerHour!!, 0.01)
 
-            val miles =
-                gpsViewModel(
-                    distanceMeters = 4_620.0,
-                    durationSeconds = 1_678,
-                    settings = UserSettings(distanceUnit = DistanceUnit.MILES),
-                ).uiState.value
+            val miles = gpsViewModel(distanceMeters = 4_620.0, durationSeconds = 1_678, settings = UserSettings(distanceUnit = DistanceUnit.MILES)).uiState.value
             assertEquals(584.5, miles.averagePaceSecondsPerUnit!!, 0.2) // 9:44 /mi
             assertEquals(6.16, miles.averageSpeedPerHour!!, 0.01)
         }
@@ -484,11 +475,7 @@ class WorkoutSummaryViewModelTest {
         runTest {
             val vm =
                 viewModel(
-                    FakeWorkoutRepository(
-                        workouts = listOf(workout("w1")),
-                        exercises = listOf(workoutExercise("we1", "w1")),
-                        sets = listOf(aSet("s1", "we1", 0, reps = 8)),
-                    ),
+                    FakeWorkoutRepository(workouts = listOf(workout("w1")), exercises = listOf(workoutExercise("we1", "w1")), sets = listOf(aSet("s1", "we1", 0, reps = 8))),
                 )
             val state = vm.uiState.value
             assertFalse(state.isGpsTracked)
@@ -524,6 +511,85 @@ class WorkoutSummaryViewModelTest {
                 vm.uiState.value.heartRateSummary!!
                     .maxBpm,
             )
+        }
+
+    // --- W1-02: core workout stats ---
+
+    @Test
+    fun `drop sets and failure sets count toward sets and reps like normal sets`() =
+        runTest {
+            val vm =
+                viewModel(
+                    FakeWorkoutRepository(
+                        workouts = listOf(workout("w1")),
+                        exercises = listOf(workoutExercise("we1", "w1")),
+                        sets =
+                            listOf(
+                                aSet("s1", "we1", 0, reps = 8),
+                                aSet("s2", "we1", 1, reps = 6, setType = SetType.DROPSET),
+                                aSet("s3", "we1", 2, reps = 4, setType = SetType.FAILURE),
+                            ),
+                    ),
+                )
+
+            assertEquals(3, vm.uiState.value.completedSetCount)
+            assertEquals(18, vm.uiState.value.totalReps) // 8 + 6 + 4
+        }
+
+    @Test
+    fun `warm-ups count toward sets and reps when includeWarmupsInStats is on`() =
+        runTest {
+            val vm =
+                viewModel(
+                    FakeWorkoutRepository(
+                        workouts = listOf(workout("w1")),
+                        exercises = listOf(workoutExercise("we1", "w1")),
+                        sets =
+                            listOf(
+                                aSet("s1", "we1", 0, reps = 8),
+                                aSet("s2", "we1", 1, reps = 15, setType = SetType.WARMUP),
+                            ),
+                    ),
+                    settingsRepo = FakeSettingsRepository(UserSettings(includeWarmupsInStats = true)),
+                )
+
+            assertEquals(2, vm.uiState.value.completedSetCount)
+            assertEquals(23, vm.uiState.value.totalReps) // 8 + 15
+        }
+
+    @Test
+    fun `sets that were never completed count toward neither sets nor reps`() =
+        runTest {
+            val vm =
+                viewModel(
+                    FakeWorkoutRepository(
+                        workouts = listOf(workout("w1")),
+                        exercises = listOf(workoutExercise("we1", "w1")),
+                        sets =
+                            listOf(
+                                aSet("s1", "we1", 0, reps = 8),
+                                aSet("s2", "we1", 1, reps = 10, isCompleted = false),
+                            ),
+                    ),
+                )
+
+            assertEquals(1, vm.uiState.value.completedSetCount)
+            assertEquals(8, vm.uiState.value.totalReps)
+        }
+
+    @Test
+    fun `duration on the summary is the workout's saved duration, unchanged`() =
+        runTest {
+            val vm =
+                viewModel(
+                    FakeWorkoutRepository(
+                        workouts = listOf(workout("w1", durationSeconds = 3_120)), // 52 min
+                        exercises = listOf(workoutExercise("we1", "w1")),
+                        sets = listOf(aSet("s1", "we1", 0, reps = 8)),
+                    ),
+                )
+
+            assertEquals(3_120, vm.uiState.value.durationSeconds)
         }
 
     // --- fixture ---
@@ -636,6 +702,7 @@ class WorkoutSummaryViewModelTest {
         setType: SetType = SetType.NORMAL,
         weightKg: Double? = 50.0,
         distanceMeters: Double? = null,
+        isCompleted: Boolean = true,
     ) = WorkoutSetEntity(
         id = id,
         workoutExerciseId = workoutExerciseId,
@@ -647,8 +714,8 @@ class WorkoutSummaryViewModelTest {
         distanceMeters = distanceMeters,
         rpe = null,
         customMetric = null,
-        isCompleted = true,
-        completedAt = 1L,
+        isCompleted = isCompleted,
+        completedAt = if (isCompleted) 1L else null,
     )
 
     private fun exercise(
