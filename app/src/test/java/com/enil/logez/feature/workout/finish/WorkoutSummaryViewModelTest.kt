@@ -513,6 +513,121 @@ class WorkoutSummaryViewModelTest {
             )
         }
 
+    // --- W2-01a: muscle intensity for the body map ---
+
+    /** A chest exercise (we-chest) and a back exercise (we-back) in workout w1. */
+    private fun muscleViewModel(
+        sets: List<WorkoutSetEntity>,
+        settings: UserSettings = UserSettings(),
+        backPrimary: MuscleGroup = MuscleGroup.LATS,
+    ) = WorkoutSummaryViewModel(
+        savedStateHandle = SavedStateHandle(mapOf(WorkoutSummaryViewModel.WORKOUT_ID_ARG to "w1")),
+        workoutRepository =
+            FakeWorkoutRepository(
+                workouts = listOf(workout("w1")),
+                exercises =
+                    listOf(
+                        workoutExercise("we-chest", "w1", exerciseId = "chest"),
+                        workoutExercise("we-back", "w1", orderIndex = 1, exerciseId = "back"),
+                    ),
+                sets = sets,
+            ),
+        exerciseRepository = FakeExerciseRepository(listOf(exercise("chest", MuscleGroup.CHEST), exercise("back", backPrimary))),
+        personalRecordsRepository = FakePersonalRecordsRepository(),
+        settingsRepository = FakeSettingsRepository(settings),
+        activityTrackRepository = FakeActivityTrackRepository(),
+        heartRateSampleRepository = FakeWorkoutHeartRateSampleRepository(),
+        heartRateBackfill = noBackfill(),
+    )
+
+    @Test
+    fun `an unfinished set does not light up its muscle`() =
+        runTest {
+            val vm =
+                muscleViewModel(
+                    listOf(
+                        aSet("s1", "we-chest", 0, reps = 8),
+                        aSet("s2", "we-back", 0, reps = 8, isCompleted = false),
+                    ),
+                )
+
+            assertEquals(mapOf(MuscleGroup.CHEST to 1f), vm.uiState.value.muscleIntensity)
+        }
+
+    @Test
+    fun `warm-up sets are left off the body map when the setting is off`() =
+        runTest {
+            val vm =
+                muscleViewModel(
+                    listOf(
+                        aSet("s1", "we-chest", 0, reps = 8),
+                        aSet("s2", "we-back", 0, reps = 15, setType = SetType.WARMUP),
+                    ),
+                )
+
+            assertEquals(mapOf(MuscleGroup.CHEST to 1f), vm.uiState.value.muscleIntensity)
+        }
+
+    @Test
+    fun `warm-up sets count on the body map when the setting is on`() =
+        runTest {
+            val vm =
+                muscleViewModel(
+                    listOf(
+                        aSet("s1", "we-chest", 0, reps = 8),
+                        aSet("s2", "we-back", 0, reps = 15, setType = SetType.WARMUP),
+                    ),
+                    settings = UserSettings(includeWarmupsInStats = true),
+                )
+
+            assertEquals(mapOf(MuscleGroup.CHEST to 1f, MuscleGroup.LATS to 1f), vm.uiState.value.muscleIntensity)
+        }
+
+    @Test
+    fun `drop sets count toward the body map`() =
+        runTest {
+            val vm =
+                muscleViewModel(
+                    listOf(
+                        aSet("s1", "we-chest", 0, reps = 8),
+                        aSet("s2", "we-back", 0, reps = 8),
+                        aSet("s3", "we-back", 1, reps = 6, setType = SetType.DROPSET),
+                    ),
+                )
+
+            // Back has 2 counted sets (normal + drop), chest has 1, so back is the strongest.
+            val intensity = vm.uiState.value.muscleIntensity
+            assertEquals(1f, intensity.getValue(MuscleGroup.LATS), 0.001f)
+            assertEquals(0.5f, intensity.getValue(MuscleGroup.CHEST), 0.001f)
+        }
+
+    @Test
+    fun `a full-body exercise is left off the body map and does not dim the others`() =
+        runTest {
+            val vm =
+                muscleViewModel(
+                    listOf(
+                        aSet("s1", "we-chest", 0, reps = 8),
+                        aSet("s2", "we-back", 0, reps = 10),
+                        aSet("s3", "we-back", 1, reps = 10),
+                    ),
+                    backPrimary = MuscleGroup.FULL_BODY,
+                )
+
+            assertEquals(mapOf(MuscleGroup.CHEST to 1f), vm.uiState.value.muscleIntensity)
+        }
+
+    @Test
+    fun `a workout with no counted sets has an empty body map`() =
+        runTest {
+            val vm = muscleViewModel(listOf(aSet("s1", "we-chest", 0, reps = 8, isCompleted = false)))
+
+            assertTrue(
+                vm.uiState.value.muscleIntensity
+                    .isEmpty(),
+            )
+        }
+
     // --- W1-02: core workout stats ---
 
     @Test
