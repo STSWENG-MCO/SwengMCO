@@ -26,8 +26,9 @@ reading first.
   match the codebase's existing pattern.
 - Business logic belongs in `core/domain/calc/*.kt` as pure Kotlin, specifically so it can be
   tested without Robolectric/Android dependencies.
-- There is no instrumented/Compose UI test suite yet (`app/src/androidTest/` doesn't exist). If you
-  add one, keep it there rather than mixing UI tests into `app/src/test/`.
+- Instrumented/Compose UI tests live in `app/src/androidTest/` (separate from the JVM unit tests in
+  `app/src/test/`) and run isolated per test via Android Test Orchestrator on the `api26` and
+  `api36` Gradle Managed Devices (`./gradlew :app:qaDevicesGroupDebugAndroidTest`).
 
 ## Code style
 
