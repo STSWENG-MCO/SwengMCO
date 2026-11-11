@@ -1,0 +1,115 @@
+# Release Workflow: Full verification, release build (APK + Bundle), and GitHub Release publication.
+# Triggered by version tag pushes (e.g. v1.0.0), merges to main, or workflow_dispatch.
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release Tag (e.g., v1.0.0)'
+        required: false
+        default: ''
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Verify, Build & Publish Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Configure Keystore (if secrets provided)
+        shell: bash
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            mkdir -p keystore
+            echo "$KEYSTORE_BASE64" | base64 -d > keystore/release.jks
+            cat <<EOF > keystore.properties
+          storeFile=keystore/release.jks
+          storePassword=${KEYSTORE_PASSWORD}
+          keyAlias=${KEY_ALIAS}
+          keyPassword=${KEY_PASSWORD}
+          EOF
+            echo "Release keystore configured from secrets."
+          else
+            echo "No KEYSTORE_BASE64 secret provided; building with default unsigned/fallback release configuration."
+          fi
+
+      - name: Run Unit Tests
+        run: ./gradlew :app:testDebugUnitTest --console=plain
+
+      - name: Run Release Lint
+        run: ./gradlew :app:lintRelease --console=plain
+
+      - name: Assemble Release APK & Bundle
+        env:
+          CONTACT_EMAIL: ${{ secrets.LOGEZ_CONTACT_EMAIL || 'placeholder@logez.app' }}
+          RAW_TAG: ${{ github.event.inputs.tag_name || github.ref_name }}
+          GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m"
+        run: |
+          VERSION_NAME="${RAW_TAG#v}"
+          echo "Building LogEZ release for version: $VERSION_NAME"
+          ./gradlew :app:assembleRelease :app:bundleRelease \
+            -Plogez.contactEmail="$CONTACT_EMAIL" \
+            -PversionName="$VERSION_NAME" \
+            --console=plain
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-build-artifacts
+          path: |
+            app/build/outputs/apk/release/*.apk
+            app/build/outputs/bundle/release/*.aab
+          retention-days: 30
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag_name != '')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
+          name: Release ${{ github.event.inputs.tag_name || github.ref_name }}
+          generate_release_notes: true
+          body: |
+            ## LogEZ Production Release ${{ github.event.inputs.tag_name || github.ref_name }}
+
+            This official production release has passed full CI verification: unit tests, release lint, and production packaging.
+
+            ### Downloads & Artifacts
+            * **Production APK (`.apk`):** Download `app-release.apk` below for direct installation on Android devices (Android 8.0+ / API 26+).
+            * **Google Play Bundle (`.aab`):** Use `app-release.aab` for Google Play Store console publishing.
+
+            ---
+            *Built from commit `${{ github.sha }}` on branch `${{ github.ref_name }}`.*
+          files: |
+            app/build/outputs/apk/release/*.apk
+            app/build/outputs/bundle/release/*.aab
