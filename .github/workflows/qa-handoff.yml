@@ -134,33 +134,24 @@ jobs:
   handoff-release:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/heads/release/')
-    permissions:
-      issues: write
     steps:
-      - name: Process Staging Candidate QA Handoff
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const branchName = context.ref.replace('refs/heads/', '')
-            const commitHash = context.sha.substring(0, 7)
-            const commitUrl = `${context.payload.repository.html_url}/commit/${context.sha}`
-
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: `[Release QA] Testing Candidate Ready: ${branchName}`,
-              labels: ['QA Pending'],
-              body: `
-              ### [Release Candidate Testing] <@&1561637916432801832>
-              A new release branch **${branchName}** has been cut and staged for verification.
-              * **Branch:** \`${branchName}\`
-              * **Source Commit:** [${commitHash}](${commitUrl})
-              * **Status:** Staging APK built via \`cd.yml\`
-              #### QA Acceptance Checklist:
-              - [ ] Verify core acceptance criteria on **at least two physical devices** with different Android versions.
-              - [ ] Validate Room schema migrations and offline data preservation.
-              - [ ] Coordinate testing feedback across the 2-week testing window with User Testers.
-              - [ ] If all checks pass, mark as \`Done\` for Product Owner sign-off.
-              `.trim().replace(/^\s+/gm, '')
-            })
+      - name: Notify QA of Staging Candidate
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+        run: |
+          BRANCH="${GITHUB_REF#refs/heads/}"
+          COMMIT="${GITHUB_SHA:0:7}"
+          COMMIT_URL="${{ github.server_url }}/${{ github.repository }}/commit/${GITHUB_SHA}"
+          APK_URL="https://github.com/${{ github.repository }}/releases/download/staging-latest/logez-staging.apk"
+          MSG=$(cat <<EOF
+          ### [Release Candidate Testing] <@&1561637916432801832>
+          A new release branch **${BRANCH}** has been cut and staged for verification!
+          * **Branch:** \`${BRANCH}\`
+          * **Source Commit:** [${COMMIT}](${COMMIT_URL})
+          * **Direct APK Download:** [Download logez-staging.apk](${APK_URL})
+          #### QA Checklist:
+          - [ ] Verify core acceptance criteria on **at least two physical devices** with different Android versions.
+          - [ ] Validate Room schema migrations and offline data preservation.
+          - [ ] Coordinate testing feedback across the 2-week testing window with User Testers.
+          EOF
+          )
