@@ -592,6 +592,77 @@ class WorkoutSummaryViewModelTest {
             assertEquals(3_120, vm.uiState.value.durationSeconds)
         }
 
+    @Test
+    fun `three normal sets plus one drop set total 4 sets and 38 reps`() =
+        runTest {
+            val vm =
+                viewModel(
+                    FakeWorkoutRepository(
+                        workouts = listOf(workout("w1")),
+                        exercises = listOf(workoutExercise("we1", "w1")),
+                        sets =
+                            listOf(
+                                aSet("s1", "we1", 0, reps = 10),
+                                aSet("s2", "we1", 1, reps = 10),
+                                aSet("s3", "we1", 2, reps = 10),
+                                aSet("s4", "we1", 3, reps = 8, setType = SetType.DROPSET),
+                            ),
+                    ),
+                )
+
+            assertEquals(4, vm.uiState.value.completedSetCount)
+            assertEquals(38, vm.uiState.value.totalReps)
+        }
+
+    @Test
+    fun `warm-ups are excluded from sets and reps when includeWarmupsInStats is explicitly off`() =
+        runTest {
+            val vm =
+                viewModel(
+                    FakeWorkoutRepository(
+                        workouts = listOf(workout("w1")),
+                        exercises = listOf(workoutExercise("we1", "w1")),
+                        sets =
+                            listOf(
+                                aSet("s1", "we1", 0, reps = 10, setType = SetType.WARMUP),
+                                aSet("s2", "we1", 1, reps = 10),
+                                aSet("s3", "we1", 2, reps = 10),
+                            ),
+                    ),
+                    settingsRepo = FakeSettingsRepository(UserSettings(includeWarmupsInStats = false)),
+                )
+
+            assertEquals(2, vm.uiState.value.completedSetCount)
+            assertEquals(20, vm.uiState.value.totalReps)
+        }
+
+    @Test
+    fun `the same workout totals differently with includeWarmupsInStats on and off`() =
+        runTest {
+            fun summaryFor(includeWarmups: Boolean) =
+                viewModel(
+                    FakeWorkoutRepository(
+                        workouts = listOf(workout("w1")),
+                        exercises = listOf(workoutExercise("we1", "w1")),
+                        sets =
+                            listOf(
+                                aSet("s1", "we1", 0, reps = 10, setType = SetType.WARMUP),
+                                aSet("s2", "we1", 1, reps = 10),
+                                aSet("s3", "we1", 2, reps = 10),
+                            ),
+                    ),
+                    settingsRepo = FakeSettingsRepository(UserSettings(includeWarmupsInStats = includeWarmups)),
+                ).uiState.value
+
+            val on = summaryFor(true)
+            assertEquals(3, on.completedSetCount)
+            assertEquals(30, on.totalReps)
+
+            val off = summaryFor(false)
+            assertEquals(2, off.completedSetCount)
+            assertEquals(20, off.totalReps)
+        }
+
     // --- fixture ---
 
     /** A backfill that never finds anything new: Health Connect unavailable. */
