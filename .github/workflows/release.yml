@@ -74,6 +74,7 @@ jobs:
         env:
           CONTACT_EMAIL: ${{ secrets.LOGEZ_CONTACT_EMAIL || 'placeholder@logez.app' }}
           RAW_TAG: ${{ github.event.inputs.tag_name || github.ref_name }}
+          GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m"
         run: |
           VERSION_NAME="${RAW_TAG#v}"
           echo "Building LogEZ release for version: $VERSION_NAME"
