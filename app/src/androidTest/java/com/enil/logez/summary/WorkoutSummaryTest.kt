@@ -37,28 +37,29 @@ import org.junit.runners.model.Statement
 
 @RunWith(AndroidJUnit4::class)
 class WorkoutSummaryTest {
-
-    private val grantPermissionsRule = TestRule { base, _ ->
-        object : Statement() {
-            override fun evaluate() {
-                val instrumentation = InstrumentationRegistry.getInstrumentation()
-                val pkg = instrumentation.targetContext.packageName
-                val uiAutomation = instrumentation.uiAutomation
-                val permissions = listOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION,
-                )
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    permissions.forEach { uiAutomation.grantRuntimePermission(pkg, it) }
-                } else {
-                    permissions.forEach { permission ->
-                        uiAutomation.executeShellCommand("pm grant $pkg $permission").close()
+    private val grantPermissionsRule =
+        TestRule { base, _ ->
+            object : Statement() {
+                override fun evaluate() {
+                    val instrumentation = InstrumentationRegistry.getInstrumentation()
+                    val pkg = instrumentation.targetContext.packageName
+                    val uiAutomation = instrumentation.uiAutomation
+                    val permissions =
+                        listOf(
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION,
+                        )
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        permissions.forEach { uiAutomation.grantRuntimePermission(pkg, it) }
+                    } else {
+                        permissions.forEach { permission ->
+                            uiAutomation.executeShellCommand("pm grant $pkg $permission").close()
+                        }
                     }
+                    base.evaluate()
                 }
-                base.evaluate()
             }
         }
-    }
 
     val composeRule = createAndroidComposeRule<MainActivity>()
 
@@ -106,7 +107,9 @@ class WorkoutSummaryTest {
         // 4. Check off the 1st set so FinishWorkoutScreen allows saving
         val checkSetDesc = composeRule.string(R.string.workout_check_set)
         composeRule.waitUntil(timeoutMillis = 8_000) {
-            composeRule.onAllNodesWithContentDescription(checkSetDesc).fetchSemanticsNodes()
+            composeRule
+                .onAllNodesWithContentDescription(checkSetDesc)
+                .fetchSemanticsNodes()
                 .isNotEmpty()
         }
         composeRule.onAllNodesWithContentDescription(checkSetDesc).onFirst().performClick()
@@ -143,7 +146,8 @@ class WorkoutSummaryTest {
         val runButtonLabel = composeRule.string(R.string.workout_track_walk_run_running)
         composeRule.waitUntil(timeoutMillis = 8_000) {
             runCatching {
-                composeRule.onNode(hasScrollAction())
+                composeRule
+                    .onNode(hasScrollAction())
                     .performScrollToNode(hasText(runButtonLabel))
                 true
             }.getOrDefault(false)
