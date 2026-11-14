@@ -40,10 +40,11 @@ android {
         applicationId = "com.enil.logez"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = providers.gradleProperty("versionCode").orNull?.toIntOrNull() ?: 1
+        versionName = providers.gradleProperty("versionName").orNull ?: "0.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunnerArguments["clearPackageData"] = "true"
 
         buildConfigField("String", "CONTACT_EMAIL", "\"$contactEmail\"")
     }
@@ -100,6 +101,28 @@ android {
     }
     testOptions {
         unitTests.isIncludeAndroidResources = true
+        execution = "ANDROIDX_TEST_ORCHESTRATOR"
+        animationsDisabled = true
+        managedDevices {
+            localDevices {
+                create("api26") {
+                    device = "Pixel 6"
+                    apiLevel = 26
+                    systemImageSource = "google"
+                }
+                create("api36") {
+                    device = "Pixel 6"
+                    apiLevel = 36
+                    systemImageSource = "google"
+                }
+            }
+            groups {
+                create("qaDevices") {
+                    targetDevices.add(localDevices["api26"])
+                    targetDevices.add(localDevices["api36"])
+                }
+            }
+        }
     }
     lint {
         // Play-readiness audit, 2026-09-25: two UI-state defaults read java.time.LocalDate.EPOCH,
@@ -219,8 +242,11 @@ dependencies {
 
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.rules)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
+    androidTestUtil(libs.androidx.test.orchestrator)
 }
 
 // A release must never ship the privacy policy's "contact email not set" placeholder (Owner

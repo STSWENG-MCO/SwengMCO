@@ -2,8 +2,9 @@ root = true
 
 [*.{kt,kts}]
 # Jetpack Compose functions are PascalCase by convention (and by our team standard),
-# so ktlint's function-naming rule must not flag @Composable functions.
-ktlint_function_naming_ignore_when_annotated_with = Composable
+# and Android instrumented @Test methods use subject_action_result snake_case (D8 rejects
+# spaces in method names below API 30), so ktlint's function-naming rule ignores both.
+ktlint_function_naming_ignore_when_annotated_with = Composable, Test
 
 # Existing code has many long lines; not enforced for now.
 ktlint_standard_max-line-length = disabled

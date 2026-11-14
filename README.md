@@ -44,7 +44,13 @@ The privacy policy lives in `feature/privacy/PrivacyPolicyContent.kt` and is als
 
 Test reports land in `app/build/reports/tests/`. Tests live in `app/src/test/`, use JUnit4 + Robolectric, and favor hand-written in-memory fakes (`app/src/test/java/com/enil/logez/fakes/`) over a mocking framework — match that pattern for new tests.
 
-There is currently no instrumented/Compose UI test suite (`app/src/androidTest/` doesn't exist yet) — new UI-behavior coverage should go there if you add it.
+Instrumented Compose UI smoke tests live in `app/src/androidTest/` and run under Android Test Orchestrator (`clearPackageData = true`) on the declared Gradle Managed Devices (`api26` and `api36`, grouped as `qaDevices`):
+
+```bash
+./gradlew :app:qaDevicesGroupDebugAndroidTest
+```
+
+HTML reports land in `app/build/reports/androidTests/managedDevice/debug/`, and JUnit XML results in `app/build/outputs/androidTest-results/managedDevice/debug/`.
 
 ## More docs
 
