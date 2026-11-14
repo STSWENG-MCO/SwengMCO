@@ -28,6 +28,7 @@ import com.enil.logez.testutil.bottomNavTab
 import com.enil.logez.testutil.dismissNotificationPromptIfShown
 import com.enil.logez.testutil.string
 import com.enil.logez.testutil.waitUntilTextExists
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
@@ -138,6 +139,12 @@ class WorkoutSummaryTest {
 
     @Test
     fun gpsActivityFinishSaveSummaryDone_navigatesToHistoryTab() {
+        // MapLibre native GL crashes on API < 28 x86 emulator translation layers (GL2Encoder SIGSEGV)
+        assumeTrue(
+            "Skip MapLibre GL on API < 28 emulators due to native goldfish OpenGL emulation limitations",
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.P,
+        )
+
         val interruptedDiscardLabel = composeRule.string(R.string.activity_tracking_interrupted_discard)
         waitForComposeAndDismissInterrupted(interruptedDiscardLabel)
 
