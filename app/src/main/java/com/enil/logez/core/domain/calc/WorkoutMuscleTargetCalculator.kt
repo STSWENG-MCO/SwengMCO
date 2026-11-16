@@ -34,4 +34,10 @@ object WorkoutMuscleTargetCalculator {
         val strongest = scores.values.maxOrNull() ?: return emptyMap()
         return scores.mapValues { (_, score) -> (score / strongest).toFloat() }
     }
+
+    fun trainedGroups(intensities: Map<MuscleGroup, Float>): List<MuscleGroup> =
+        intensities.entries
+            .filter { it.key in MAPPABLE && it.value > 0f }
+            .sortedWith(compareByDescending<Map.Entry<MuscleGroup, Float>> { it.value }.thenBy { it.key.ordinal })
+            .map { it.key }
 }

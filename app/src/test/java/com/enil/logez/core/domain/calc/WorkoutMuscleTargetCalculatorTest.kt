@@ -131,4 +131,27 @@ class WorkoutMuscleTargetCalculatorTest {
             WorkoutMuscleTargetCalculator.MAPPABLE,
         )
     }
+
+    @Test
+    fun `trainedGroups lists strongest first and keeps enum order on ties`() {
+        val result =
+            WorkoutMuscleTargetCalculator.trainedGroups(
+                mapOf(MuscleGroup.TRICEPS to 0.5f, MuscleGroup.CHEST to 1f, MuscleGroup.BICEPS to 0.5f),
+            )
+        assertEquals(listOf(MuscleGroup.CHEST, MuscleGroup.BICEPS, MuscleGroup.TRICEPS), result)
+    }
+
+    @Test
+    fun `trainedGroups drops zero-intensity and non-mappable groups`() {
+        val result =
+            WorkoutMuscleTargetCalculator.trainedGroups(
+                mapOf(MuscleGroup.CARDIO to 1f, MuscleGroup.OTHER to 0.8f, MuscleGroup.CHEST to 0f),
+            )
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun `trainedGroups of an empty map is empty`() {
+        assertTrue(WorkoutMuscleTargetCalculator.trainedGroups(emptyMap()).isEmpty())
+    }
 }
