@@ -8,7 +8,9 @@ import com.enil.logez.core.data.entity.WorkoutEntity
 import com.enil.logez.core.data.entity.WorkoutExerciseEntity
 import com.enil.logez.core.data.entity.WorkoutHeartRateSampleEntity
 import com.enil.logez.core.data.entity.WorkoutSetEntity
+import com.enil.logez.core.domain.calc.BodyRegion
 import com.enil.logez.core.domain.calc.HeartRateZone
+import com.enil.logez.core.domain.calc.hasRegionData
 import com.enil.logez.core.domain.model.DistanceUnit
 import com.enil.logez.core.domain.model.Equipment
 import com.enil.logez.core.domain.model.ExerciseType
@@ -626,6 +628,17 @@ class WorkoutSummaryViewModelTest {
                 vm.uiState.value.muscleIntensity
                     .isEmpty(),
             )
+        }
+
+    @Test
+    fun `a neck-only workout highlights the neck but leaves every balance axis at zero`() =
+        runTest {
+            val vm = muscleViewModel(listOf(aSet("s1", "we-back", 0, reps = 12)), backPrimary = MuscleGroup.NECK)
+
+            val state = vm.uiState.value
+            assertEquals(mapOf(MuscleGroup.NECK to 1f), state.muscleIntensity)
+            assertEquals(BodyRegion.entries.toList(), state.muscleBalance.map { it.region })
+            assertFalse(state.muscleBalance.hasRegionData())
         }
 
     // --- W1-02: core workout stats ---
