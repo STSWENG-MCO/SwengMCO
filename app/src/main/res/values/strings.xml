@@ -151,6 +151,7 @@
     <string name="muscle_region_quads_axis">Quads</string>
     <string name="muscle_region_hamstrings_glutes_axis">Hams</string>
     <string name="muscle_region_lower_leg_axis">Lower leg</string>
+    <string name="muscle_silhouette_description">Body map. Muscles trained: %1$s.</string>
     <string name="analytics_tile_workouts">Workouts</string>
     <string name="analytics_tile_duration">Duration</string>
     <string name="analytics_tile_volume">Volume</string>
