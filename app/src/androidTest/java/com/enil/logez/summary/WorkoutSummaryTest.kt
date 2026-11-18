@@ -129,7 +129,8 @@ class WorkoutSummaryTest {
         composeRule.onNodeWithText(summaryTitle).assertIsDisplayed()
 
         val doneLabel = composeRule.string(R.string.summary_done)
-        composeRule.onNodeWithText(doneLabel).performScrollTo().performClick()
+        // W3-02a: Done is fixed under the slide pager, always on screen, so no scroll is needed.
+        composeRule.onNodeWithText(doneLabel).assertIsDisplayed().performClick()
 
         // 7. Verify Done navigates to the History tab
         composeRule.assertBottomBarVisible()
@@ -202,7 +203,8 @@ class WorkoutSummaryTest {
         composeRule.onAllNodesWithText("Running (Outdoor)").onFirst().assertIsDisplayed()
 
         val doneLabel = composeRule.string(R.string.summary_done)
-        composeRule.onNodeWithText(doneLabel).performScrollTo()
+        // W3-02a: Done is fixed under the slide pager, always on screen.
+        composeRule.onNodeWithText(doneLabel).assertIsDisplayed()
 
         val routeEmptyLabel = composeRule.string(R.string.summary_gps_route_empty)
         if (composeRule.onAllNodesWithText(routeEmptyLabel).fetchSemanticsNodes().isNotEmpty()) {

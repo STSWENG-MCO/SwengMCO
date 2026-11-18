@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
@@ -18,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.EmojiEvents
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -72,7 +74,7 @@ import com.enil.logez.feature.workout.finish.share.ShareSummaryDialog
  * is intercepted to mean Done: the workout is already saved, so re-entering the finish screen
  * behind it would offer to save something that no longer exists.
  *
- * A GPS-tracked walk/run renders [GpsWorkoutSummary] instead (2026-09-26). This route draws
+ * A GPS-tracked walk/run uses the walk/run slides ([GpsOverviewSlide]) instead (2026-09-26). This route draws
  * behind the status bar (LogEzApp leaves out the top inset for it) so that summary's map can run
  * up to the top edge; the strength layout pads itself back down below the status bar. The inner
  * Scaffold adds no insets of its own: it used to add the status bar a second time on top of the
@@ -95,141 +97,25 @@ fun WorkoutSummaryScreen(
     Scaffold(contentWindowInsets = WindowInsets(0)) { padding ->
         if (uiState.isLoading) return@Scaffold
 
-        if (uiState.isGpsTracked) {
-            Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-                GpsWorkoutSummary(
-                    uiState = uiState,
-                    onOpenMap = { showFullMap = true },
-                    onShare = { showShareDialog = true },
-                    onDone = onDone,
-                )
-                // Drawn over the summary rather than in place of it, so closing the map returns to
-                // the same scroll position with the hero map still loaded.
-                if (showFullMap && uiState.routePoints.isNotEmpty()) {
-                    // Composed after the screen's own BackHandler, so Back closes the map first.
-                    BackHandler { showFullMap = false }
-                    FullScreenRouteMap(routePoints = uiState.routePoints, onClose = { showFullMap = false })
-                }
-            }
-        } else {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .padding(padding)
-                        .windowInsetsPadding(WindowInsets.statusBars)
-                        .verticalScroll(rememberScrollState())
-                        .padding(Spacing.md),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    stringResource(R.string.summary_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = Spacing.lg),
-                )
-                Text(uiState.title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = Spacing.xs))
-                if (uiState.structure == WorkoutStructure.CIRCUIT) {
-                    // M11: the same "CIRCUIT · N rounds" line the share card carries.
-                    Text(
-                        stringResource(R.string.routine_structure_chip_circuit) + " · " +
-                            pluralStringResource(R.plurals.routine_rounds_count, uiState.rounds, uiState.rounds),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(top = Spacing.xxs),
-                    )
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = Spacing.lg),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                ) {
-                    // Only a metric this workout actually logged gets a cell -- a GPS-tracked walk has
-                    // no weight/reps concept, so showing "0kg"/"0 Reps" next to its real distance would
-                    // be noise, not data (each cell is independently gated, not tied to workout type).
-                    if (uiState.hasVolume) StatCell(value = formatVolume(uiState.totalVolumeKg, uiState.weightUnit), label = stringResource(R.string.summary_volume), modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, valueStyle = LogEzMono.dataLarge, labelColor = MaterialTheme.colorScheme.onSurfaceVariant, labelTextAlign = TextAlign.Center)
-                    StatCell(value = uiState.completedSetCount.toString(), label = stringResource(R.string.summary_sets), modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, valueStyle = LogEzMono.dataLarge, labelColor = MaterialTheme.colorScheme.onSurfaceVariant, labelTextAlign = TextAlign.Center)
-                    if (uiState.hasReps) StatCell(value = uiState.totalReps.toString(), label = stringResource(R.string.summary_reps), modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, valueStyle = LogEzMono.dataLarge, labelColor = MaterialTheme.colorScheme.onSurfaceVariant, labelTextAlign = TextAlign.Center)
-                    if (uiState.hasDistance) StatCell(value = formatDistance(uiState.totalDistanceMeters, uiState.distanceUnit), label = stringResource(R.string.summary_distance), modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, valueStyle = LogEzMono.dataLarge, labelColor = MaterialTheme.colorScheme.onSurfaceVariant, labelTextAlign = TextAlign.Center)
-                    StatCell(value = formatDuration(uiState.durationSeconds), label = stringResource(R.string.summary_duration), modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, valueStyle = LogEzMono.dataLarge, labelColor = MaterialTheme.colorScheme.onSurfaceVariant, labelTextAlign = TextAlign.Center)
-                }
-
-                if (WorkoutMuscleTargetCalculator.trainedGroups(uiState.muscleIntensity).isNotEmpty()) {
-                    Text(
-                        stringResource(R.string.analytics_body_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.fillMaxWidth().padding(top = Spacing.lg, bottom = Spacing.sm),
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        MuscleSilhouette(
-                            intensity = uiState.muscleIntensity,
-                            variant = uiState.muscleDiagramVariant,
-                            modifier = Modifier.weight(0.8f),
-                        )
-                        MuscleBalanceRadar(
-                            shares = uiState.muscleBalance,
-                            modifier = Modifier.weight(1.2f),
-                            compact = true,
-                        )
+        // W3-02a: every summary (strength or walk/run) is a pager of slides, with Share and Done
+        // fixed underneath so they're reachable from any slide.
+        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                SummaryPager(slides = uiState.summarySlides(), modifier = Modifier.weight(1f)) { slide ->
+                    if (uiState.isGpsTracked) {
+                        GpsSummarySlide(slide, uiState, onOpenMap = { showFullMap = true })
+                    } else {
+                        StrengthSummarySlide(slide, uiState)
                     }
                 }
-
-                if (uiState.routePoints.isNotEmpty()) {
-                    // M21c: upgraded from the Canvas sketch spike to the real offline map, per the
-                    // Owner's explicit choice once the spike proved the concept (decisions.md 2026-09-10).
-                    RouteMapView(
-                        routePoints = uiState.routePoints,
-                        followLatest = false,
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .height(180.dp)
-                                .padding(top = Spacing.lg)
-                                .clip(RoundedCornerShape(Radius.sm)),
-                    )
-                }
-
-                if (uiState.heartRateSamples.isNotEmpty()) {
-                    var selectedBpmIndex by rememberSaveable { mutableStateOf<Int?>(null) }
-                    Text(
-                        stringResource(R.string.summary_heart_rate_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(top = Spacing.lg),
-                    )
-                    LineChart(
-                        points = uiState.heartRateSamples.map { (recordedAt, bpm) -> LineChartPoint(x = recordedAt, y = bpm.toDouble()) },
-                        yLabel = { "${it.toInt()}" },
-                        xLabel = { formatChartElapsed(((it - uiState.startedAtMillis) / 1000).coerceAtLeast(0L)) },
-                        selectedIndex = selectedBpmIndex,
-                        onPointTap = { selectedBpmIndex = it },
-                        modifier = Modifier.padding(top = Spacing.sm),
-                    )
-                }
-
-                if (uiState.prMedals.isNotEmpty()) {
-                    Text(
-                        stringResource(R.string.summary_prs_header),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(top = Spacing.lg, bottom = Spacing.sm).fillMaxWidth(),
-                    )
-                    uiState.prMedals.forEach { medal -> PrMedalCard(medal, uiState.weightUnit, uiState.distanceUnit) }
-                }
-
-                OutlinedButton(
-                    onClick = { showShareDialog = true },
-                    modifier = Modifier.fillMaxWidth().padding(top = Spacing.lg),
-                ) {
-                    Text(stringResource(R.string.summary_share))
-                }
-                Button(onClick = onDone, modifier = Modifier.fillMaxWidth().padding(top = Spacing.sm)) {
-                    Text(stringResource(R.string.summary_done))
-                }
+                SummaryActions(onShare = { showShareDialog = true }, onDone = onDone)
+            }
+            // Drawn over the summary rather than in place of it, so closing the map returns to the
+            // same slide and scroll position with the hero map still loaded.
+            if (uiState.isGpsTracked && showFullMap && uiState.routePoints.isNotEmpty()) {
+                // Composed after the screen's own BackHandler, so Back closes the map first.
+                BackHandler { showFullMap = false }
+                FullScreenRouteMap(routePoints = uiState.routePoints, onClose = { showFullMap = false })
             }
         }
 
@@ -292,6 +178,181 @@ fun WorkoutSummaryScreen(
                     ),
                 onDismiss = { showShareDialog = false },
             )
+        }
+    }
+}
+
+/** Which slides this workout has data for; see [summarySlides]. */
+internal fun WorkoutSummaryUiState.summarySlides(): List<SummarySlide> =
+    summarySlides(
+        hasMuscles = WorkoutMuscleTargetCalculator.trainedGroups(muscleIntensity).isNotEmpty(),
+        hasHeartRate = if (isGpsTracked) heartRateSummary != null else heartRateSamples.isNotEmpty(),
+        hasRecords = prMedals.isNotEmpty(),
+    )
+
+/** One strength-workout slide. Scrolls on its own when its content is taller than the page. */
+@Composable
+private fun StrengthSummarySlide(
+    slide: SummarySlide,
+    uiState: WorkoutSummaryUiState,
+) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .verticalScroll(rememberScrollState())
+                .padding(Spacing.md),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        when (slide) {
+            SummarySlide.OVERVIEW -> StrengthOverview(uiState)
+            SummarySlide.MUSCLES -> {
+                SlideHeading(stringResource(R.string.analytics_body_title))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    MuscleSilhouette(
+                        intensity = uiState.muscleIntensity,
+                        variant = uiState.muscleDiagramVariant,
+                        modifier = Modifier.weight(0.8f),
+                    )
+                    MuscleBalanceRadar(
+                        shares = uiState.muscleBalance,
+                        modifier = Modifier.weight(1.2f),
+                        compact = true,
+                    )
+                }
+            }
+            SummarySlide.HEART_RATE -> {
+                var selectedBpmIndex by rememberSaveable { mutableStateOf<Int?>(null) }
+                SlideHeading(stringResource(R.string.summary_heart_rate_title))
+                LineChart(
+                    points = uiState.heartRateSamples.map { (recordedAt, bpm) -> LineChartPoint(x = recordedAt, y = bpm.toDouble()) },
+                    yLabel = { "${it.toInt()}" },
+                    xLabel = { formatChartElapsed(((it - uiState.startedAtMillis) / 1000).coerceAtLeast(0L)) },
+                    selectedIndex = selectedBpmIndex,
+                    onPointTap = { selectedBpmIndex = it },
+                    modifier = Modifier.padding(top = Spacing.sm),
+                )
+            }
+            SummarySlide.RECORDS -> {
+                SlideHeading(stringResource(R.string.summary_prs_header))
+                uiState.prMedals.forEach { medal -> PrMedalCard(medal, uiState.weightUnit, uiState.distanceUnit) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StrengthOverview(uiState: WorkoutSummaryUiState) {
+    Text(
+        stringResource(R.string.summary_title),
+        style = MaterialTheme.typography.headlineSmall,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(top = Spacing.lg),
+    )
+    Text(uiState.title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = Spacing.xs))
+    if (uiState.structure == WorkoutStructure.CIRCUIT) {
+        // M11: the same "CIRCUIT · N rounds" line the share card carries.
+        Text(
+            stringResource(R.string.routine_structure_chip_circuit) + " · " +
+                pluralStringResource(R.plurals.routine_rounds_count, uiState.rounds, uiState.rounds),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(top = Spacing.xxs),
+        )
+    }
+
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(top = Spacing.lg),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+    ) {
+        // Only a metric this workout actually logged gets a cell (each cell is independently gated).
+        if (uiState.hasVolume) StatCell(value = formatVolume(uiState.totalVolumeKg, uiState.weightUnit), label = stringResource(R.string.summary_volume), modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, valueStyle = LogEzMono.dataLarge, labelColor = MaterialTheme.colorScheme.onSurfaceVariant, labelTextAlign = TextAlign.Center)
+        StatCell(value = uiState.completedSetCount.toString(), label = stringResource(R.string.summary_sets), modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, valueStyle = LogEzMono.dataLarge, labelColor = MaterialTheme.colorScheme.onSurfaceVariant, labelTextAlign = TextAlign.Center)
+        if (uiState.hasReps) StatCell(value = uiState.totalReps.toString(), label = stringResource(R.string.summary_reps), modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, valueStyle = LogEzMono.dataLarge, labelColor = MaterialTheme.colorScheme.onSurfaceVariant, labelTextAlign = TextAlign.Center)
+        if (uiState.hasDistance) StatCell(value = formatDistance(uiState.totalDistanceMeters, uiState.distanceUnit), label = stringResource(R.string.summary_distance), modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, valueStyle = LogEzMono.dataLarge, labelColor = MaterialTheme.colorScheme.onSurfaceVariant, labelTextAlign = TextAlign.Center)
+        StatCell(value = formatDuration(uiState.durationSeconds), label = stringResource(R.string.summary_duration), modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, valueStyle = LogEzMono.dataLarge, labelColor = MaterialTheme.colorScheme.onSurfaceVariant, labelTextAlign = TextAlign.Center)
+    }
+
+    if (uiState.routePoints.isNotEmpty()) {
+        // M21c: the real offline map (decisions.md 2026-09-10).
+        RouteMapView(
+            routePoints = uiState.routePoints,
+            followLatest = false,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(180.dp)
+                    .padding(top = Spacing.lg)
+                    .clip(RoundedCornerShape(Radius.sm)),
+        )
+    }
+}
+
+/**
+ * One walk/run slide. The overview keeps its edge-to-edge map behind the status bar; the other
+ * slides pad below it like the strength slides do.
+ */
+@Composable
+private fun GpsSummarySlide(
+    slide: SummarySlide,
+    uiState: WorkoutSummaryUiState,
+    onOpenMap: () -> Unit,
+) {
+    if (slide == SummarySlide.OVERVIEW) {
+        GpsOverviewSlide(uiState = uiState, onOpenMap = onOpenMap)
+        return
+    }
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .verticalScroll(rememberScrollState())
+                .padding(Spacing.md),
+    ) {
+        when (slide) {
+            SummarySlide.HEART_RATE ->
+                uiState.heartRateSummary?.let { summary ->
+                    HeartRateCard(summary, uiState.startedAtMillis, Modifier.padding(top = Spacing.md))
+                }
+            SummarySlide.RECORDS -> {
+                CardHeading(stringResource(R.string.summary_prs_header), Modifier.padding(top = Spacing.lg, bottom = Spacing.sm))
+                uiState.prMedals.forEach { medal -> GpsPrMedalCard(medal, uiState.distanceUnit) }
+            }
+            // A walk/run has no muscle data, so summarySlides() never yields MUSCLES for it.
+            SummarySlide.OVERVIEW, SummarySlide.MUSCLES -> Unit
+        }
+    }
+}
+
+@Composable
+private fun SlideHeading(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier.fillMaxWidth().padding(top = Spacing.lg, bottom = Spacing.sm),
+    )
+}
+
+/** Share and Done, fixed under the pager. */
+@Composable
+private fun SummaryActions(
+    onShare: () -> Unit,
+    onDone: () -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.md).padding(bottom = Spacing.md)) {
+        OutlinedButton(onClick = onShare, modifier = Modifier.fillMaxWidth().padding(top = Spacing.sm)) {
+            Icon(Icons.Outlined.Share, contentDescription = null, modifier = Modifier.size(18.dp))
+            Text(stringResource(R.string.summary_share), modifier = Modifier.padding(start = Spacing.xs))
+        }
+        Button(onClick = onDone, modifier = Modifier.fillMaxWidth().padding(top = Spacing.sm)) {
+            Text(stringResource(R.string.summary_done))
         }
     }
 }
@@ -360,7 +421,7 @@ private fun formatChartElapsed(totalSeconds: Long): String {
  * Reps-based records are whole numbers; everything else carries a unit. Time uses the clock format
  * the walk/run summary uses, which keeps hours ("1:15:03", not "75:03"). Distance stays in meters
  * here: on a strength summary it is a carry or a sled push, where "20m" reads better than
- * "0.02 km". A walk/run's distance record renders on [GpsWorkoutSummary] in km/mi instead.
+ * "0.02 km". A walk/run's distance record renders on the walk/run summary in km/mi instead.
  */
 private fun formatPrValue(
     medal: PrMedal,
