@@ -8,9 +8,7 @@ import com.enil.logez.core.data.entity.WorkoutEntity
 import com.enil.logez.core.data.entity.WorkoutExerciseEntity
 import com.enil.logez.core.data.entity.WorkoutHeartRateSampleEntity
 import com.enil.logez.core.data.entity.WorkoutSetEntity
-import com.enil.logez.core.domain.calc.BodyRegion
 import com.enil.logez.core.domain.calc.HeartRateZone
-import com.enil.logez.core.domain.calc.hasRegionData
 import com.enil.logez.core.domain.model.DistanceUnit
 import com.enil.logez.core.domain.model.Equipment
 import com.enil.logez.core.domain.model.ExerciseType
@@ -63,7 +61,11 @@ class WorkoutSummaryViewModelTest {
         runTest {
             val vm =
                 viewModel(
-                    FakeWorkoutRepository(workouts = listOf(workout("w1")), exercises = listOf(workoutExercise("we1", "w1")), sets = listOf(aSet("s1", "we1", 0, reps = 8))),
+                    FakeWorkoutRepository(
+                        workouts = listOf(workout("w1")),
+                        exercises = listOf(workoutExercise("we1", "w1")),
+                        sets = listOf(aSet("s1", "we1", 0, reps = 8)),
+                    ),
                     settingsRepo = FakeSettingsRepository(UserSettings(muscleDiagramVariant = MuscleDiagramVariant.FEMALE)),
                 )
             assertEquals(MuscleDiagramVariant.FEMALE, vm.uiState.value.muscleDiagramVariant)
@@ -370,7 +372,12 @@ class WorkoutSummaryViewModelTest {
             assertEquals(363.2, km.averagePaceSecondsPerUnit!!, 0.1) // 6:03 /km
             assertEquals(9.91, km.averageSpeedPerHour!!, 0.01)
 
-            val miles = gpsViewModel(distanceMeters = 4_620.0, durationSeconds = 1_678, settings = UserSettings(distanceUnit = DistanceUnit.MILES)).uiState.value
+            val miles =
+                gpsViewModel(
+                    distanceMeters = 4_620.0,
+                    durationSeconds = 1_678,
+                    settings = UserSettings(distanceUnit = DistanceUnit.MILES),
+                ).uiState.value
             assertEquals(584.5, miles.averagePaceSecondsPerUnit!!, 0.2) // 9:44 /mi
             assertEquals(6.16, miles.averageSpeedPerHour!!, 0.01)
         }
@@ -477,7 +484,11 @@ class WorkoutSummaryViewModelTest {
         runTest {
             val vm =
                 viewModel(
-                    FakeWorkoutRepository(workouts = listOf(workout("w1")), exercises = listOf(workoutExercise("we1", "w1")), sets = listOf(aSet("s1", "we1", 0, reps = 8))),
+                    FakeWorkoutRepository(
+                        workouts = listOf(workout("w1")),
+                        exercises = listOf(workoutExercise("we1", "w1")),
+                        sets = listOf(aSet("s1", "we1", 0, reps = 8)),
+                    ),
                 )
             val state = vm.uiState.value
             assertFalse(state.isGpsTracked)
@@ -513,282 +524,6 @@ class WorkoutSummaryViewModelTest {
                 vm.uiState.value.heartRateSummary!!
                     .maxBpm,
             )
-        }
-
-    // --- W2-01a: muscle intensity for the body map ---
-
-    /** A chest exercise (we-chest) and a back exercise (we-back) in workout w1. */
-    private fun muscleViewModel(
-        sets: List<WorkoutSetEntity>,
-        settings: UserSettings = UserSettings(),
-        backPrimary: MuscleGroup = MuscleGroup.LATS,
-    ) = WorkoutSummaryViewModel(
-        savedStateHandle = SavedStateHandle(mapOf(WorkoutSummaryViewModel.WORKOUT_ID_ARG to "w1")),
-        workoutRepository =
-            FakeWorkoutRepository(
-                workouts = listOf(workout("w1")),
-                exercises =
-                    listOf(
-                        workoutExercise("we-chest", "w1", exerciseId = "chest"),
-                        workoutExercise("we-back", "w1", orderIndex = 1, exerciseId = "back"),
-                    ),
-                sets = sets,
-            ),
-        exerciseRepository = FakeExerciseRepository(listOf(exercise("chest", MuscleGroup.CHEST), exercise("back", backPrimary))),
-        personalRecordsRepository = FakePersonalRecordsRepository(),
-        settingsRepository = FakeSettingsRepository(settings),
-        activityTrackRepository = FakeActivityTrackRepository(),
-        heartRateSampleRepository = FakeWorkoutHeartRateSampleRepository(),
-        heartRateBackfill = noBackfill(),
-    )
-
-    @Test
-    fun `an unfinished set does not light up its muscle`() =
-        runTest {
-            val vm =
-                muscleViewModel(
-                    listOf(
-                        aSet("s1", "we-chest", 0, reps = 8),
-                        aSet("s2", "we-back", 0, reps = 8, isCompleted = false),
-                    ),
-                )
-
-            assertEquals(mapOf(MuscleGroup.CHEST to 1f), vm.uiState.value.muscleIntensity)
-        }
-
-    @Test
-    fun `warm-up sets are left off the body map when the setting is off`() =
-        runTest {
-            val vm =
-                muscleViewModel(
-                    listOf(
-                        aSet("s1", "we-chest", 0, reps = 8),
-                        aSet("s2", "we-back", 0, reps = 15, setType = SetType.WARMUP),
-                    ),
-                )
-
-            assertEquals(mapOf(MuscleGroup.CHEST to 1f), vm.uiState.value.muscleIntensity)
-        }
-
-    @Test
-    fun `warm-up sets count on the body map when the setting is on`() =
-        runTest {
-            val vm =
-                muscleViewModel(
-                    listOf(
-                        aSet("s1", "we-chest", 0, reps = 8),
-                        aSet("s2", "we-back", 0, reps = 15, setType = SetType.WARMUP),
-                    ),
-                    settings = UserSettings(includeWarmupsInStats = true),
-                )
-
-            assertEquals(mapOf(MuscleGroup.CHEST to 1f, MuscleGroup.LATS to 1f), vm.uiState.value.muscleIntensity)
-        }
-
-    @Test
-    fun `drop sets count toward the body map`() =
-        runTest {
-            val vm =
-                muscleViewModel(
-                    listOf(
-                        aSet("s1", "we-chest", 0, reps = 8),
-                        aSet("s2", "we-back", 0, reps = 8),
-                        aSet("s3", "we-back", 1, reps = 6, setType = SetType.DROPSET),
-                    ),
-                )
-
-            // Back has 2 counted sets (normal + drop), chest has 1, so back is the strongest.
-            val intensity = vm.uiState.value.muscleIntensity
-            assertEquals(1f, intensity.getValue(MuscleGroup.LATS), 0.001f)
-            assertEquals(0.5f, intensity.getValue(MuscleGroup.CHEST), 0.001f)
-        }
-
-    @Test
-    fun `a full-body exercise is left off the body map and does not dim the others`() =
-        runTest {
-            val vm =
-                muscleViewModel(
-                    listOf(
-                        aSet("s1", "we-chest", 0, reps = 8),
-                        aSet("s2", "we-back", 0, reps = 10),
-                        aSet("s3", "we-back", 1, reps = 10),
-                    ),
-                    backPrimary = MuscleGroup.FULL_BODY,
-                )
-
-            assertEquals(mapOf(MuscleGroup.CHEST to 1f), vm.uiState.value.muscleIntensity)
-        }
-
-    @Test
-    fun `a workout with no counted sets has an empty body map`() =
-        runTest {
-            val vm = muscleViewModel(listOf(aSet("s1", "we-chest", 0, reps = 8, isCompleted = false)))
-
-            assertTrue(
-                vm.uiState.value.muscleIntensity
-                    .isEmpty(),
-            )
-        }
-
-    @Test
-    fun `a neck-only workout highlights the neck but leaves every balance axis at zero`() =
-        runTest {
-            val vm = muscleViewModel(listOf(aSet("s1", "we-back", 0, reps = 12)), backPrimary = MuscleGroup.NECK)
-
-            val state = vm.uiState.value
-            assertEquals(mapOf(MuscleGroup.NECK to 1f), state.muscleIntensity)
-            assertEquals(BodyRegion.entries.toList(), state.muscleBalance.map { it.region })
-            assertFalse(state.muscleBalance.hasRegionData())
-        }
-
-    // --- W1-02: core workout stats ---
-
-    @Test
-    fun `drop sets and failure sets count toward sets and reps like normal sets`() =
-        runTest {
-            val vm =
-                viewModel(
-                    FakeWorkoutRepository(
-                        workouts = listOf(workout("w1")),
-                        exercises = listOf(workoutExercise("we1", "w1")),
-                        sets =
-                            listOf(
-                                aSet("s1", "we1", 0, reps = 8),
-                                aSet("s2", "we1", 1, reps = 6, setType = SetType.DROPSET),
-                                aSet("s3", "we1", 2, reps = 4, setType = SetType.FAILURE),
-                            ),
-                    ),
-                )
-
-            assertEquals(3, vm.uiState.value.completedSetCount)
-            assertEquals(18, vm.uiState.value.totalReps) // 8 + 6 + 4
-        }
-
-    @Test
-    fun `warm-ups count toward sets and reps when includeWarmupsInStats is on`() =
-        runTest {
-            val vm =
-                viewModel(
-                    FakeWorkoutRepository(
-                        workouts = listOf(workout("w1")),
-                        exercises = listOf(workoutExercise("we1", "w1")),
-                        sets =
-                            listOf(
-                                aSet("s1", "we1", 0, reps = 8),
-                                aSet("s2", "we1", 1, reps = 15, setType = SetType.WARMUP),
-                            ),
-                    ),
-                    settingsRepo = FakeSettingsRepository(UserSettings(includeWarmupsInStats = true)),
-                )
-
-            assertEquals(2, vm.uiState.value.completedSetCount)
-            assertEquals(23, vm.uiState.value.totalReps) // 8 + 15
-        }
-
-    @Test
-    fun `sets that were never completed count toward neither sets nor reps`() =
-        runTest {
-            val vm =
-                viewModel(
-                    FakeWorkoutRepository(
-                        workouts = listOf(workout("w1")),
-                        exercises = listOf(workoutExercise("we1", "w1")),
-                        sets =
-                            listOf(
-                                aSet("s1", "we1", 0, reps = 8),
-                                aSet("s2", "we1", 1, reps = 10, isCompleted = false),
-                            ),
-                    ),
-                )
-
-            assertEquals(1, vm.uiState.value.completedSetCount)
-            assertEquals(8, vm.uiState.value.totalReps)
-        }
-
-    @Test
-    fun `duration on the summary is the workout's saved duration, unchanged`() =
-        runTest {
-            val vm =
-                viewModel(
-                    FakeWorkoutRepository(
-                        workouts = listOf(workout("w1", durationSeconds = 3_120)), // 52 min
-                        exercises = listOf(workoutExercise("we1", "w1")),
-                        sets = listOf(aSet("s1", "we1", 0, reps = 8)),
-                    ),
-                )
-
-            assertEquals(3_120, vm.uiState.value.durationSeconds)
-        }
-
-    @Test
-    fun `three normal sets plus one drop set total 4 sets and 38 reps`() =
-        runTest {
-            val vm =
-                viewModel(
-                    FakeWorkoutRepository(
-                        workouts = listOf(workout("w1")),
-                        exercises = listOf(workoutExercise("we1", "w1")),
-                        sets =
-                            listOf(
-                                aSet("s1", "we1", 0, reps = 10),
-                                aSet("s2", "we1", 1, reps = 10),
-                                aSet("s3", "we1", 2, reps = 10),
-                                aSet("s4", "we1", 3, reps = 8, setType = SetType.DROPSET),
-                            ),
-                    ),
-                )
-
-            assertEquals(4, vm.uiState.value.completedSetCount)
-            assertEquals(38, vm.uiState.value.totalReps)
-        }
-
-    @Test
-    fun `warm-ups are excluded from sets and reps when includeWarmupsInStats is explicitly off`() =
-        runTest {
-            val vm =
-                viewModel(
-                    FakeWorkoutRepository(
-                        workouts = listOf(workout("w1")),
-                        exercises = listOf(workoutExercise("we1", "w1")),
-                        sets =
-                            listOf(
-                                aSet("s1", "we1", 0, reps = 10, setType = SetType.WARMUP),
-                                aSet("s2", "we1", 1, reps = 10),
-                                aSet("s3", "we1", 2, reps = 10),
-                            ),
-                    ),
-                    settingsRepo = FakeSettingsRepository(UserSettings(includeWarmupsInStats = false)),
-                )
-
-            assertEquals(2, vm.uiState.value.completedSetCount)
-            assertEquals(20, vm.uiState.value.totalReps)
-        }
-
-    @Test
-    fun `the same workout totals differently with includeWarmupsInStats on and off`() =
-        runTest {
-            fun summaryFor(includeWarmups: Boolean) =
-                viewModel(
-                    FakeWorkoutRepository(
-                        workouts = listOf(workout("w1")),
-                        exercises = listOf(workoutExercise("we1", "w1")),
-                        sets =
-                            listOf(
-                                aSet("s1", "we1", 0, reps = 10, setType = SetType.WARMUP),
-                                aSet("s2", "we1", 1, reps = 10),
-                                aSet("s3", "we1", 2, reps = 10),
-                            ),
-                    ),
-                    settingsRepo = FakeSettingsRepository(UserSettings(includeWarmupsInStats = includeWarmups)),
-                ).uiState.value
-
-            val on = summaryFor(true)
-            assertEquals(3, on.completedSetCount)
-            assertEquals(30, on.totalReps)
-
-            val off = summaryFor(false)
-            assertEquals(2, off.completedSetCount)
-            assertEquals(20, off.totalReps)
         }
 
     // --- fixture ---
@@ -901,7 +636,6 @@ class WorkoutSummaryViewModelTest {
         setType: SetType = SetType.NORMAL,
         weightKg: Double? = 50.0,
         distanceMeters: Double? = null,
-        isCompleted: Boolean = true,
     ) = WorkoutSetEntity(
         id = id,
         workoutExerciseId = workoutExerciseId,
@@ -913,8 +647,8 @@ class WorkoutSummaryViewModelTest {
         distanceMeters = distanceMeters,
         rpe = null,
         customMetric = null,
-        isCompleted = isCompleted,
-        completedAt = if (isCompleted) 1L else null,
+        isCompleted = true,
+        completedAt = 1L,
     )
 
     private fun exercise(

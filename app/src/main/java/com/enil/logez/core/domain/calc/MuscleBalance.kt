@@ -56,6 +56,3 @@ fun balanceAxes(current: List<MuscleStatsCalculator.GroupShare>): List<RegionSha
         RegionShare(region, setCount, sharePercent)
     }
 }
-
-/** True when at least one of the 8 axes has a set on it, i.e. the wheel has something to plot. */
-fun List<RegionShare>.hasRegionData(): Boolean = any { it.setCount > 0 }

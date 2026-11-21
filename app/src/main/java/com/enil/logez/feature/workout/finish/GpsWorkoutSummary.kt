@@ -30,11 +30,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material.icons.outlined.OpenInFull
+import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
@@ -97,9 +100,8 @@ private val HERO_MAP_HEIGHT = 280.dp
 private val HERO_FADE_HEIGHT = 56.dp
 
 /**
- * The overview slide of a GPS-tracked walk/run's summary (Owner-approved mockup, 2026-09-26): the
- * recorded route first, then distance, time, pace and splits. Heart rate and records are their own
- * slides since W3-02a. No muscle diagram, balance radar
+ * The finish summary for a GPS-tracked walk/run (Owner-approved mockup, 2026-09-26): the recorded
+ * route first, then distance, time, pace, splits and heart rate. No muscle diagram, balance radar
  * or set count; those describe a gym session and said nothing true about a run.
  *
  * Every card is gated on data actually existing. A run without a watch simply has no heart-rate
@@ -107,9 +109,11 @@ private val HERO_FADE_HEIGHT = 56.dp
  * empty placeholders (the app's honest-absence rule for summaries).
  */
 @Composable
-internal fun GpsOverviewSlide(
+internal fun GpsWorkoutSummary(
     uiState: WorkoutSummaryUiState,
     onOpenMap: () -> Unit,
+    onShare: () -> Unit,
+    onDone: () -> Unit,
 ) {
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val scroll = rememberScrollState()
@@ -158,8 +162,22 @@ internal fun GpsOverviewSlide(
                     PaceCard(uiState, Modifier.padding(top = Spacing.md))
                 }
 
-                // W3-02a: heart rate and records are their own slides now (see SummaryPager), and
-                // Share/Done sit under the pager so every slide can reach them.
+                uiState.heartRateSummary?.let { summary ->
+                    HeartRateCard(summary, uiState.startedAtMillis, Modifier.padding(top = Spacing.md))
+                }
+
+                if (uiState.prMedals.isNotEmpty()) {
+                    CardHeading(stringResource(R.string.summary_prs_header), Modifier.padding(top = Spacing.lg, bottom = Spacing.sm))
+                    uiState.prMedals.forEach { medal -> GpsPrMedalCard(medal, uiState.distanceUnit) }
+                }
+
+                OutlinedButton(onClick = onShare, modifier = Modifier.fillMaxWidth().padding(top = Spacing.sm)) {
+                    Icon(Icons.Outlined.Share, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Text(stringResource(R.string.summary_share), modifier = Modifier.padding(start = Spacing.xs))
+                }
+                Button(onClick = onDone, modifier = Modifier.fillMaxWidth().padding(top = Spacing.sm)) {
+                    Text(stringResource(R.string.summary_done))
+                }
             }
         }
         StatusBarBackdrop(scroll, statusBarTop)
@@ -617,7 +635,7 @@ private fun ZoneRow(
 
 /** A record on a walk/run summary: the record type leads, since the exercise is the run itself. */
 @Composable
-internal fun GpsPrMedalCard(
+private fun GpsPrMedalCard(
     medal: PrMedal,
     distanceUnit: DistanceUnit,
 ) {
@@ -644,7 +662,7 @@ internal fun GpsPrMedalCard(
 }
 
 @Composable
-internal fun CardHeading(
+private fun CardHeading(
     text: String,
     modifier: Modifier = Modifier,
 ) {

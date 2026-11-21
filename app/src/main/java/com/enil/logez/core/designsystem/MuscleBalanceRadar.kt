@@ -1,25 +1,20 @@
 package com.enil.logez.core.designsystem
 
 import androidx.compose.animation.core.snap
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.enil.logez.R
 import com.enil.logez.core.domain.calc.BodyRegion
 import com.enil.logez.core.domain.calc.RegionShare
-import com.enil.logez.core.domain.calc.hasRegionData
 import io.github.koalaplot.core.polar.PolarGraph
 import io.github.koalaplot.core.polar.PolarGraphDefaults
 import io.github.koalaplot.core.polar.PolarPlotSeries
@@ -38,10 +33,6 @@ fun MuscleBalanceRadar(
     modifier: Modifier = Modifier,
     compact: Boolean = false,
 ) {
-    if (!shares.hasRegionData()) {
-        MuscleBalanceEmpty(modifier)
-        return
-    }
     val radialMax = (shares.maxOfOrNull { it.sharePercent }?.times(1.1f) ?: 0f).coerceAtLeast(25f)
     val radialAxisModel = rememberFloatRadialAxisModel(listOf(0f, radialMax / 2f, radialMax))
     val angularAxisModel = rememberCategoryAngularAxisModel(BodyRegion.entries.toList())
@@ -101,18 +92,3 @@ private fun bodyRegionAxisLabel(region: BodyRegion): String =
             BodyRegion.LOWER_LEG -> R.string.muscle_region_lower_leg_axis
         },
     )
-
-@Composable
-private fun MuscleBalanceEmpty(modifier: Modifier) {
-    Box(
-        modifier = modifier.fillMaxWidth().padding(Spacing.sm),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            stringResource(R.string.muscle_balance_no_regions),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-    }
-}
