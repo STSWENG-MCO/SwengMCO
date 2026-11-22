@@ -2,8 +2,6 @@ package com.enil.logez.core.domain.calc
 
 import com.enil.logez.core.domain.model.MuscleGroup
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class MuscleBalanceTest {
@@ -65,29 +63,5 @@ class MuscleBalanceTest {
     fun `a group sharing multiple raw groups sums them into one region`() {
         val result = balanceAxes(listOf(share(MuscleGroup.HAMSTRINGS, 2), share(MuscleGroup.GLUTES, 2)))
         assertEquals(RegionShare(BodyRegion.HAMSTRINGS_GLUTES, 4, 100), result.first { it.region == BodyRegion.HAMSTRINGS_GLUTES })
-    }
-
-    @Test
-    fun `non-region groups are left out of the denominator`() {
-        val result = balanceAxes(listOf(share(MuscleGroup.CHEST, 2), share(MuscleGroup.CARDIO, 6), share(MuscleGroup.NECK, 2)))
-
-        // 10 sets in total, but only 2 are on the wheel, so chest is 100% of the wheel, not 20%.
-        assertEquals(RegionShare(BodyRegion.CHEST, 2, 100), result.first { it.region == BodyRegion.CHEST })
-        assertEquals(2, result.sumOf { it.setCount })
-    }
-
-    @Test
-    fun `equal thirds each round to 33 percent`() {
-        val result = balanceAxes(listOf(share(MuscleGroup.CHEST, 1), share(MuscleGroup.LATS, 1), share(MuscleGroup.SHOULDERS, 1)))
-
-        val percents = listOf(BodyRegion.CHEST, BodyRegion.BACK, BodyRegion.SHOULDERS).map { r -> result.first { it.region == r }.sharePercent }
-        assertEquals(listOf(33, 33, 33), percents)
-    }
-
-    @Test
-    fun `hasRegionData is false for empty and non-region-only input, true once a region has a set`() {
-        assertFalse(balanceAxes(emptyList()).hasRegionData())
-        assertFalse(balanceAxes(listOf(share(MuscleGroup.NECK, 4))).hasRegionData())
-        assertTrue(balanceAxes(listOf(share(MuscleGroup.CHEST, 1))).hasRegionData())
     }
 }

@@ -45,16 +45,16 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.enil.logez.R
+import com.enil.logez.core.designsystem.BodyDiagram
+import com.enil.logez.core.designsystem.BodyDiagramRegions
 import com.enil.logez.core.designsystem.Gold500
 import com.enil.logez.core.designsystem.LineChart
 import com.enil.logez.core.designsystem.LineChartPoint
 import com.enil.logez.core.designsystem.LogEzMono
 import com.enil.logez.core.designsystem.MuscleBalanceRadar
-import com.enil.logez.core.designsystem.MuscleSilhouette
 import com.enil.logez.core.designsystem.Radius
 import com.enil.logez.core.designsystem.Spacing
 import com.enil.logez.core.designsystem.StatCell
-import com.enil.logez.core.domain.calc.WorkoutMuscleTargetCalculator
 import com.enil.logez.core.domain.model.DistanceUnit
 import com.enil.logez.core.domain.model.GpsActivity
 import com.enil.logez.core.domain.model.WeightUnit
@@ -154,7 +154,7 @@ fun WorkoutSummaryScreen(
                     StatCell(value = formatDuration(uiState.durationSeconds), label = stringResource(R.string.summary_duration), modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, valueStyle = LogEzMono.dataLarge, labelColor = MaterialTheme.colorScheme.onSurfaceVariant, labelTextAlign = TextAlign.Center)
                 }
 
-                if (WorkoutMuscleTargetCalculator.trainedGroups(uiState.muscleIntensity).isNotEmpty()) {
+                if (uiState.muscleIntensity.keys.any { it in BodyDiagramRegions.MAPPABLE }) {
                     Text(
                         stringResource(R.string.analytics_body_title),
                         style = MaterialTheme.typography.titleMedium,
@@ -166,7 +166,7 @@ fun WorkoutSummaryScreen(
                         horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        MuscleSilhouette(
+                        BodyDiagram(
                             intensity = uiState.muscleIntensity,
                             variant = uiState.muscleDiagramVariant,
                             modifier = Modifier.weight(0.8f),
