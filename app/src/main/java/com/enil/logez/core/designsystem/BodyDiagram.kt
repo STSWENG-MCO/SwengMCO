@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import com.enil.logez.core.domain.calc.WorkoutMuscleTargetCalculator
 import com.enil.logez.core.domain.model.MuscleDiagramVariant
 import com.enil.logez.core.domain.model.MuscleGroup
 
@@ -32,8 +33,11 @@ import com.enil.logez.core.domain.model.MuscleGroup
  * render as unlabeled silhouette context only.
  */
 object BodyDiagramRegions {
-    /** Groups the diagram can render — every [MuscleGroup] except the three non-anatomical ones. */
-    val MAPPABLE: Set<MuscleGroup> = MuscleGroup.entries.toSet() - setOf(MuscleGroup.CARDIO, MuscleGroup.FULL_BODY, MuscleGroup.OTHER)
+    /**
+     * Groups the diagram can render — every [MuscleGroup] except the three non-anatomical ones.
+     * Defined once in the domain layer (W2-01a) so the intensity calculation and the screens agree.
+     */
+    val MAPPABLE: Set<MuscleGroup> = WorkoutMuscleTargetCalculator.MAPPABLE
 }
 
 /**
