@@ -10,13 +10,20 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
@@ -110,5 +117,62 @@ class SummaryPagerTest {
     fun aSingleSlideShowsNoPageIndicator() {
         compose.setContent { TestPager(listOf(SummarySlide.OVERVIEW)) }
         compose.onNodeWithTag(SUMMARY_PAGE_INDICATOR_TAG).assertDoesNotExist()
+    }
+
+    @Test
+    fun theIndicatorIsAPoliteLiveRegionSoTalkBackAnnouncesPageChanges() {
+        compose.setContent { TestPager(threeSlides) }
+        compose
+            .onNodeWithTag(SUMMARY_PAGE_INDICATOR_TAG)
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
+    }
+
+    @Test
+    fun theAnnouncedDescriptionChangesWithThePage() {
+        compose.setContent { TestPager(threeSlides) }
+        assertOnSlide(1, 3)
+        compose.onNodeWithContentDescription("Next slide").performClick()
+        compose.waitForIdle()
+        assertOnSlide(2, 3)
+    }
+
+    @Test
+    fun theIndicatorDoesNotAlsoExposeItsVisibleCounterAsSeparateText() {
+        compose.setContent { TestPager(threeSlides) }
+        compose
+            .onNodeWithTag(SUMMARY_PAGE_INDICATOR_TAG)
+            .assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Text))
+    }
+
+    @Test
+    fun nextAndPreviousButtonsMoveBetweenSlidesWithoutASwipe() {
+        compose.setContent { TestPager(threeSlides) }
+        compose.onNodeWithContentDescription("Next slide").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("slide:MUSCLES").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Previous slide").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("slide:OVERVIEW").assertIsDisplayed()
+    }
+
+    @Test
+    fun theButtonsAreDisabledAtTheFirstAndLastSlide() {
+        compose.setContent { TestPager(threeSlides) }
+        compose.onNodeWithContentDescription("Previous slide").assertIsNotEnabled()
+        compose.onNodeWithContentDescription("Next slide").assertIsEnabled()
+        repeat(2) {
+            compose.onNodeWithContentDescription("Next slide").performClick()
+            compose.waitForIdle()
+        }
+        assertOnSlide(3, 3)
+        compose.onNodeWithContentDescription("Next slide").assertIsNotEnabled()
+        compose.onNodeWithContentDescription("Previous slide").assertIsEnabled()
+    }
+
+    @Test
+    fun aSingleSlideShowsNoSlideButtons() {
+        compose.setContent { TestPager(listOf(SummarySlide.OVERVIEW)) }
+        compose.onNodeWithContentDescription("Previous slide").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Next slide").assertDoesNotExist()
     }
 }

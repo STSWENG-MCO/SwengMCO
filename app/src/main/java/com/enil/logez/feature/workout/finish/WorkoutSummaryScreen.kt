@@ -38,6 +38,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -336,7 +338,7 @@ private fun SlideHeading(text: String) {
         text,
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.SemiBold,
-        modifier = Modifier.fillMaxWidth().padding(top = Spacing.lg, bottom = Spacing.sm),
+        modifier = Modifier.fillMaxWidth().padding(top = Spacing.lg, bottom = Spacing.sm).semantics { heading() },
     )
 }
 
