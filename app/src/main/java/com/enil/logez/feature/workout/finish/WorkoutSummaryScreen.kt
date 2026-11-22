@@ -192,7 +192,7 @@ internal fun WorkoutSummaryUiState.summarySlides(): List<SummarySlide> =
 
 /** One strength-workout slide. Scrolls on its own when its content is taller than the page. */
 @Composable
-private fun StrengthSummarySlide(
+internal fun StrengthSummarySlide(
     slide: SummarySlide,
     uiState: WorkoutSummaryUiState,
 ) {
@@ -298,7 +298,7 @@ private fun StrengthOverview(uiState: WorkoutSummaryUiState) {
  * slides pad below it like the strength slides do.
  */
 @Composable
-private fun GpsSummarySlide(
+internal fun GpsSummarySlide(
     slide: SummarySlide,
     uiState: WorkoutSummaryUiState,
     onOpenMap: () -> Unit,
