@@ -13,6 +13,7 @@ import com.enil.logez.core.data.repository.PersonalRecordsRepositoryImpl
 import com.enil.logez.core.data.repository.RoomTransactionRunner
 import com.enil.logez.core.data.repository.RoutineRepositoryImpl
 import com.enil.logez.core.data.repository.SettingsRepositoryImpl
+import com.enil.logez.core.data.repository.ShareTemplateRepositoryImpl
 import com.enil.logez.core.data.repository.WellnessRepositoryImpl
 import com.enil.logez.core.data.repository.WorkoutHeartRateSampleRepositoryImpl
 import com.enil.logez.core.data.repository.WorkoutRepositoryImpl
@@ -24,6 +25,7 @@ import com.enil.logez.core.domain.repository.MeasurementRepository
 import com.enil.logez.core.domain.repository.PersonalRecordsRepository
 import com.enil.logez.core.domain.repository.RoutineRepository
 import com.enil.logez.core.domain.repository.SettingsRepository
+import com.enil.logez.core.domain.repository.ShareTemplateRepository
 import com.enil.logez.core.domain.repository.TransactionRunner
 import com.enil.logez.core.domain.repository.WellnessRepository
 import com.enil.logez.core.domain.repository.WorkoutHeartRateSampleRepository
@@ -60,6 +62,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindSettingsRepository(impl: SettingsRepositoryImpl): SettingsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindShareTemplateRepository(impl: ShareTemplateRepositoryImpl): ShareTemplateRepository
 
     @Binds
     @Singleton
