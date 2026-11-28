@@ -89,6 +89,8 @@ fun ShareSummaryDialog(
     var menuExpanded by remember { mutableStateOf(false) }
     val graphicsLayer = rememberGraphicsLayer()
     val scope = rememberCoroutineScope()
+    val templateState = rememberShareTemplateState(data.workoutKind())
+    val shownData = data.copy(choice = templateState.choice)
 
     val performShare: () -> Unit = {
         scope.launch {
@@ -166,7 +168,17 @@ fun ShareSummaryDialog(
                     modifier = Modifier.fillMaxWidth(),
                 )
 
-                ScaledCardPreview(data, ShareCardFormat.STORY, graphicsLayer, Modifier.padding(top = Spacing.md))
+                ScaledCardPreview(shownData, ShareCardFormat.STORY, graphicsLayer, Modifier.padding(top = Spacing.md))
+
+                val options = shownData.selectableTemplates()
+                if (options.size > 1) {
+                    ShareTemplatePicker(
+                        options = options,
+                        selected = shownData.resolvedChoice().template,
+                        onSelect = templateState.select,
+                        modifier = Modifier.padding(top = Spacing.sm),
+                    )
+                }
 
                 // Single status slot: at most one message, and the latest action's outcome wins.
                 when (status) {

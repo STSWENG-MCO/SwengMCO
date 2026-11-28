@@ -12,6 +12,7 @@ import android.provider.MediaStore
 import androidx.annotation.RequiresApi
 import androidx.core.content.FileProvider
 import com.enil.logez.core.common.AppLogger
+import com.enil.logez.core.domain.repository.ShareTemplateRepository
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -197,4 +198,6 @@ interface WorkoutShareEntryPoint {
     fun workoutShareController(): WorkoutShareController
 
     fun appLogger(): AppLogger
+
+    fun shareTemplateRepository(): ShareTemplateRepository
 }
