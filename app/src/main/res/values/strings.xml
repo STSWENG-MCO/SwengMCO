@@ -576,6 +576,43 @@
     <string name="share_card_pace_km">Pace /km</string>
     <string name="share_card_pace_mi">Pace /mi</string>
     <string name="share_card_avg_bpm">Avg bpm</string>
+    <string name="share_card_new_record">New personal record</string>
+    <string name="share_card_log_eyebrow">Workout log</string>
+    <string name="share_card_muscles_eyebrow">Muscles trained</string>
+    <string name="share_card_week_streak">Week streak</string>
+    <string name="share_card_day_streak">Day streak</string>
+    <string name="share_card_weeks_legend">12 weeks · days per week</string>
+    <string name="share_card_nth_workout">Workout #%1$d in %2$s</string>
+    <plurals name="share_card_weeks">
+        <item quantity="one">week</item>
+        <item quantity="other">weeks</item>
+    </plurals>
+    <plurals name="share_card_streak_caption">
+        <item quantity="one">Weekly training target met %1$d week in a row.</item>
+        <item quantity="other">Weekly training target met %1$d weeks in a row.</item>
+    </plurals>
+    <plurals name="share_card_muscle_sets">
+        <item quantity="one">%1$d set</item>
+        <item quantity="other">%1$d sets</item>
+    </plurals>
+    <string name="share_card_total_volume">Total volume</string>
+    <plurals name="share_card_records_pill">
+        <item quantity="one">%1$d record</item>
+        <item quantity="other">%1$d records</item>
+    </plurals>
+    <string name="share_template_stack">Stack</string>
+    <string name="share_template_number">Number</string>
+    <string name="share_template_records">Records</string>
+    <string name="share_template_glass">Glass</string>
+    <string name="share_template_rail">Rail</string>
+    <string name="share_template_strip">Strip</string>
+    <string name="share_template_body_map">Body map</string>
+    <string name="share_template_route">Route</string>
+    <string name="share_template_splits">Splits</string>
+    <string name="share_template_summary">Summary</string>
+    <string name="share_template_muscles">Muscles</string>
+    <string name="share_template_log">Log</string>
+    <string name="share_template_streak">Streak</string>
 
     <!-- Shareable summary-card export -->
     <string name="share_card_avg_reps">avg %1$s reps</string>

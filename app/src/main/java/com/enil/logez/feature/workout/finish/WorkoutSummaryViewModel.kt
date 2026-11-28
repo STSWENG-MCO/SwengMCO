@@ -11,6 +11,9 @@ import com.enil.logez.core.domain.calc.PaceCalculator
 import com.enil.logez.core.domain.calc.RegionShare
 import com.enil.logez.core.domain.calc.RouteSplit
 import com.enil.logez.core.domain.calc.RouteSplitsCalculator
+import com.enil.logez.core.domain.calc.StreakSummary
+import com.enil.logez.core.domain.calc.StreakSummaryCalculator
+import com.enil.logez.core.domain.calc.StreakWorkout
 import com.enil.logez.core.domain.calc.VolumeCalculator
 import com.enil.logez.core.domain.calc.WorkoutMuscleTargetCalculator
 import com.enil.logez.core.domain.calc.WorkoutTotalsCalculator
@@ -35,6 +38,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.ZoneId
 import javax.inject.Inject
 
 /**
@@ -161,6 +166,20 @@ class WorkoutSummaryViewModel
                             SummaryExerciseLine(
                                 name = exercisesById[blockRows.first().exerciseId]?.name.orEmpty(),
                                 setCount = includedRows.size,
+                                sets = includedRows.map { SummarySet(weightKg = it.set.weightKg, reps = it.set.reps) },
+                                // Same VolumeCalculator rules as the workout total, so the lines add up to it.
+                                volumeKg =
+                                    exercisesById[blockRows.first().exerciseId]?.let { exercise ->
+                                        includedRows.sumOf { row ->
+                                            VolumeCalculator.setVolume(
+                                                exerciseType = exercise.exerciseType,
+                                                isBodyweightVolumeEligible = exercise.isBodyweightVolumeEligible,
+                                                weightKg = row.set.weightKg,
+                                                reps = row.set.reps,
+                                                bodyweightKg = null,
+                                            )
+                                        }
+                                    } ?: 0.0,
                                 // Owner (P-079): each line also carries average reps per set. Null (not 0)
                                 // for exercises that log no reps at all — duration/distance rows have no
                                 // honest average to show.
@@ -222,6 +241,19 @@ class WorkoutSummaryViewModel
                         )
                     }
 
+                // The workout's own date is "today" for the streak, so a shared card never ages.
+                val zone = ZoneId.systemDefault()
+                val streak =
+                    StreakSummaryCalculator.summarize(
+                        workouts =
+                            (workoutRepository.getCompletedWorkouts() + workout)
+                                .distinctBy { it.id }
+                                .map { StreakWorkout(it.title, Instant.ofEpochMilli(it.startedAt).atZone(zone).toLocalDate()) },
+                        current = StreakWorkout(workout.title, Instant.ofEpochMilli(workout.startedAt).atZone(zone).toLocalDate()),
+                        firstDayOfWeek = settings.firstDayOfWeek,
+                        weeklyTarget = settings.weeklyActiveDayTarget,
+                    )
+
                 _uiState.value =
                     WorkoutSummaryUiState(
                         isLoading = false,
@@ -276,6 +308,8 @@ class WorkoutSummaryViewModel
                         muscleIntensity = muscleIntensity,
                         muscleDiagramVariant = settings.muscleDiagramVariant,
                         muscleBalance = muscleBalance,
+                        muscleSetCounts = if (isGpsTracked) emptyMap() else muscleTargets.groupingBy { it.primary }.eachCount(),
+                        streak = streak,
                         prMedals = prs,
                         exerciseLines = exerciseLines,
                         structure = workout.structure,
@@ -302,6 +336,14 @@ data class SummaryExerciseLine(
     val name: String,
     val setCount: Int,
     val avgReps: Double? = null,
+    /** The counted sets in order, for the Summary and Log share templates. */
+    val sets: List<SummarySet> = emptyList(),
+    val volumeKg: Double = 0.0,
+)
+
+data class SummarySet(
+    val weightKg: Double?,
+    val reps: Int?,
 )
 
 data class WorkoutSummaryUiState(
@@ -350,4 +392,8 @@ data class WorkoutSummaryUiState(
     val splits: List<RouteSplit> = emptyList(),
     /** (epochMillis, seconds per unit), smoothed over a minute; same availability as [splits]. */
     val paceSeries: List<Pair<Long, Double>> = emptyList(),
+    /** Strength only: completed sets per primary muscle group, for the Muscles share template. */
+    val muscleSetCounts: Map<com.enil.logez.core.domain.model.MuscleGroup, Int> = emptyMap(),
+    /** The workout's place in the user's history, for the Streak share template. */
+    val streak: StreakSummary? = null,
 )

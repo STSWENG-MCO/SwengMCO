@@ -36,12 +36,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -57,17 +55,25 @@ import com.enil.logez.core.designsystem.MuscleBalanceRadar
 import com.enil.logez.core.designsystem.MuscleSilhouette
 import com.enil.logez.core.designsystem.Radius
 import com.enil.logez.core.designsystem.Spacing
-import com.enil.logez.core.designsystem.StatCell
+import com.enil.logez.core.domain.calc.WeightDisplay
 import com.enil.logez.core.domain.calc.WorkoutMuscleTargetCalculator
 import com.enil.logez.core.domain.model.DistanceUnit
 import com.enil.logez.core.domain.model.GpsActivity
+import com.enil.logez.core.domain.model.ShareTemplateChoice
 import com.enil.logez.core.domain.model.WeightUnit
+import com.enil.logez.core.domain.model.WorkoutKind
 import com.enil.logez.core.domain.model.WorkoutStructure
 import com.enil.logez.feature.activity.map.RouteMapView
 import com.enil.logez.feature.history.formatCardDateTime
 import com.enil.logez.feature.workout.finish.share.GpsShareCardData
 import com.enil.logez.feature.workout.finish.share.ShareCardData
+import com.enil.logez.feature.workout.finish.share.ShareCardOverview
+import com.enil.logez.feature.workout.finish.share.ShareExercise
+import com.enil.logez.feature.workout.finish.share.ShareRecord
+import com.enil.logez.feature.workout.finish.share.ShareSplit
+import com.enil.logez.feature.workout.finish.share.ShareStreak
 import com.enil.logez.feature.workout.finish.share.ShareSummaryDialog
+import com.enil.logez.feature.workout.finish.share.rememberShareTemplateState
 
 /**
  * PHASE2_PLAN.md §5.1.8(c) post-save summary, plus the local-only summary-card export: the share
@@ -91,6 +97,7 @@ fun WorkoutSummaryScreen(
     // Saveable so a rotation with the dialog open re-opens it instead of silently swallowing the tap.
     var showShareDialog by rememberSaveable { mutableStateOf(false) }
     var showFullMap by rememberSaveable { mutableStateOf(false) }
+    val templateState = rememberShareTemplateState(if (uiState.isGpsTracked) WorkoutKind.GPS_TRACKED else WorkoutKind.STRENGTH)
     BackHandler(onBack = onDone)
     // Heart rate often reaches Health Connect after Save; coming back here (for instance after
     // opening Samsung Health to sync the watch) looks again and adds whatever arrived.
@@ -107,7 +114,7 @@ fun WorkoutSummaryScreen(
                     if (uiState.isGpsTracked) {
                         GpsSummarySlide(slide, uiState, onOpenMap = { showFullMap = true })
                     } else {
-                        StrengthSummarySlide(slide, uiState)
+                        StrengthSummarySlide(slide, uiState, shareChoice = templateState.choice)
                     }
                 }
                 SummaryActions(onShare = { showShareDialog = true }, onDone = onDone)
@@ -197,6 +204,7 @@ internal fun WorkoutSummaryUiState.summarySlides(): List<SummarySlide> =
 internal fun StrengthSummarySlide(
     slide: SummarySlide,
     uiState: WorkoutSummaryUiState,
+    shareChoice: ShareTemplateChoice? = null,
 ) {
     Column(
         modifier =
@@ -208,7 +216,7 @@ internal fun StrengthSummarySlide(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         when (slide) {
-            SummarySlide.OVERVIEW -> StrengthOverview(uiState)
+            SummarySlide.OVERVIEW -> StrengthOverview(uiState, shareChoice)
             SummarySlide.MUSCLES -> {
                 SlideHeading(stringResource(R.string.analytics_body_title))
                 Row(
@@ -249,36 +257,12 @@ internal fun StrengthSummarySlide(
 }
 
 @Composable
-private fun StrengthOverview(uiState: WorkoutSummaryUiState) {
-    Text(
-        stringResource(R.string.summary_title),
-        style = MaterialTheme.typography.headlineSmall,
-        fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(top = Spacing.lg),
-    )
-    Text(uiState.title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = Spacing.xs))
-    if (uiState.structure == WorkoutStructure.CIRCUIT) {
-        // M11: the same "CIRCUIT · N rounds" line the share card carries.
-        Text(
-            stringResource(R.string.routine_structure_chip_circuit) + " · " +
-                pluralStringResource(R.plurals.routine_rounds_count, uiState.rounds, uiState.rounds),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(top = Spacing.xxs),
-        )
-    }
-
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(top = Spacing.lg),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-    ) {
-        // Only a metric this workout actually logged gets a cell (each cell is independently gated).
-        if (uiState.hasVolume) StatCell(value = formatVolume(uiState.totalVolumeKg, uiState.weightUnit), label = stringResource(R.string.summary_volume), modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, valueStyle = LogEzMono.dataLarge, labelColor = MaterialTheme.colorScheme.onSurfaceVariant, labelTextAlign = TextAlign.Center)
-        StatCell(value = uiState.completedSetCount.toString(), label = stringResource(R.string.summary_sets), modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, valueStyle = LogEzMono.dataLarge, labelColor = MaterialTheme.colorScheme.onSurfaceVariant, labelTextAlign = TextAlign.Center)
-        if (uiState.hasReps) StatCell(value = uiState.totalReps.toString(), label = stringResource(R.string.summary_reps), modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, valueStyle = LogEzMono.dataLarge, labelColor = MaterialTheme.colorScheme.onSurfaceVariant, labelTextAlign = TextAlign.Center)
-        if (uiState.hasDistance) StatCell(value = formatDistance(uiState.totalDistanceMeters, uiState.distanceUnit), label = stringResource(R.string.summary_distance), modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, valueStyle = LogEzMono.dataLarge, labelColor = MaterialTheme.colorScheme.onSurfaceVariant, labelTextAlign = TextAlign.Center)
-        StatCell(value = formatDuration(uiState.durationSeconds), label = stringResource(R.string.summary_duration), modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, valueStyle = LogEzMono.dataLarge, labelColor = MaterialTheme.colorScheme.onSurfaceVariant, labelTextAlign = TextAlign.Center)
-    }
+private fun StrengthOverview(
+    uiState: WorkoutSummaryUiState,
+    shareChoice: ShareTemplateChoice?,
+) {
+    // The saved template, drawn by the same composable as the share preview and export.
+    ShareCardOverview(uiState.toShareCardData().copy(choice = shareChoice), Modifier.padding(top = Spacing.md))
 
     if (uiState.routePoints.isNotEmpty()) {
         // M21c: the real offline map (decisions.md 2026-09-10).
@@ -440,3 +424,122 @@ private fun formatPrValue(
         com.enil.logez.core.domain.model.PrType.LONGEST_DISTANCE -> "${formatSummaryNumber(medal.value)}m"
         else -> formatVolume(medal.value, weightUnit)
     }
+
+/** Everything the share card draws, from the summary state. Used by the dialog and the overview slide. */
+@Composable
+internal fun WorkoutSummaryUiState.toShareCardData(): ShareCardData {
+    val uiState = this
+    val km = uiState.distanceUnit == DistanceUnit.KM
+    val gpsShare =
+        if (uiState.isGpsTracked) {
+            GpsShareCardData(
+                eyebrow =
+                    stringResource(
+                        when (uiState.gpsActivity) {
+                            GpsActivity.RUN -> R.string.share_card_run_complete
+                            GpsActivity.WALK -> R.string.share_card_walk_complete
+                            GpsActivity.OTHER -> R.string.summary_title
+                        },
+                    ),
+                routePoints = uiState.routePoints,
+                distanceNumber = if (uiState.hasDistance) formatDistanceNumber(uiState.totalDistanceMeters, uiState.distanceUnit) else null,
+                distanceUnitLabel = if (km) "km" else "mi",
+                timeText =
+                    com.enil.logez.core.designsystem
+                        .formatElapsedClock(uiState.durationSeconds),
+                paceText =
+                    uiState.averagePaceSecondsPerUnit?.let {
+                        com.enil.logez.core.designsystem
+                            .formatPace(it)
+                    },
+                paceLabel = stringResource(if (km) R.string.share_card_pace_km else R.string.share_card_pace_mi),
+                avgBpmText = uiState.heartRateSummary?.averageBpm?.toString(),
+                prLines = uiState.prMedals.map { medal -> stringResource(medal.prType.labelRes()) to formatGpsPrValue(medal, uiState.distanceUnit) },
+                splits =
+                    uiState.splits.map { split ->
+                        ShareSplit(
+                            number = split.number,
+                            paceSeconds = split.paceSecondsPerUnit,
+                            paceText =
+                                com.enil.logez.core.designsystem
+                                    .formatPace(split.paceSecondsPerUnit),
+                        )
+                    },
+            )
+        } else {
+            null
+        }
+
+    fun setText(set: SummarySet): String = formatSummaryNumber(WeightDisplay.toDisplay(set.weightKg ?: 0.0, uiState.weightUnit)) + " × " + (set.reps ?: 0)
+
+    val monthName =
+        java.time.Instant
+            .ofEpochMilli(uiState.startedAtMillis)
+            .atZone(java.time.ZoneId.systemDefault())
+            .month
+            .getDisplayName(
+                java.time.format.TextStyle.FULL,
+                com.enil.logez.core.designsystem
+                    .currentLocale(),
+            )
+
+    return ShareCardData(
+        title = uiState.title,
+        // A shared image outlives "Today", so a walk/run card carries the full date.
+        dateLine = if (uiState.isGpsTracked) formatFullDateTime(uiState.startedAtMillis) else formatCardDateTime(uiState.startedAtMillis),
+        durationText = formatDuration(uiState.durationSeconds),
+        volumeText = if (uiState.hasVolume) formatVolume(uiState.totalVolumeKg, uiState.weightUnit) else null,
+        setsText = uiState.completedSetCount.toString(),
+        repsText = if (uiState.hasReps) uiState.totalReps.toString() else null,
+        distanceText = if (uiState.hasDistance) formatDistance(uiState.totalDistanceMeters, uiState.distanceUnit) else null,
+        muscleIntensity = uiState.muscleIntensity,
+        muscleDiagramVariant = uiState.muscleDiagramVariant,
+        muscleBalance = uiState.muscleBalance,
+        prs = uiState.prMedals,
+        // CIRCUIT drops the "N × " prefix -- the card's own rounds line already says how many times
+        // the sequence ran; REGULAR keeps History's shape.
+        exerciseLines =
+            uiState.exerciseLines.map { line ->
+                val base = if (uiState.structure == WorkoutStructure.CIRCUIT) line.name else "${line.setCount} × ${line.name}"
+                line.avgReps?.let { base + " · " + stringResource(R.string.share_card_avg_reps, formatAvgReps(it)) } ?: base
+            },
+        structure = uiState.structure,
+        rounds = uiState.rounds,
+        gps = gpsShare,
+        records =
+            if (uiState.isGpsTracked) {
+                gpsShare?.prLines.orEmpty().map { (label, value) -> ShareRecord(uiState.title, label, value) }
+            } else {
+                uiState.prMedals.map { medal ->
+                    ShareRecord(
+                        name = medal.exerciseName,
+                        typeText = stringResource(medal.prType.labelRes()),
+                        valueText = formatPrValue(medal, uiState.weightUnit, uiState.distanceUnit),
+                    )
+                }
+            },
+        exercises =
+            uiState.exerciseLines.map { line ->
+                val weighted = line.sets.filter { it.weightKg != null && it.reps != null }
+                ShareExercise(
+                    name = line.name,
+                    topSetText = weighted.maxByOrNull { it.weightKg ?: 0.0 }?.let(::setText),
+                    volumeText = if (line.volumeKg > 0.0) formatVolume(line.volumeKg, uiState.weightUnit) else null,
+                    setTexts = weighted.map(::setText),
+                    hasRecord = uiState.prMedals.any { it.exerciseName == line.name },
+                )
+            },
+        muscleSets = uiState.muscleSetCounts,
+        streak =
+            uiState.streak?.let { streak ->
+                ShareStreak(
+                    weekStreak = streak.weekStreak,
+                    dayStreak = streak.dayStreak,
+                    weeklyTarget = streak.weeklyTarget,
+                    weekDayCounts = streak.weekDayCounts,
+                    nthThisMonth = streak.nthThisMonth,
+                    monthName = monthName,
+                )
+            },
+    )
+}
